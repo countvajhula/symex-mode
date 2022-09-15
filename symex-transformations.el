@@ -101,6 +101,13 @@
      (symex-select-nearest)
      (symex-tidy)))
 
+(defmacro symex-define-insertion-command (name args docstring &rest body)
+  "Define a symex command that enters an insertion state."
+  `(defun ,name ,args
+     ,docstring
+     ,@body
+     (symex-enter-lowest)))
+
 (symex-define-command symex-clear ()
   "Clear contents of symex."
   (interactive)
