@@ -116,15 +116,12 @@
      (symex-select-nearest)
      (symex-tidy)))
 
-(defun symex-clear ()
+(symex-define-command symex-clear ()
   "Clear contents of symex."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-clear)
-    (progn
-      (symex--clear)
-      (symex-select-nearest)
-      (symex-tidy))))
+    (symex--clear)))
 
 (defun symex--emit-backward ()
   "Emit backward."
