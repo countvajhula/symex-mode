@@ -65,6 +65,18 @@
                       (list start end))))))
   (symex-select-nearest))
 
+(defun symex-lisp-clear ()
+  "Helper to clear contents of symex."
+  (cond ((symex-opening-round-p)
+         (apply #'evil-delete (evil-inner-paren)))
+        ((symex-opening-square-p)
+         (apply #'evil-delete (evil-inner-bracket)))
+        ((symex-opening-curly-p)
+         (apply #'evil-delete (evil-inner-curly)))
+        ((symex-string-p)
+         (apply #'evil-delete (evil-inner-double-quote)))
+        (t (kill-sexp))))
+
 (defun symex-lisp--delete (count)
   "Delete COUNT symexes."
   (interactive "p")
