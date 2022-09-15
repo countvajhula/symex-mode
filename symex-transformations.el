@@ -279,7 +279,7 @@ by default, joins next symex to current one."
       (symex-ts-open-line-after)
     (symex-lisp--open-line-after)))
 
-(defun symex-open-line-before ()
+(symex-define-insertion-command symex-open-line-before ()
   "Open new line before symex."
   (interactive)
   (if (symex-tree-sitter-p)

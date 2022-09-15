@@ -189,7 +189,7 @@ too."
     (newline-and-indent)
     (evil-previous-line)
     (indent-according-to-mode)
-    (evil-append-line 1)))
+    (move-end-of-line 1)))
 
 (defun symex-ts--paste (count direction)
   "Paste before or after symex, COUNT times, according to DIRECTION.

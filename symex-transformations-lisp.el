@@ -161,8 +161,7 @@
   (unless (or (symex--current-line-empty-p)
               (save-excursion (backward-char)
                               (lispy-left-p)))
-    (insert " "))
-  (symex-enter-lowest))
+    (insert " ")))
 
 (defun symex-lisp--insert-before ()
   "Insert before symex (instead of vim's default at the start of line)."
