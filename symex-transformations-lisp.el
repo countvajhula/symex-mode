@@ -149,8 +149,7 @@
   "Open new line after symex."
   (interactive)
   (forward-sexp)
-  (newline-and-indent)
-  (symex-enter-lowest))
+  (newline-and-indent))
 
 (defun symex-lisp--open-line-before ()
   "Open new line before symex."

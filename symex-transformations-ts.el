@@ -179,8 +179,7 @@ too."
   (interactive)
   (when (symex-ts-get-current-node)
     (goto-char (tsc-node-end-position (symex-ts-get-current-node)))
-    (newline-and-indent)
-    (evil-insert-state)))
+    (newline-and-indent)))
 
 (defun symex-ts-open-line-before ()
   "Open new line before symex."

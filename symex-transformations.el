@@ -272,7 +272,7 @@ by default, joins next symex to current one."
       (dotimes (_ count)
         (symex-lisp--paste-after)))))
 
-(defun symex-open-line-after ()
+(symex-define-insertion-command symex-open-line-after ()
   "Open new line after symex."
   (interactive)
   (if (symex-tree-sitter-p)
