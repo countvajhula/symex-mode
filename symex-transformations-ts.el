@@ -254,6 +254,10 @@ DIRECTION should be either the symbol `before' or `after'."
                    node))))
       (copy-region-as-kill start end))))
 
+(defun symex-ts-tidy ()
+  "Auto-indent symex and fix any whitespace."
+  nil)
+
 
 ;; TODO: TS: capture node
 ;; TODO: TS: delete remaining nodes
