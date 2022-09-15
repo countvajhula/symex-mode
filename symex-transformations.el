@@ -102,6 +102,12 @@
              (forward-char))
            (symex-enter-lowest))))
 
+;; TODO: `symex-define-command` macro
+;; - write the wrapping code before and after without needing advice
+;; - select-nearest etc. after, and remove the ad hoc cases
+;; - this would also allow more fine-grained handling, e.g. different types of commands
+;; - this would also avoid the need for `symex--evil-repeatable-commands`, so that we could `(evil-add-command-properties fn :repeat t)` directly -- this would also support users defining new symex commands and having them be repeatable without a manual registration process
+
 (defun symex-clear ()
   "Clear contents of symex."
   (interactive)
