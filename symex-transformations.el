@@ -108,6 +108,14 @@
 ;; - this would also allow more fine-grained handling, e.g. different types of commands
 ;; - this would also avoid the need for `symex--evil-repeatable-commands`, so that we could `(evil-add-command-properties fn :repeat t)` directly -- this would also support users defining new symex commands and having them be repeatable without a manual registration process
 
+(defmacro symex-define-command (name args docstring &rest body)
+  "Define a symex command."
+  `(defun ,name ,args
+     ,docstring
+     ,@body
+     (symex-select-nearest)
+     (symex-tidy)))
+
 (defun symex-clear ()
   "Clear contents of symex."
   (interactive)
