@@ -77,6 +77,12 @@
          (apply #'evil-delete (evil-inner-double-quote)))
         (t (kill-sexp))))
 
+(defun symex-lisp-replace ()
+  (symex-lisp-clear)
+  (when (or (symex-form-p) (symex-string-p))
+    (forward-char))
+  (symex-enter-lowest))
+
 (defun symex-lisp--delete (count)
   "Delete COUNT symexes."
   (interactive "p")

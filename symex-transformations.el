@@ -85,10 +85,7 @@
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-replace)
-    (progn (symex-lisp-clear)
-           (when (or (symex-form-p) (symex-string-p))
-             (forward-char))
-           (symex-enter-lowest))))
+    (symex-lisp-replace)))
 
 ;; TODO: `symex-define-command` macro
 ;; - write the wrapping code before and after without needing advice
