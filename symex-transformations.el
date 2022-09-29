@@ -47,14 +47,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; TODO: define these using the symex command macro
-(defun symex-delete (count)
+(symex-define-command symex-delete (count)
   "Delete COUNT symexes."
   (interactive "p")
   (if (symex-tree-sitter-p)
       (symex-ts-delete-node-forward count)
     (symex-lisp--delete count)))
 
-(defun symex-delete-backwards (count)
+(symex-define-command symex-delete-backwards (count)
   "Delete COUNT symexes backwards."
   (interactive "p")
   (if (symex-tree-sitter-p)

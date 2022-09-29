@@ -120,16 +120,14 @@
         ((save-excursion (forward-char) ; ... <>)
                          (lispy-right-p))
          (symex--go-backward))
-        (t (symex--go-forward)))
-  (symex-select-nearest)
-  (symex-tidy))
+        (t (symex--go-forward))))
 
 (defun symex-lisp--delete-backwards (count)
   "Delete COUNT symexes backwards."
   (interactive "p")
   (dotimes (_ count)
     (when (symex--go-backward)
-      (symex-delete 1))))
+      (symex-lisp--delete 1))))
 
 (defun symex-lisp--change (count)
   "Change COUNT symexes."

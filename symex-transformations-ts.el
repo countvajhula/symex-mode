@@ -108,8 +108,7 @@ selected according to the ranges that have changed."
                             (symex-ts--get-nth-sibling-from-node node #'tsc-get-prev-named-sibling count)
                           node))))
         (kill-region start-pos end-pos)
-        (symex-ts--delete-current-line-if-empty start-pos)
-        (symex-ts-set-current-node-from-point)))))
+        (symex-ts--delete-current-line-if-empty start-pos)))))
 
 (defun symex-ts-delete-node-forward (&optional count keep-empty-lines)
   "Delete COUNT nodes forward from the current node.
