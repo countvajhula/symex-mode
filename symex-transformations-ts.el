@@ -54,13 +54,7 @@ selected according to the ranges that have changed."
              ;; If the change starts on a carriage return, move
              ;; forward one character
              (when (char-equal ?\C-j (char-after))
-               (forward-char 1)))
-
-           ;; Update current node from point and reindent if necessary
-           (symex-ts-set-current-node-from-point)
-           (when symex-highlight-p
-             (symex--update-overlay))
-           (indent-according-to-mode))
+               (forward-char 1))))
 
          ;; Return the result of evaluating BODY
          ,res))))
@@ -255,7 +249,8 @@ DIRECTION should be either the symbol `before' or `after'."
 
 (defun symex-ts-tidy ()
   "Auto-indent symex and fix any whitespace."
-  nil)
+  ;; Update current node from point and reindent if necessary
+  (indent-according-to-mode))
 
 
 ;; TODO: TS: capture node
