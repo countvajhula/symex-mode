@@ -46,6 +46,7 @@
 ;;; TRANSFORMATIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
 
+;; TODO: define these using the symex command macro
 (defun symex-delete (count)
   "Delete COUNT symexes."
   (interactive "p")
@@ -286,6 +287,7 @@ by default, joins next symex to current one."
       (symex-ts-open-line-before)
     (symex-lisp--open-line-before)))
 
+;; TODO: define the rest as insertion commands
 (defun symex-append-after ()
   "Append after symex (instead of vim's default of line)."
   (interactive)

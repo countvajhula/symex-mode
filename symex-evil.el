@@ -313,6 +313,9 @@ executing this command to get the expected behavior."
               :after #'symex-evil-repeat-stop-recording-advice)
   (advice-add 'evil-repeat
               :around #'symex-evil-repeat-preserve-state-advice)
+  ;; TODO: once all the commands are defined using the macro,
+  ;; add this declaration to the macro definition and remove
+  ;; the "registration" here.
   (dolist (fn symex--evil-repeatable-commands)
     (evil-add-command-properties fn :repeat t)))
 

@@ -83,6 +83,7 @@
     (forward-char))
   (symex-enter-lowest))
 
+;; TODO: rename these to reflect non-private
 (defun symex-lisp--delete (count)
   "Delete COUNT symexes."
   (interactive "p")
