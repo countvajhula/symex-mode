@@ -141,8 +141,7 @@
   "Append after symex (instead of vim's default of line)."
   (interactive)
   (forward-sexp)  ; selected symexes will have the cursor on the starting paren
-  (insert " ")
-  (symex-enter-lowest))
+  (insert " "))
 
 (defun symex-lisp--open-line-after ()
   "Open new line after symex."
@@ -166,16 +165,14 @@
   "Insert before symex (instead of vim's default at the start of line)."
   (interactive)
   (insert " ")
-  (backward-char)
-  (symex-enter-lowest))
+  (backward-char))
 
 (defun symex-lisp--insert-at-beginning ()
   "Insert at beginning of symex."
   (interactive)
   (when (or (lispy-left-p)
             (symex-string-p))
-    (forward-char))
-  (symex-enter-lowest))
+    (forward-char)))
 
 (defun symex-lisp--insert-at-end ()
   "Insert at end of symex."
@@ -184,8 +181,7 @@
           (symex-string-p))
       (progn (forward-sexp)
              (backward-char))
-    (forward-sexp))
-  (symex-enter-lowest))
+    (forward-sexp)))
 
 (defun symex-lisp--paste-after ()
   "Paste after symex."

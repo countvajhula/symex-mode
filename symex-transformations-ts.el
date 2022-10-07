@@ -140,15 +140,13 @@ too."
   "Insert at beginning of symex."
   (interactive)
   (when (symex-ts-get-current-node)
-    (goto-char (tsc-node-start-position (symex-ts-get-current-node)))
-    (evil-insert-state)))
+    (goto-char (tsc-node-start-position (symex-ts-get-current-node)))))
 
 (defun symex-ts-insert-at-end ()
   "Insert at end of symex."
   (interactive)
   (when (symex-ts-get-current-node)
-    (goto-char (tsc-node-end-position (symex-ts-get-current-node)))
-    (evil-insert-state)))
+    (goto-char (tsc-node-end-position (symex-ts-get-current-node)))))
 
 (defun symex-ts-insert-before ()
   "Insert before symex (instead of vim's default at the start of line)."
@@ -156,8 +154,16 @@ too."
   (when (symex-ts-get-current-node)
     (goto-char (tsc-node-start-position (symex-ts-get-current-node)))
     (insert " ")
-    (backward-char)
-    (evil-insert-state)))
+    (backward-char)))
+
+(defun symex-ts-append-after ()
+  "Append after the end of the symex.
+
+Since non-Lisp languages don't really have a syntactic distinction
+between the inside and the outside of expressions, this is just an
+alias for inserting at the end."
+  (interactive)
+  (symex-ts-insert-at-end))
 
 (defun symex-ts-append-after ()
   "Append after symex (instead of vim's default of line)."

@@ -61,7 +61,6 @@
       (symex-ts-delete-node-backward count)
     (symex-lisp--delete-backwards count)))
 
-;; TODO: symex-delete-remaining: fix symex--remaining-length for TS
 (defun symex-delete-remaining ()
   "Delete remaining symexes at this level."
   (interactive)
@@ -246,7 +245,6 @@ by default, joins next symex to current one."
     (symex-ts-yank count)
     (symex-lisp--yank count)))
 
-;; TODO: symex-yank-remaining: fix symex--remaining-length for TS
 (defun symex-yank-remaining ()
   "Yank (copy) remaining symexes at this level."
   (interactive)
@@ -288,28 +286,28 @@ by default, joins next symex to current one."
     (symex-lisp--open-line-before)))
 
 ;; TODO: define the rest as insertion commands
-(defun symex-append-after ()
+(symex-define-insertion-command symex-append-after ()
   "Append after symex (instead of vim's default of line)."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-append-after)
     (symex-lisp--append-after)))
 
-(defun symex-insert-before ()
+(symex-define-insertion-command symex-insert-before ()
   "Insert before symex (instead of vim's default at the start of line)."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-insert-before)
     (symex-lisp--insert-before)))
 
-(defun symex-insert-at-beginning ()
+(symex-define-insertion-command symex-insert-at-beginning ()
   "Insert at beginning of symex."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-insert-at-beginning)
     (symex-lisp--insert-at-beginning)))
 
-(defun symex-insert-at-end ()
+(symex-define-insertion-command symex-insert-at-end ()
   "Insert at end of symex."
   (interactive)
   (if (symex-tree-sitter-p)
