@@ -46,7 +46,27 @@
 ;;; TRANSFORMATIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
 
-;; TODO: define these using the symex command macro
+;; TODO: `symex-define-command` macro
+;; - write the wrapping code before and after without needing advice
+;; - select-nearest etc. after, and remove the ad hoc cases
+;; - this would also allow more fine-grained handling, e.g. different types of commands
+;; - this would also avoid the need for `symex--evil-repeatable-commands`, so that we could `(evil-add-command-properties fn :repeat t)` directly -- this would also support users defining new symex commands and having them be repeatable without a manual registration process
+
+(defmacro symex-define-command (name args docstring &rest body)
+  "Define a symex command."
+  `(defun ,name ,args
+     ,docstring
+     ,@body
+     (symex-select-nearest)
+     (symex-tidy)))
+
+(defmacro symex-define-insertion-command (name args docstring &rest body)
+  "Define a symex command that enters an insertion state."
+  `(defun ,name ,args
+     ,docstring
+     ,@body
+     (symex-enter-lowest)))
+
 (symex-define-command symex-delete (count)
   "Delete COUNT symexes."
   (interactive "p")
@@ -86,27 +106,6 @@
   (if (symex-tree-sitter-p)
       (symex-ts-replace)
     (symex-lisp-replace)))
-
-;; TODO: `symex-define-command` macro
-;; - write the wrapping code before and after without needing advice
-;; - select-nearest etc. after, and remove the ad hoc cases
-;; - this would also allow more fine-grained handling, e.g. different types of commands
-;; - this would also avoid the need for `symex--evil-repeatable-commands`, so that we could `(evil-add-command-properties fn :repeat t)` directly -- this would also support users defining new symex commands and having them be repeatable without a manual registration process
-
-(defmacro symex-define-command (name args docstring &rest body)
-  "Define a symex command."
-  `(defun ,name ,args
-     ,docstring
-     ,@body
-     (symex-select-nearest)
-     (symex-tidy)))
-
-(defmacro symex-define-insertion-command (name args docstring &rest body)
-  "Define a symex command that enters an insertion state."
-  `(defun ,name ,args
-     ,docstring
-     ,@body
-     (symex-enter-lowest)))
 
 (symex-define-command symex-clear ()
   "Clear contents of symex."
@@ -285,7 +284,6 @@ by default, joins next symex to current one."
       (symex-ts-open-line-before)
     (symex-lisp--open-line-before)))
 
-;; TODO: define the rest as insertion commands
 (symex-define-insertion-command symex-append-after ()
   "Append after symex (instead of vim's default of line)."
   (interactive)
