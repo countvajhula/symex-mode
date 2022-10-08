@@ -337,8 +337,8 @@ If you're using evil, put something resembling this in your configuration *befor
 ::
 
   (setq symex--user-evil-keyspec
-        '(("j" . symex-go-up)
-          ("k" . symex-go-down)
+        '(("j" . symex-go-in)
+          ("k" . symex-go-out)
           ("C-j" . symex-climb-branch)
           ("C-k" . symex-descend-branch)
           ("M-j" . symex-goto-highest)
@@ -352,8 +352,8 @@ If you're using hydra, put something resembling this in your configuration *afte
                           :post (symex-exit-mode)
                           :after-exit (symex--signal-exit))
       "Symex mode"
-      ("j" symex-go-up "up")
-      ("k" symex-go-down "down")
+      ("j" symex-go-in "in")
+      ("k" symex-go-out "out")
       ("C-j" symex-climb-branch "climb branch")
       ("C-k" symex-descend-branch "descend branch")
       ("M-j" symex-goto-highest "go to highest")

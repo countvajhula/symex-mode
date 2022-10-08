@@ -84,21 +84,21 @@ such as symex selection via advice.  This should be used in all
 internal operations that are not primarily user-directed."
   (symex--execute-tree-move (symex-make-move (- count) 0)))
 
-(cl-defun symex--go-up (&optional (count 1))
+(cl-defun symex--go-out (&optional (count 1))
   "Move up COUNT symexes.
 
 This is an internal utility that avoids any user-level concerns
 such as symex selection via advice.  This should be used in all
 internal operations that are not primarily user-directed."
-  (symex--execute-tree-move (symex-make-move 0 count)))
+  (symex--execute-tree-move (symex-make-move 0 (- count))))
 
-(cl-defun symex--go-down (&optional (count 1))
+(cl-defun symex--go-in (&optional (count 1))
   "Move down COUNT symexes.
 
 This is an internal utility that avoids any user-level concerns
 such as symex selection via advice.  This should be used in all
 internal operations that are not primarily user-directed."
-  (symex--execute-tree-move (symex-make-move 0 (- count))))
+  (symex--execute-tree-move (symex-make-move 0 count)))
 
 (cl-defun symex-go-forward (&optional (count 1))
   "Move forward COUNT symexes."
@@ -110,15 +110,19 @@ internal operations that are not primarily user-directed."
   (interactive)
   (symex--execute-tree-move (symex-make-move (- count) 0)))
 
-(cl-defun symex-go-up (&optional (count 1))
+(cl-defun symex-go-out (&optional (count 1))
   "Move up COUNT symexes."
+  (interactive)
+  (symex--execute-tree-move (symex-make-move 0 (- count))))
+
+(defalias 'symex-go-up 'symex-go-out)
+
+(cl-defun symex-go-in (&optional (count 1))
+  "Move down COUNT symexes."
   (interactive)
   (symex--execute-tree-move (symex-make-move 0 count)))
 
-(cl-defun symex-go-down (&optional (count 1))
-  "Move down COUNT symexes."
-  (interactive)
-  (symex--execute-tree-move (symex-make-move 0 (- count))))
+(defalias 'symex-go-down 'symex-go-in)
 
 (defun symex--compute-results (a b computation)
   "Combine component computed results A and B into an aggregate result.

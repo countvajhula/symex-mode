@@ -35,6 +35,11 @@
 (require 'symex-interop)
 (require 'symex-utils)
 
+(defcustom symex-flip-y-bindings nil
+  "When non-nil move y direction is reversed."
+  :type 'boolean
+  :group 'symex-evil)
+
 (defvar symex-editing-mode-map (make-sparse-keymap))
 
 (define-minor-mode symex-editing-mode
@@ -128,9 +133,9 @@ executing this command to get the expected behavior."
 ;; TODO: others that could accept a count argument:
 ;; simple insert/append
 (defvar symex--evil-keyspec
-  '(("h" . symex-go-backward)
-    ("j" . symex-go-down)
-    ("k" . symex-go-up)
+  `(("h" . symex-go-backward)
+    ("j" . ,(if symex-flip-y-bindings 'symex-go-out 'symex-go-in))
+    ("k" . ,(if symex-flip-y-bindings 'symex-go-in 'symex-go-out))
     ("l" . symex-go-forward)
     ("gj" . symex-next-visual-line)
     ("gk" . symex-previous-visual-line)

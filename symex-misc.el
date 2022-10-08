@@ -584,8 +584,8 @@ is expected to handle in Emacs)."
   "Add selection advice."
   (advice-add #'symex-go-forward :around #'symex-selection-motion-advice)
   (advice-add #'symex-go-backward :around #'symex-selection-motion-advice)
-  (advice-add #'symex-go-up :around #'symex-selection-motion-advice)
-  (advice-add #'symex-go-down :around #'symex-selection-motion-advice)
+  (advice-add #'symex-go-out :around #'symex-selection-motion-advice)
+  (advice-add #'symex-go-in :around #'symex-selection-motion-advice)
   (advice-add #'symex-traverse-forward :around #'symex-selection-motion-advice)
   (advice-add #'symex-traverse-backward :around #'symex-selection-motion-advice)
   (advice-add #'symex-traverse-forward-skip :around #'symex-selection-motion-advice)
@@ -604,8 +604,8 @@ is expected to handle in Emacs)."
   "Remove selection advice."
   (advice-remove #'symex-go-forward #'symex-selection-motion-advice)
   (advice-remove #'symex-go-backward #'symex-selection-motion-advice)
-  (advice-remove #'symex-go-up #'symex-selection-motion-advice)
-  (advice-remove #'symex-go-down #'symex-selection-motion-advice)
+  (advice-remove #'symex-go-out #'symex-selection-motion-advice)
+  (advice-remove #'symex-go-in #'symex-selection-motion-advice)
   (advice-remove #'symex-traverse-forward #'symex-selection-motion-advice)
   (advice-remove #'symex-traverse-backward #'symex-selection-motion-advice)
   (advice-remove #'symex-traverse-forward-skip #'symex-selection-motion-advice)

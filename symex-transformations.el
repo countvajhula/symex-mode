@@ -140,13 +140,13 @@
   (when (and (lispy-left-p)
              (not (symex-empty-list-p)))
     (save-excursion
-      (symex--go-up)  ; need to be inside the symex to emit and capture
+      (symex--go-out)  ; need to be inside the symex to emit and capture
       (paredit-backward-barf-sexp 1))
     (symex--go-forward)
     (when (symex-empty-list-p)
       (fixup-whitespace)
       (re-search-forward lispy-left)
-      (symex--go-down))))
+      (symex--go-in))))
 
 (defun symex-emit-backward (count)
   "Emit backward, COUNT times."
@@ -159,7 +159,7 @@
   (when (and (lispy-left-p)
              (not (symex-empty-list-p)))
     (save-excursion
-      (symex--go-up)  ; need to be inside the symex to emit and capture
+      (symex--go-out)  ; need to be inside the symex to emit and capture
       (paredit-forward-barf-sexp 1))
     (when (symex-empty-list-p)
       (symex--go-forward)
@@ -177,14 +177,14 @@
   (when (lispy-left-p)
     (if (symex-empty-list-p)
         (forward-char)
-      (symex--go-up))  ; need to be inside the symex to emit and capture
+      (symex--go-out))  ; need to be inside the symex to emit and capture
     ;; paredit captures 1 ((|2 3)) -> (1 (2 3))
     ;; but we don't want to in this case since point indicates the
     ;; inner symex, which cannot capture, rather than the outer
     ;; one. Just a note for the future.
     (paredit-backward-slurp-sexp 1)
     (fixup-whitespace)
-    (symex--go-down)))
+    (symex--go-in)))
 
 (defun symex-capture-backward (count)
   "Capture from behind, COUNT times."
@@ -199,7 +199,7 @@
     (save-excursion
       (if (symex-empty-list-p)
           (forward-char)
-        (symex--go-up))  ; need to be inside the symex to emit and capture
+        (symex--go-out))  ; need to be inside the symex to emit and capture
       (lispy-forward-slurp-sexp 1))))
 
 (defun symex-capture-forward (count)
@@ -440,7 +440,7 @@ This consumes the head of the symex, putting the rest of its contents
 in the parent symex."
   (interactive)
   (save-excursion
-    (symex--go-up)
+    (symex--go-out)
     (symex--go-forward)
     (paredit-splice-sexp-killing-backward))
   (symex-tidy))
@@ -452,7 +452,7 @@ This consumes the tail of the symex, putting the head
 in the parent symex."
   (interactive)
   (save-excursion
-    (symex--go-up)
+    (symex--go-out)
     (symex--go-forward)
     (paredit-splice-sexp-killing-forward)
     (symex--go-backward))
@@ -471,20 +471,20 @@ then no action is taken."
         (symex-delete 1)
       (save-excursion
         (evil-surround-delete (char-after))
-        (symex--go-down)
+        (symex--go-in)
         (symex-tidy)))))
 
 (defun symex-wrap-round ()
   "Wrap with ()."
   (interactive)
   (paredit-wrap-round)
-  (symex--go-down))
+  (symex--go-in))
 
 (defun symex-wrap-square ()
   "Wrap with []."
   (interactive)
   (paredit-wrap-square)
-  (symex--go-down))
+  (symex--go-in))
 
 (defun symex-wrap-curly ()
   "Wrap with {}."
@@ -854,7 +854,7 @@ implementation."
   "Unfurl the constituent symexes so they each occupy separate lines."
   (interactive)
   (save-excursion
-    (symex--go-up)
+    (symex--go-out)
     (symex-unfurl-remaining)))
 
 (provide 'symex-transformations)
