@@ -1,7 +1,7 @@
 ;;; symex.el --- An evil way to edit Lisp symbolic expressions as trees -*- lexical-binding: t -*-
 
 ;; Author: Siddhartha Kasivajhula <sid@countvajhula.com>
-;; URL: https://github.com/countvajhula/symex.el
+;; URL: https://github.com/drym-org/symex.el
 ;; Version: 1.0
 ;; Package-Requires: ((emacs "25.1") (tsc "0.15.2") (tree-sitter "0.15.2") (lispy "0.26.0") (paredit "24") (evil-cleverparens "20170718.413") (evil "1.2.14") (evil-surround "1.0.4") (hydra "0.15.0") (seq "2.22"))
 ;; Keywords: lisp, convenience, languages

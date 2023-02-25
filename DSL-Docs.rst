@@ -6,7 +6,7 @@ Symex DSL
 Introduction
 ------------
 
-The Symex.el Emacs package consists of three things: (1) A high-level language (or DSL) for tree operations, (2) A low-level tree abstraction layer, and (3) An Evil modal UI. The modal UI is documented in the `README <https://github.com/countvajhula/symex.el/blob/master/README.rst>`_, and the low-level abstraction layer is fulfilled by third party packages like Paredit and Lispy. This is the documentation for the DSL.
+The Symex.el Emacs package consists of three things: (1) A high-level language (or DSL) for tree operations, (2) A low-level tree abstraction layer, and (3) An Evil modal UI. The modal UI is documented in the `README <https://github.com/drym-org/symex.el/blob/master/README.rst>`_, and the low-level abstraction layer is fulfilled by third party packages like Paredit and Lispy. This is the documentation for the DSL.
 
 The Symex DSL allows you to specify arbitrary tree traversals in a cursor-oriented manner. That is, instead of describing traversals from an absolute reference point such as a root node, it allows you to describe traversals from the first-person vantage point of the cursor -- what would you do if you were where this cursor is right now? It allows you to describe what you'd like to do in intuitive terms that make sense for movement in a tree. Symex is the language a squirrel might use to describe a traversal to another squirrel.
 

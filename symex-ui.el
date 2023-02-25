@@ -1,6 +1,6 @@
 ;;; symex-ui.el --- An evil way to edit Lisp symbolic expressions as trees -*- lexical-binding: t -*-
 
-;; URL: https://github.com/countvajhula/symex.el
+;; URL: https://github.com/drym-org/symex.el
 
 ;; This program is "part of the world," in the sense described at
 ;; https://drym.org.  From your perspective, this is no different than

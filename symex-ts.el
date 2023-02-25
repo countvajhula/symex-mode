@@ -1,7 +1,7 @@
 ;;; symex-ts.el --- Primitive navigations using Tree Sitter -*- lexical-binding: t; coding: utf-8 -*-
 
 ;; Author: Simon Pugnet <simon@polaris64.net>
-;; URL: https://github.com/countvajhula/symex.el
+;; URL: https://github.com/drym-org/symex.el
 
 ;; This program is "part of the world," in the sense described at
 ;; https://drym.org.  From your perspective, this is no different than
