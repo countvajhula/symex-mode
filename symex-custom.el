@@ -45,11 +45,6 @@
   :type 'boolean
   :group 'symex)
 
-(defcustom symex-modal-backend 'evil
-  "Whether to use hydra or evil as the backend for the modal interface."
-  :type 'symbol
-  :group 'symex)
-
 (defcustom symex-quote-prefix-list (list "'" "`")
   "List of prefixes to cycle through while using `symex-cycle-quote`."
   :type 'list
