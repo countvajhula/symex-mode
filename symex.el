@@ -101,14 +101,13 @@
 
 (defun symex--enter-mode ()
   "Load the modal interface."
-  (cond ((eq symex-modal-backend 'evil)
-         (unless (symex--rigpa-enabled-p)
-           ;; the minor mode needs to be enabled prior to entering the
-           ;; evil state or the keybindings won't take effect. So we
-           ;; can't do it in the state entry hook, which would
-           ;; otherwise be preferable
-           (symex-enable-editing-minor-mode))
-         (evil-symex-state))))
+  (unless (symex--rigpa-enabled-p)
+    ;; the minor mode needs to be enabled prior to entering the
+    ;; evil state or the keybindings won't take effect. So we
+    ;; can't do it in the state entry hook, which would
+    ;; otherwise be preferable
+    (symex-enable-editing-minor-mode))
+  (evil-symex-state))
 
 (defun symex-enter-mode ()
   "Take necessary action upon symex mode entry."
