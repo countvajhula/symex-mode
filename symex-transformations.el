@@ -52,7 +52,6 @@
 ;; - this would also allow more fine-grained handling, e.g. different types of commands
 ;; - this would also avoid the need for `symex--evil-repeatable-commands`, so that we could `(evil-add-command-properties fn :repeat t)` directly -- this would also support users defining new symex commands and having them be repeatable without a manual registration process
 ;; TODO: dot operator disrupts scroll margins
-;; TODO: why doesn't symex-replace undo in one step?
 ;; TODO: maybe identify "non-disorienting" commands and define a new macro for them. E.g. symex-tidy is itself a command. it that bad?
 
 (defmacro symex-define-command (name args docstring &rest body)

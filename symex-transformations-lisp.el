@@ -79,8 +79,7 @@
 (defun symex-lisp-replace ()
   (symex-lisp-clear)
   (when (or (symex-form-p) (symex-string-p))
-    (forward-char))
-  (symex-enter-lowest))
+    (forward-char)))
 
 (defun symex-lisp--delete (count)
   "Delete COUNT symexes."
