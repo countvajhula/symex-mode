@@ -60,10 +60,17 @@
      (symex-select-nearest)
      (symex-tidy)))
 
-(defmacro symex-define-insertion-command (name args docstring &rest body)
+(defmacro symex-define-insertion-command (name
+                                          args
+                                          docstring
+                                          interactive-decl
+                                          &rest
+                                          body)
   "Define a symex command that enters an insertion state."
   `(defun ,name ,args
      ,docstring
+     ,interactive-decl
+     (evil-start-undo-step)
      ,@body
      (symex-enter-lowest)))
 
