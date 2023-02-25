@@ -233,8 +233,7 @@ DIRECTION should be either the symbol `before' or `after'."
                       (point))))
 
       (symex-ts-clear)
-      (goto-char new-pos)
-      (evil-insert-state 1))))
+      (goto-char new-pos))))
 
 (defun symex-ts-yank (count)
   "Yank (copy) COUNT symexes."

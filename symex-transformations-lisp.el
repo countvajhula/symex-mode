@@ -62,8 +62,7 @@
              ;; maybe we should just always use this instead
              (save-excursion
                (apply #'evil-indent
-                      (list start end))))))
-  (symex-select-nearest))
+                      (list start end)))))))
 
 (defun symex-lisp-clear ()
   "Helper to clear contents of symex."
@@ -201,7 +200,7 @@
       (insert extra-to-prepend)
       (evil-paste-before nil nil))
     (symex--go-forward)
-    (symex-tidy)))
+    (symex-lisp-tidy)))
 
 (defun symex-lisp--paste-before ()
   "Paste before symex."
@@ -220,8 +219,7 @@
           (forward-char))
         (insert extra-to-append))
       (symex--go-forward)
-      (symex-tidy))
-    (symex-tidy)))
+      (symex-lisp-tidy))))
 
 (defun symex-lisp--yank (count)
   "Yank (copy) COUNT symexes."
