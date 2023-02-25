@@ -54,6 +54,7 @@
 
 (defmacro symex-define-command (name args docstring &rest body)
   "Define a symex command."
+  (declare (indent defun))
   `(defun ,name ,args
      ,docstring
      ,@body
@@ -67,6 +68,7 @@
                                           &rest
                                           body)
   "Define a symex command that enters an insertion state."
+  (declare (indent defun))
   `(defun ,name ,args
      ,docstring
      ,interactive-decl
