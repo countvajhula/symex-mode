@@ -72,7 +72,7 @@
   (interactive "p")
   (if (symex-tree-sitter-p)
       (symex-ts-delete-node-forward count)
-    (symex-lisp--delete count)))
+    (symex-lisp-delete count)))
 
 (symex-define-command symex-delete-backwards (count)
   "Delete COUNT symexes backwards."
@@ -87,12 +87,12 @@
   (let ((count (symex--remaining-length)))
     (symex-delete count)))
 
-(defun symex-change (count)
+(symex-define-insertion-command symex-change (count)
   "Change COUNT symexes."
   (interactive "p")
   (if (symex-tree-sitter-p)
-      (symex-ts-change-node-forward count)
-    (symex-lisp--change count)))
+      (symex-ts-delete-node-forward count t) ; only delete - no tidy
+    (symex-lisp--delete count)))
 
 (defun symex-change-remaining ()
   "Change remaining symexes at this level."

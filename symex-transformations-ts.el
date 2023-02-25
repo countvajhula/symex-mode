@@ -36,9 +36,11 @@ evaluated. The new tree is then compared and the current node is
 selected according to the ranges that have changed."
   (let ((prev-tree (gensym))
         (res (gensym))
-        (changed-ranges (gensym)))
+        (changed-ranges (gensym))
+        (orig-pos (gensym)))
 
-    `(let ((,prev-tree tree-sitter-tree))
+    `(let ((,prev-tree tree-sitter-tree)
+           (,orig-pos (point)))
 
        ;; Execute BODY, bind to RES
        (let ((,res (progn ,@body)))
@@ -49,21 +51,19 @@ selected according to the ranges that have changed."
            ;; Move point to the first changed range if possible
            (when (and (> (length ,changed-ranges) 0)
                       (> (length (elt ,changed-ranges 0)) 0))
-             (goto-char (elt (elt ,changed-ranges 0) 0))
-
-             ;; If the change starts on a carriage return, move
-             ;; forward one character
-             (when (char-equal ?\C-j (char-after))
-               (forward-char 1))))
+             (let ((new-pos (elt (elt ,changed-ranges 0) 0)))
+               ;; don't move point to before the
+               ;; original point location
+               (if (< new-pos ,orig-pos)
+                   (goto-char ,orig-pos)
+                 (goto-char new-pos)
+                 ;; If the change starts on a carriage return, move
+                 ;; forward one character
+                 (when (char-equal ?\C-j (char-after))
+                   (forward-char 1))))))
 
          ;; Return the result of evaluating BODY
          ,res))))
-
-(defun symex-ts-change-node-forward (&optional count)
-  "Delete COUNT nodes forward from the current node and enter Insert state."
-  (interactive "p")
-  (save-excursion (symex-ts-delete-node-forward count t))
-  (evil-insert-state 1))
 
 (defun symex-ts-clear ()
   "Clear contents of symex."

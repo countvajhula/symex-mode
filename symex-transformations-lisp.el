@@ -83,14 +83,17 @@
     (forward-char))
   (symex-enter-lowest))
 
-;; TODO: rename these to reflect non-private
 (defun symex-lisp--delete (count)
   "Delete COUNT symexes."
-  (interactive "p")
   (let ((last-command nil)  ; see symex-yank re: last-command
         (start (point))
         (end (symex--get-end-point count)))
-    (kill-region start end))
+    (kill-region start end)))
+
+(defun symex-lisp-delete (count)
+  "Delete COUNT symexes."
+  (interactive "p")
+  (symex-lisp--delete count)
   (cond ((or (symex--current-line-empty-p)         ; ^<>$
              (save-excursion (evil-last-non-blank) ; (<>$
                              (lispy-left-p))
@@ -122,20 +125,20 @@
          (symex--go-backward))
         (t (symex--go-forward))))
 
+;; TODO: rename these to reflect non-private
 (defun symex-lisp--delete-backwards (count)
   "Delete COUNT symexes backwards."
   (interactive "p")
   (dotimes (_ count)
     (when (symex--go-backward)
-      (symex-lisp--delete 1))))
+      (symex-lisp-delete 1))))
 
 (defun symex-lisp--change (count)
   "Change COUNT symexes."
   (interactive "p")
   (let ((start (point))
         (end (symex--get-end-point count)))
-    (kill-region start end))
-  (symex-enter-lowest))
+    (kill-region start end)))
 
 (defun symex-lisp--append-after ()
   "Append after symex (instead of vim's default of line)."
