@@ -61,7 +61,8 @@
      ,docstring
      ,@body
      (symex-select-nearest)
-     (symex--tidy)))
+     (symex--tidy)
+     (symex-select-nearest)))
 
 (defmacro symex-define-insertion-command (name
                                           args
