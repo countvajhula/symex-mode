@@ -76,7 +76,7 @@ At the moment, Symex uses an Evil state to implement its modal interface. Does t
 
 If you do happen to be an Evil user, using Symex should feel familiar, but while there are many similarities to Evil, it's also fairly different.
 
-Symex has a modal interface, but one that's simpler than Evil. In Evil, the paradigm is composing verbs with nouns (or operators with motions, in Vim parlance), whereas Symex has a "point free" design where the noun is fixed so you only need to worry about the operations you'd like to perform rather than composing them with nouns (which are assumed to be symexes).
+Symex has a modal interface, but one that's simpler than Evil. In Evil, the paradigm is composing verbs with nouns (or operators with motions, in Vim parlance), whereas Symex has a "point free" design where the noun is fixed (i.e. it assumes you mean to perform operations on symexes) so you only need to worry about what you are trying to do without bothering about composition. For more on this style of UI, see `Rigpa <https://github.com/countvajhula/rigpa>`_.
 
 Key Bindings
 ------------
