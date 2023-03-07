@@ -184,41 +184,49 @@
              (backward-char))
     (forward-sexp)))
 
-(defun symex-lisp--paste-after ()
-  "Paste after symex."
-  (interactive)
-  (let ((extra-to-prepend
-         (cond ((or (and (symex--point-at-indentation-p)
-                         (not (bolp)))
-                    (save-excursion (forward-sexp)
-                                    (eolp)))
-                "\n")
-               (t " "))))
-    (save-excursion
-      (forward-sexp)
-      (insert extra-to-prepend)
-      (evil-paste-before nil nil))
-    (symex--go-forward)
-    (symex-lisp-tidy)))
+(defun symex-lisp--paste (before after)
+  "Paste before, padding on either side.
+
+Paste text from the paste buffer, padding it with BEFORE and AFTER
+text, on the respective side."
+  (insert before)
+  (evil-paste-before nil nil)
+  ;; select the text just pasted
+  ;; https://emacs.stackexchange.com/a/44351
+  (exchange-point-and-mark)
+  (let ((start (region-beginning))
+        (end (region-end)))
+    (indent-region start end)
+    (deactivate-mark)
+    (goto-char end)
+    (insert after)
+    (symex-lisp--select-nearest)
+    (symex-lisp-tidy 1)
+    (goto-char start)))
+
+(defun symex-lisp--padding ()
+  "Determine paste padding needed for current point position."
+  (cond ((or (and (symex--point-at-indentation-p)
+                  (not (bolp)))
+             (save-excursion (forward-sexp)
+                             (eolp)))
+         "\n")
+        (t " ")))
 
 (defun symex-lisp--paste-before ()
   "Paste before symex."
   (interactive)
-  (let ((extra-to-append
-         (cond ((or (and (symex--point-at-indentation-p)
-                         (not (bolp)))
-                    (save-excursion (forward-sexp)
-                                    (eolp)))
-                "\n")
-               (t " "))))
+  (symex-lisp--paste ""
+                     (symex-lisp--padding)))
+
+(defun symex-lisp--paste-after ()
+  "Paste after symex."
+  (interactive)
+  (let ((padding (symex-lisp--padding)))
     (save-excursion
-      (save-excursion
-        (evil-paste-before nil nil)
-        (when evil-move-cursor-back
-          (forward-char))
-        (insert extra-to-append))
-      (symex--go-forward)
-      (symex-lisp-tidy))))
+      (forward-sexp)
+      (symex-lisp--paste padding
+                         ""))))
 
 (defun symex-lisp--yank (count)
   "Yank (copy) COUNT symexes."
