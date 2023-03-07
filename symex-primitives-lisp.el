@@ -124,8 +124,35 @@
 (defvar symex--re-blank-line "^[[:space:]]*$"
   "A blank line, either empty or containing only whitespace.")
 
+(defvar symex--re-whitespace "[[:space:]|\n]*"
+  "Whitespace that may extend over many lines.")
+
 (defvar symex--re-symex-line "^[[:space:]]*[^;[:space:]\n]"
   "A line that isn't blank and isn't a comment line.")
+
+(defvar symex--re-racket-syntax-object
+  (concat "#['`]" lispy-left))
+
+(defvar symex--re-splicing-unquote
+  (concat ",@" lispy-left))
+
+(defvar symex--re-racket-unquote-syntax
+  (concat "#," lispy-left))
+
+(defvar symex--re-racket-splicing-unsyntax
+  (concat "#,@" lispy-left))
+
+(defvar symex--re-quoted-list
+  (concat "['`]" lispy-left))
+
+(defvar symex--re-unquoted-list
+  (concat "," lispy-left))
+
+(defvar symex--re-clojure-deref-reader-macro
+  (concat "@" lispy-left))
+
+(defvar symex--re-clojure-literal-lambda
+  (concat "#" lispy-left))
 
 (defun symex-comment-line-p ()
   "Check if we're currently at the start of a comment line."
@@ -151,10 +178,10 @@
 
 (defun symex-empty-list-p ()
   "Check if we're looking at an empty list."
-  (save-excursion
-    (and (lispy-left-p)
-         (progn (forward-char 2) ;; need to go forward by 2 for some reason
-                (lispy-right-p)))))
+  (looking-at-p
+   (concat lispy-left
+           symex--re-whitespace
+           lispy-right)))
 
 (defun symex-empty-string-p ()
   "Check if we're looking at an empty list."
@@ -165,35 +192,35 @@
 
 (defun symex--racket-syntax-object-p ()
   "Check if the symex is a racket syntax object."
-  (looking-at (concat "#['`]" lispy-left)))
+  (looking-at-p symex--re-racket-syntax-object))
 
 (defun symex--splicing-unquote-p ()
   "Check if the symex is a spliced unquoted list."
-  (looking-at (concat ",@" lispy-left)))
+  (looking-at-p symex--re-splicing-unquote))
 
 (defun symex--racket-unquote-syntax-p ()
   "Check if the symex is a racket unquoted syntax list."
-  (looking-at (concat "#," lispy-left)))
+  (looking-at-p symex--re-racket-unquote-syntax))
 
 (defun symex--racket-splicing-unsyntax-p ()
   "Check if the symex is a racket spliced unsyntaxed list."
-  (looking-at (concat "#,@" lispy-left)))
+  (looking-at-p symex--re-racket-splicing-unsyntax))
 
 (defun symex--quoted-list-p ()
   "Check if the symex is a quoted list."
-  (looking-at (concat "['`]" lispy-left)))
+  (looking-at-p symex--re-quoted-list))
 
 (defun symex--unquoted-list-p ()
   "Check if the symex is an unquoted list."
-  (looking-at (concat "," lispy-left)))
+  (looking-at-p symex--re-unquoted-list))
 
 (defun symex--clojure-deref-reader-macro-p ()
   "Check if the symex is a Clojure deref reader macro."
-  (looking-at (concat "@" lispy-left)))
+  (looking-at-p symex--re-clojure-deref-reader-macro))
 
 (defun symex--clojure-literal-lambda-p ()
   "Check if the symex is a Clojure anonymous function literal."
-  (looking-at (concat "#" lispy-left)))
+  (looking-at-p symex--re-clojure-literal-lambda))
 
 (defun symex--special-left-p ()
   "Check if point is at a \"special\" opening delimiter.
@@ -212,25 +239,29 @@ as special cases here."
       (symex--clojure-deref-reader-macro-p)
       (symex--clojure-literal-lambda-p)))
 
+(defun symex--re-or (&rest args)
+  "An OR combinator for regular expression strings."
+  (concat (string-join args "\\|") ))
+
 (defun symex--special-empty-list-p ()
   "Check if we're looking at a \"special\" empty list."
   (or (save-excursion
         (and (symex--racket-splicing-unsyntax-p)
-             (progn (forward-char 5)
-                    (lispy-right-p))))
+             (progn (forward-char 4)
+                    (looking-at-p (concat symex--re-whitespace lispy-right)))))
       (save-excursion
         (and (or (symex--racket-syntax-object-p)
                  (symex--racket-unquote-syntax-p)
                  (symex--splicing-unquote-p))
-             (progn (forward-char 4)
-                    (lispy-right-p))))
+             (progn (forward-char 3)
+                    (looking-at-p (concat symex--re-whitespace lispy-right)))))
       (save-excursion
         (and (or (symex--quoted-list-p)
                  (symex--unquoted-list-p)
                  (symex--clojure-deref-reader-macro-p)
                  (symex--clojure-literal-lambda-p))
-             (progn (forward-char 3)
-                    (lispy-right-p))))))
+             (progn (forward-char 2)
+                    (looking-at-p (concat symex--re-whitespace lispy-right)))))))
 
 (defun symex-atom-p ()
   "Check if the symex is an atom."
