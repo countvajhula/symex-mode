@@ -214,10 +214,9 @@ text, on the respective side."
   "Paste after symex."
   (interactive)
   (let ((padding (symex-lisp--padding)))
-    (save-excursion
-      (forward-sexp)
-      (symex-lisp--paste padding
-                         ""))))
+    (forward-sexp)
+    (symex-lisp--paste padding
+                       "")))
 
 (defun symex-lisp--yank (count)
   "Yank (copy) COUNT symexes."
