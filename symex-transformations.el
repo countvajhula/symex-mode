@@ -61,8 +61,7 @@
      ,docstring
      ,@body
      (symex-select-nearest)
-     (symex--tidy)
-     (symex-select-nearest)))
+     (symex--tidy 1)))
 
 (defmacro symex-define-insertion-command (name
                                           args
@@ -642,16 +641,16 @@ layer of quoting."
   (interactive)
   (insert ","))
 
-(defun symex--tidy ()
+(defun symex--tidy (count)
   "Auto-indent symex and fix any whitespace."
   (if tree-sitter-mode
-      (symex-ts-tidy)
-    (symex-lisp-tidy)))
+      (symex-ts-tidy) ; TODO: add count
+    (symex-lisp-tidy count)))
 
-(symex-define-command symex-tidy ()
+(symex-define-command symex-tidy (count)
   "Auto-indent symex and fix any whitespace."
-  (interactive)
-  (symex--tidy))
+  (interactive "p")
+  (symex--tidy count))
 
 (cl-defun symex--transform-in-isolation (traversal side-effect &key pre-traversal)
   "Transform a symex in a temporary buffer and replace the original with it.

@@ -41,28 +41,19 @@
 ;;; TRANSFORMATIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun symex-lisp-tidy ()
+(defun symex-lisp-tidy (count)
   "Auto-indent symex and fix any whitespace."
   (fixup-whitespace)
-  (when (save-excursion (looking-at-p "[[:space:]]"))
-    (forward-char))
-  (condition-case nil
-      (save-excursion
-        (forward-sexp)
-        (fixup-whitespace))
-    (error nil))
-  (condition-case err
-      (save-excursion
-        (apply #'evil-indent
-               (seq-take (evil-cp-a-form 1)
-                         2)))
-    (error (message "[Symex] symex-tidy: suppressed error %S" err)
-           (let ((start (point))
-                 (end (save-excursion (forward-sexp) (point))))
-             ;; maybe we should just always use this instead
-             (save-excursion
-               (apply #'evil-indent
-                      (list start end)))))))
+  ;; fixup may move point into the whitespace - restore it
+  (when (looking-at-p "[[:space:]]")
+    (symex-lisp--go-to-next-non-whitespace-char))
+  (let ((start (point))
+        (end (save-excursion
+               (dotimes (_ count)
+                 (forward-sexp))
+               (point))))
+    (indent-region start end))
+  (symex-lisp--select-nearest))
 
 (defun symex-lisp-clear ()
   "Helper to clear contents of symex."
