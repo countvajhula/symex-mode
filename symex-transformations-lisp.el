@@ -138,13 +138,6 @@
     (when (symex--go-backward)
       (symex-lisp-delete 1))))
 
-(defun symex-lisp--change (count)
-  "Change COUNT symexes."
-  (interactive "p")
-  (let ((start (point))
-        (end (symex--get-end-point count)))
-    (kill-region start end)))
-
 (defun symex-lisp--append-after ()
   "Append after symex (instead of vim's default of line)."
   (interactive)
