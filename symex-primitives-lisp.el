@@ -292,7 +292,7 @@ as special cases here."
 
 ;;; Navigation
 
-(defun symex-lisp--select-nearest ()
+(defun symex-lisp-select-nearest ()
   "Select the appropriate symex nearest to point."
   (cond ((and (not (eobp))
               (save-excursion (forward-char) (lispy-right-p))) ; |)
@@ -306,7 +306,6 @@ as special cases here."
          (beginning-of-thing 'sexp))
         (t (symex-lisp--if-stuck (symex-lisp--backward)
                                  (symex-lisp--forward)))))
-
 
 (defun symex-lisp--get-starting-point ()
   "Get the point value at the start of the current symex."

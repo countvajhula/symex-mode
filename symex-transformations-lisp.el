@@ -60,7 +60,7 @@
                  (forward-sexp))
                (point))))
     (indent-region start end))
-  (symex-lisp--select-nearest))
+  (symex-lisp-select-nearest))
 
 (defun symex-lisp-clear ()
   "Helper to clear contents of symex."
@@ -130,21 +130,20 @@
          (symex--go-backward))
         (t (symex--go-forward))))
 
-;; TODO: rename these to reflect non-private
-(defun symex-lisp--delete-backwards (count)
+(defun symex-lisp-delete-backwards (count)
   "Delete COUNT symexes backwards."
   (interactive "p")
   (dotimes (_ count)
     (when (symex--go-backward)
       (symex-lisp-delete 1))))
 
-(defun symex-lisp--append-after ()
+(defun symex-lisp-append-after ()
   "Append after symex (instead of vim's default of line)."
   (interactive)
   (forward-sexp)  ; selected symexes will have the cursor on the starting paren
   (insert " "))
 
-(defun symex-lisp--open-line-after ()
+(defun symex-lisp-open-line-after ()
   "Open new line after symex."
   (interactive)
   (forward-sexp)
@@ -153,7 +152,7 @@
              (newline-and-indent))
     (newline-and-indent)))
 
-(defun symex-lisp--open-line-before ()
+(defun symex-lisp-open-line-before ()
   "Open new line before symex."
   (interactive)
   (newline-and-indent)
@@ -165,20 +164,20 @@
                               (lispy-left-p)))
     (insert " ")))
 
-(defun symex-lisp--insert-before ()
+(defun symex-lisp-insert-before ()
   "Insert before symex (instead of vim's default at the start of line)."
   (interactive)
   (insert " ")
   (backward-char))
 
-(defun symex-lisp--insert-at-beginning ()
+(defun symex-lisp-insert-at-beginning ()
   "Insert at beginning of symex."
   (interactive)
   (when (or (lispy-left-p)
             (symex-string-p))
     (forward-char)))
 
-(defun symex-lisp--insert-at-end ()
+(defun symex-lisp-insert-at-end ()
   "Insert at end of symex."
   (interactive)
   (if (or (lispy-left-p)
@@ -203,7 +202,7 @@ text, on the respective side."
     (deactivate-mark)
     (goto-char end)
     (insert after)
-    (symex-lisp--select-nearest)
+    (symex-lisp-select-nearest)
     (symex-lisp-tidy 1)
     (goto-char start)))
 
@@ -216,13 +215,13 @@ text, on the respective side."
          "\n")
         (t " ")))
 
-(defun symex-lisp--paste-before ()
+(defun symex-lisp-paste-before ()
   "Paste before symex."
   (interactive)
   (symex-lisp--paste ""
                      (symex-lisp--padding)))
 
-(defun symex-lisp--paste-after ()
+(defun symex-lisp-paste-after ()
   "Paste after symex."
   (interactive)
   (let ((padding (symex-lisp--padding)))
@@ -230,7 +229,7 @@ text, on the respective side."
     (symex-lisp--paste padding
                        "")))
 
-(defun symex-lisp--yank (count)
+(defun symex-lisp-yank (count)
   "Yank (copy) COUNT symexes."
   (interactive "p")
   ;; we set `last-command` here to avoid appending to the kill ring

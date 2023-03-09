@@ -90,7 +90,7 @@
   (interactive "p")
   (if (symex-tree-sitter-p)
       (symex-ts-delete-node-backward count)
-    (symex-lisp--delete-backwards count)))
+    (symex-lisp-delete-backwards count)))
 
 (symex-define-command symex-delete-remaining ()
   "Delete remaining symexes at this level."
@@ -269,7 +269,7 @@ by default, joins next symex to current one."
   (interactive "p")
   (if (symex-tree-sitter-p)
     (symex-ts-yank count)
-    (symex-lisp--yank count)))
+    (symex-lisp-yank count)))
 
 (defun symex-yank-remaining ()
   "Yank (copy) remaining symexes at this level."
@@ -285,7 +285,7 @@ by default, joins next symex to current one."
       (symex-ts-paste-before count)
     (symex--with-undo-collapse
       (dotimes (_ count)
-        (symex-lisp--paste-before)))))
+        (symex-lisp-paste-before)))))
 
 (symex-define-command symex-paste-after (count)
   "Paste after symex, COUNT times."
@@ -295,49 +295,49 @@ by default, joins next symex to current one."
       (symex-ts-paste-after count)
     (symex--with-undo-collapse
       (dotimes (_ count)
-        (symex-lisp--paste-after)))))
+        (symex-lisp-paste-after)))))
 
 (symex-define-insertion-command symex-open-line-after ()
   "Open new line after symex."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-open-line-after)
-    (symex-lisp--open-line-after)))
+    (symex-lisp-open-line-after)))
 
 (symex-define-insertion-command symex-open-line-before ()
   "Open new line before symex."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-open-line-before)
-    (symex-lisp--open-line-before)))
+    (symex-lisp-open-line-before)))
 
 (symex-define-insertion-command symex-append-after ()
   "Append after symex (instead of vim's default of line)."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-append-after)
-    (symex-lisp--append-after)))
+    (symex-lisp-append-after)))
 
 (symex-define-insertion-command symex-insert-before ()
   "Insert before symex (instead of vim's default at the start of line)."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-insert-before)
-    (symex-lisp--insert-before)))
+    (symex-lisp-insert-before)))
 
 (symex-define-insertion-command symex-insert-at-beginning ()
   "Insert at beginning of symex."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-insert-at-beginning)
-    (symex-lisp--insert-at-beginning)))
+    (symex-lisp-insert-at-beginning)))
 
 (symex-define-insertion-command symex-insert-at-end ()
   "Insert at end of symex."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-insert-at-end)
-    (symex-lisp--insert-at-end)))
+    (symex-lisp-insert-at-end)))
 
 (defun symex--create (type)
   "Create new symex (list).
