@@ -238,15 +238,18 @@ If BACKWARDS is true, then joins current symex to previous one, otherwise,
 by default, joins next symex to current one."
   (if backwards
       (when (symex--point-at-indentation-p)
-        (progn (evil-previous-line)
-               (if (symex--current-line-empty-p)
-                   (evil-join (line-beginning-position)
-                              (1+ (line-beginning-position)))
-                 (evil-join (line-beginning-position)
-                            (line-end-position)))))
-    (save-excursion (forward-sexp)
-                    (evil-join (line-beginning-position)
-                               (line-end-position)))))
+        (join-line)
+        (when (looking-at-p "[[:space:]]")
+          (symex-lisp--go-to-next-non-whitespace-char)))
+    (save-excursion
+      (unless (symex--point-on-last-line-p)
+        (forward-sexp)
+        (join-line t)
+        ;; technically, every subsequent symex that begins on
+        ;; the same line that the preceding one ends on
+        ;; should be indented
+        (symex--go-forward)
+        (symex--tidy 1)))))
 
 (defun symex-yank (count)
   "Yank (copy) COUNT symexes."
