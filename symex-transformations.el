@@ -231,8 +231,8 @@
   (dotimes (_ count)
     (symex--join-lines t)))
 
-(defun symex--join-lines-tidy-affected ()
-  "Tidy symexes affected by joining lines."
+(defun symex--same-line-tidy-affected ()
+  "Tidy symexes affected by line-oriented operations."
   (save-excursion
     (let ((affected (symex--go-forward)))
       (while affected
@@ -255,14 +255,14 @@ by default, joins next symex to current one."
         (join-line)
         (when (looking-at-p "[[:space:]]")
           (symex-lisp--go-to-next-non-whitespace-char)))
-    (save-excursion
-      (unless (symex--point-on-last-line-p)
+    (unless (symex--point-on-last-line-p)
+      (save-excursion
         (forward-sexp)
-        (join-line t)
-        ;; technically, every subsequent symex that begins on
-        ;; the same line that the preceding one ends on
-        ;; should be indented
-        (symex--join-lines-tidy-affected)))))
+        (join-line t))
+      ;; every subsequent symex that begins on
+      ;; the same line that the preceding one ends on
+      ;; should be indented
+      (symex--same-line-tidy-affected))))
 
 (defun symex-yank (count)
   "Yank (copy) COUNT symexes."
@@ -384,7 +384,8 @@ New list delimiters are determined by the TYPE."
   (save-excursion
     (forward-sexp)
     (newline-and-indent count)
-    (fixup-whitespace)))
+    (fixup-whitespace))
+  (symex--same-line-tidy-affected))
 
 (symex-define-command symex-swallow ()
   "Swallow the head of the symex.
