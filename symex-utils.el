@@ -45,6 +45,12 @@ From: https://stackoverflow.com/a/13313091"
                      (point))
      (point)))
 
+(defun symex--point-on-last-line-p ()
+  "Check if point is on the last line of the buffer."
+  (= (line-number-at-pos)
+     (save-excursion (goto-char (point-max))
+                     (line-number-at-pos))))
+
 ;; `with-undo-collapse` macro, to treat a sequence of operations
 ;; as a single entry in the undo list.
 ;; From: https://emacs.stackexchange.com/questions/7558/collapsing-undo-history/7560#7560
