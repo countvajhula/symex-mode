@@ -246,8 +246,7 @@ by default, joins next symex to current one."
                             (line-end-position)))))
     (save-excursion (forward-sexp)
                     (evil-join (line-beginning-position)
-                               (line-end-position))))
-  (symex--tidy))
+                               (line-end-position)))))
 
 (defun symex-yank (count)
   "Yank (copy) COUNT symexes."
@@ -691,7 +690,7 @@ effect is not performed during the pre-traversal."
            (error nil))
          (buffer-string)))))
   (save-excursion (yank))
-  (symex--tidy))
+  (symex--tidy 1))
 
 (symex-define-command symex-tidy-proper ()
   "Properly tidy things up.
@@ -710,7 +709,7 @@ implementation."
   (interactive)
   (symex--transform-in-isolation
    symex--traversal-postorder-in-tree
-   #'symex--tidy
+   (apply-partially #'symex--tidy 1)
    :pre-traversal (symex-traversal (circuit symex--traversal-preorder-in-tree))))
 
 (symex-define-command symex-collapse ()
@@ -762,8 +761,8 @@ implementation."
   (save-excursion
     ;; do it once first since it will be executed as a side-effect
     ;; _after_ each step in the traversal
-    (symex--tidy)
-    (symex--do-while-traversing #'symex--tidy
+    (symex--tidy 1)
+    (symex--do-while-traversing (apply-partially #'symex--tidy 1)
                                 (symex-make-move 1 0))))
 
 (symex-define-command symex-unfurl ()
