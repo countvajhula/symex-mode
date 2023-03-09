@@ -43,10 +43,17 @@
 
 (defun symex-lisp-tidy (count)
   "Auto-indent symex and fix any whitespace."
+  ;; fix leading whitespace
   (fixup-whitespace)
   ;; fixup may move point into the whitespace - restore it
   (when (looking-at-p "[[:space:]]")
     (symex-lisp--go-to-next-non-whitespace-char))
+  ;; fix trailing whitespace (indent region doesn't)
+  (condition-case nil
+      (save-excursion
+        (forward-sexp)
+        (fixup-whitespace))
+    (error nil))
   (let ((start (point))
         (end (save-excursion
                (dotimes (_ count)
