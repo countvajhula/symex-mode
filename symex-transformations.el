@@ -210,8 +210,8 @@
 (defun symex--join ()
   "Merge symexes at the same level."
   (save-excursion
-    (symex--go-forward)
-    (paredit-join-sexps)))
+    (when (symex--go-forward)
+      (paredit-join-sexps))))
 
 (symex-define-command symex-join (count)
   "Merge COUNT symexes at the same level."
