@@ -368,7 +368,8 @@ New list delimiters are determined by the TYPE."
   (interactive "p")
   (save-excursion
     (forward-sexp)
-    (newline-and-indent count)))
+    (newline-and-indent count)
+    (fixup-whitespace)))
 
 (symex-define-command symex-swallow ()
   "Swallow the head of the symex.
