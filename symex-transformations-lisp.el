@@ -191,19 +191,19 @@
 
 Paste text from the paste buffer, padding it with BEFORE and AFTER
 text, on the respective side."
-  (insert before)
-  (evil-paste-before nil nil)
-  ;; select the text just pasted
-  ;; https://emacs.stackexchange.com/a/44351
-  (exchange-point-and-mark)
-  (let ((start (region-beginning))
-        (end (region-end)))
+  (let* ((text-to-paste
+          ;; add the padding to the yanked text
+          (concat before
+                  (current-kill 0 t)
+                  after))
+         ;; compute posterior bounds of the text
+         (start (point))
+         ;; could also just get point after the fact
+         (end (+ (point)
+                 (length text-to-paste))))
+    (insert text-to-paste)
     (indent-region start end)
-    (deactivate-mark)
-    (goto-char end)
-    (insert after)
-    (symex-lisp-select-nearest)
-    (symex-lisp-tidy 1)
+    (symex--same-line-tidy-affected)
     (goto-char start)))
 
 (defun symex-lisp--padding ()
@@ -227,7 +227,9 @@ text, on the respective side."
   (let ((padding (symex-lisp--padding)))
     (forward-sexp)
     (symex-lisp--paste padding
-                       "")))
+                       "")
+    ;; move to indicate appropriate posterior selection
+    (forward-char)))
 
 (defun symex-lisp-yank (count)
   "Yank (copy) COUNT symexes."
