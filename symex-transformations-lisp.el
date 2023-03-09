@@ -155,7 +155,10 @@
   "Open new line after symex."
   (interactive)
   (forward-sexp)
-  (newline-and-indent))
+  (if (symex-inline-comment-p)
+      (progn (end-of-line)
+             (newline-and-indent))
+    (newline-and-indent)))
 
 (defun symex-lisp--open-line-before ()
   "Open new line before symex."

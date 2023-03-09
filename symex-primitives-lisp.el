@@ -160,6 +160,10 @@
     (back-to-indentation)
     (looking-at-p ";")))
 
+(defun symex-inline-comment-p ()
+  "Check if there is an inline comment following point."
+  (looking-at-p "[[:space:]]*;"))
+
 (defun symex-string-p ()
   "Check if the symex is a string."
   (looking-at-p "\""))
