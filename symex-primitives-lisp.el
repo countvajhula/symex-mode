@@ -377,7 +377,20 @@ symex-oriented languages like Lisp, this is always zero."
         ;; better to revise the above logic so that
         ;; point does not go backwards.
         (goto-char original-location)
-        (setq result 0)))
+        (setq result 0))
+      (when (and (< original-location current-location)
+                 (= result 0))
+        ;; happens when point is in whitespace like
+        ;; a |  b
+        ;; and the result is
+        ;; a   |b
+        ;; but the logic above concludes there has been
+        ;; no movement.
+        ;; probably better to revise the above logic to
+        ;; explicitly reason about the source text instead
+        ;; of relying on implicit assumptions about the
+        ;; behavior of forward-sexp - maybe use thing-at-point
+        (setq result 1)))
     result))
 
 (defun symex-lisp--forward (&optional count)
