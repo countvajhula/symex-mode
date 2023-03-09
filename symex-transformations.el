@@ -448,13 +448,14 @@ then no action is taken."
 
 (defun symex--shift-forward ()
   "Move symex forward in current tree level."
-  (forward-sexp)
-  (condition-case nil
-      (progn (transpose-sexps 1)
-             (backward-sexp)
-             t)
-    (error (backward-sexp)
-           nil)))
+  (unless (symex--point-at-last-symex-p)
+    (forward-sexp)
+    (condition-case nil
+        (progn (transpose-sexps 1)
+               (backward-sexp)
+               t)
+      (error (backward-sexp)
+             nil))))
 
 (symex-define-command symex-shift-forward (count)
   "Move symex forward COUNT times in current tree level."
