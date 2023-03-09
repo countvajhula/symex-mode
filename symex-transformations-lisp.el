@@ -93,11 +93,13 @@
   (cond ((symex--current-line-empty-p)         ; ^<>$
          ;; only join up to the next symex if the context suggests
          ;; that a line break is not desired
-         (when (or (save-excursion (next-line)
-                                   (not (symex--current-line-empty-p)))
-                   (save-excursion (previous-line)
-                                   (symex--current-line-empty-p)))
-           (symex--join-to-next)))
+         (if (or (save-excursion (next-line)
+                                 (not (symex--current-line-empty-p)))
+                 (save-excursion (previous-line)
+                                 (symex--current-line-empty-p)))
+             (symex--join-to-next)
+           ;; don't leave an empty line where the symex was
+           (kill-whole-line)))
         ((or (save-excursion (evil-last-non-blank) ; (<>$
                              (lispy-left-p))
              (looking-at-p "\n")) ; (abc <>
