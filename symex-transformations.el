@@ -231,6 +231,18 @@
   (dotimes (_ count)
     (symex--join-lines t)))
 
+(defun symex--join-lines-tidy-affected ()
+  "Tidy symexes affected by joining lines."
+  (let ((affected t))
+    (while affected
+      (symex--go-forward)
+      (symex--tidy 1)
+      (let ((ends-on-line (save-excursion (forward-sexp)
+                                          (line-number-at-pos))))
+        (setq affected (= (save-excursion (symex--go-forward)
+                                          (line-number-at-pos))
+                          ends-on-line))))))
+
 (defun symex--join-lines (&optional backwards)
   "Join lines inside symex.
 
@@ -248,8 +260,7 @@ by default, joins next symex to current one."
         ;; technically, every subsequent symex that begins on
         ;; the same line that the preceding one ends on
         ;; should be indented
-        (symex--go-forward)
-        (symex--tidy 1)))))
+        (symex--join-lines-tidy-affected)))))
 
 (defun symex-yank (count)
   "Yank (copy) COUNT symexes."
