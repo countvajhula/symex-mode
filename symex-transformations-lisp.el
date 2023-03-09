@@ -208,8 +208,11 @@ text, on the respective side."
 
 (defun symex-lisp--padding ()
   "Determine paste padding needed for current point position."
-  (cond ((or (and (symex--point-at-indentation-p)
-                  (not (bolp)))
+  (cond ((and (bolp)
+              (save-excursion (forward-sexp)
+                              (eolp)))
+         "\n\n")
+        ((or (symex--point-at-indentation-p)
              (save-excursion (forward-sexp)
                              (eolp)))
          "\n")
