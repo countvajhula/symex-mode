@@ -555,7 +555,7 @@ match."
 
 ;;; Utilities
 
-(defun symex-lisp--exit ()
+(defun symex-lisp-exit ()
   "Take necessary actions upon Symex mode exit.
 
 There are no Lisp-specific actions to take, at the present time, so
