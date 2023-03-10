@@ -443,6 +443,10 @@ To use it, first evaluate the ``symex-execute-traversal`` function for debugging
 
 There are also lots of other features like setting and unsetting breakpoints (``b`` and ``u``), seeing a backtrace (``d``), evaluating expressions in the evaluation context (``e``), and lots more, making it an indispensible tool for ELisp debugging.
 
+Note that if you are attempting to debug a feature implemented as a macro like ``symex-define-command``, you may need to copy the contents of the command to a new function and call that function from the macro, in order to be able to debug it. You would need to evaluate the function for debugging rather than the macro. Naively, if you attempt to debug the macro, the debugger is triggered at compile time (i.e. as soon as you attempt to evaluate it for debugging!) and not at runtime when you're actually interested in using it.
+
+Sometimes, the debugger appears to get overridden by Evil keybindings, complaining that the "Buffer is read-only" when you attempt to ``s`` to step forward. Saving the buffer (as opposed to debugging an unsaved buffer) seems to solve these issues, and if not, killing and reopening the buffer does.
+
 When you're done debugging, you can remove the debugger hooks by just evaluating the debugged functions in the usual way (e.g. via ``M-x eval-defun``).
 
 Also see `this series on ELisp debugging <https://endlessparentheses.com/debugging-emacs-lisp-part-1-earn-your-independence.html>`__ for more tips.
@@ -457,7 +461,7 @@ Minimizing Complexity
 
 Symex uses `advice <https://www.gnu.org/software/emacs/manual/html_node/elisp/Advising-Functions.html>`_ to implement some features such as branch memory. To minimize complexity while debugging, it may be advisable (so to speak) to disable such advice. To do this, find the place in the code where the advice is added and execute the corresponding function to remove it, something like ``(advice-remove #'symex-go-down #'symex--remember-branch-position)``. Of course, if disabling the advice causes the error to go away, then you can focus your efforts on debugging the advice itself in isolation.
 
-It may also be advisable to comment out macros like ``symex-save-excursion`` to see if the problem persists.
+It may also be advisable to comment out macros like ``symex-save-excursion`` to see if the problem persists. Commenting out macros like ``symex--with-undo-collapse`` will also help you use the debugger in code wrapped by such macros.
 
 Gotchas
 ^^^^^^^
