@@ -249,6 +249,22 @@ as special cases here."
   "An OR combinator for regular expression strings."
   (concat (string-join args "\\|") ))
 
+(defun symex--form-offset ()
+  "Get the offset for entry into the form."
+  (cond ((symex--racket-splicing-unsyntax-p) 4)
+        ((or (symex--racket-syntax-object-p)
+             (symex--racket-unquote-syntax-p)
+             (symex--splicing-unquote-p))
+         3)
+        ((or (symex--quoted-list-p)
+             (symex--unquoted-list-p)
+             (symex--clojure-deref-reader-macro-p)
+             (symex--clojure-literal-lambda-p))
+         2)
+        ((or (symex-form-p)
+             (symex-string-p)) 1)
+        (t 0)))
+
 (defun symex--special-empty-list-p ()
   "Check if we're looking at a \"special\" empty list."
   (or (save-excursion

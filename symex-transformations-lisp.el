@@ -65,13 +65,12 @@
 (defun symex-lisp-clear ()
   "Helper to clear contents of symex."
   (cond ((symex--go-up) (symex-delete-remaining))
-        ((symex-string-p) (progn (kill-sexp)
-                                 (insert "\"\"")))))
+        ((symex-string-p) (save-excursion (kill-sexp)
+                                          (insert "\"\"")))))
 
 (defun symex-lisp-replace ()
   (symex-lisp-clear)
-  (when (or (symex-form-p) (symex-string-p))
-    (forward-char)))
+  (forward-char (symex--form-offset)))
 
 (defun symex-lisp--delete (count)
   "Delete COUNT symexes."
