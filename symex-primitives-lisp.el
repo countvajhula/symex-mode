@@ -48,7 +48,9 @@
               (save-excursion (backward-char)  ; just inside symex
                               (or (lispy-left-p)
                                   (symex-string-p))))
-    (backward-sexp)))
+    (condition-case nil
+        (backward-sexp)
+      (error nil))))
 
 ;;; Predicates
 
