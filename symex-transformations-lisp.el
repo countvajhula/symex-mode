@@ -206,16 +206,23 @@ text, on the respective side."
     (symex--same-line-tidy-affected)
     (goto-char start)))
 
-(defun symex-lisp--padding ()
+(defun symex-lisp--padding (&optional before)
   "Determine paste padding needed for current point position."
   (cond ((and (bolp)
+              ;; if we're at the toplevel,
+              ;; on an "island" symex (i.e. with no peers
+              ;; occupying the same lines),
               (save-excursion (forward-sexp)
                               (eolp))
+              ;; and if the side we want to paste on already
+              ;; contains an empty line,
+              (save-excursion (if before
+                                  (previous-line)
+                                (progn (forward-sexp) (next-line)))
+                              (symex--current-line-empty-p))
+              ;; and if the text to be pasted contains newlines,
+              ;; then we typically want an extra newline separator
               (seq-contains-p (current-kill 0 t) ?\n))
-         ;; if we're at the toplevel, on an "island" symex
-         ;; (i.e. with no peers occupying the same lines),
-         ;; _and_ if the text to be pasted contains newlines,
-         ;; then we typically want an extra newline separator
          "\n\n")
         ((or (symex--point-at-indentation-p)
              (save-excursion (forward-sexp)
