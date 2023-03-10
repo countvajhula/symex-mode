@@ -101,9 +101,9 @@
            ;; don't leave an empty line where the symex was
            (kill-whole-line)))
         ((or (save-excursion (evil-last-non-blank) ; (<>$
-                             (lispy-left-p))
-             (looking-at-p "\n")) ; (abc <>
+                             (lispy-left-p)))
          (symex--join-to-next))
+        ((looking-at-p "\n") (symex--go-backward)) ; (abc <>
         ((save-excursion (back-to-indentation) ; ^<>)
                          (forward-char)
                          (lispy-right-p))
