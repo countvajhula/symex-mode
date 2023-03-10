@@ -305,8 +305,18 @@ by default, joins next symex to current one."
   (if (symex-tree-sitter-p)
       (symex-ts-paste-after count)
     (symex--with-undo-collapse
-      (dotimes (_ count)
-        (symex-lisp-paste-after)))))
+      (let ((pasted-text ""))
+        (dotimes (_ count)
+          (setq pasted-text
+                (concat (symex-lisp-paste-after)
+                        pasted-text)))
+        (save-excursion
+          (goto-char (+ (point)
+                        (length pasted-text)))
+          (symex--same-line-tidy-affected))
+        ;; move to indicate appropriate posterior selection
+        (forward-sexp)
+        (forward-char)))))
 
 (symex-define-insertion-command symex-open-line-after ()
   "Open new line after symex."
