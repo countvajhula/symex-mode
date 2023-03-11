@@ -66,7 +66,11 @@
   "Helper to clear contents of symex."
   (cond ((symex--go-up) (symex-delete-remaining))
         ((symex-string-p) (save-excursion (kill-sexp)
-                                          (insert "\"\"")))))
+                                          (insert "\"\"")))
+        ((or (symex-empty-list-p)
+             (symex--special-empty-list-p))
+         (forward-char (symex--form-offset)))
+        (t (kill-sexp))))
 
 (defun symex-lisp-replace ()
   (symex-lisp-clear)
