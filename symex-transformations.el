@@ -295,8 +295,26 @@ by default, joins next symex to current one."
   (if (symex-tree-sitter-p)
       (symex-ts-paste-before count)
     (symex--with-undo-collapse
-      (dotimes (_ count)
-        (symex-lisp-paste-before)))))
+      (let ((pasted-text ""))
+        (dotimes (_ count)
+          (setq pasted-text
+                (concat (symex-lisp-paste-before)
+                        pasted-text)))
+        (save-excursion
+          (let* ((end (+ (point) (length pasted-text)))
+                 (end-line (line-number-at-pos end)))
+            ;; we use end + 1 here since end is the point
+            ;; right before the initial expression, which
+            ;; won't be indented as it thus would fall
+            ;; outside the region to be indented.
+            (indent-region (point) (1+ end))
+            ;; indenting may add characters (e.g. spaces)
+            ;; to the buffer, so we rely on the line number
+            ;; instead.
+            (symex--goto-line end-line)
+            ;; if the last line has any trailing forms,
+            ;; indent them.
+            (symex--same-line-tidy-affected)))))))
 
 (symex-define-command symex-paste-after (count)
   "Paste after symex, COUNT times."

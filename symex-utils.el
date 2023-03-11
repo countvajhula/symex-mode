@@ -51,6 +51,14 @@ From: https://stackoverflow.com/a/13313091"
      (save-excursion (goto-char (point-max))
                      (line-number-at-pos))))
 
+(defun symex--goto-line (line-no)
+  "Go to line number LINE-NO.
+
+Emacs docs recommend against using `goto-line`, suggesting
+the following recipe instead."
+  (goto-char (point-min))
+  (forward-line (1- line-no)))
+
 ;; `with-undo-collapse` macro, to treat a sequence of operations
 ;; as a single entry in the undo list.
 ;; From: https://emacs.stackexchange.com/questions/7558/collapsing-undo-history/7560#7560
