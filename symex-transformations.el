@@ -238,7 +238,7 @@ This assumes that point is at the end of whatever change has been
 made, and tidies the next symex if it is on the same line. Then, it
 continues tidying symexes as long as the next one begins on the same
 line that the preceding one ends on."
-  (save-excursion
+  (symex--save-point-excursion
     ;; assume point is at the end of the triggering change
     (let ((affected (or (symex-lisp--point-at-start-p)
                         (= (line-number-at-pos)
