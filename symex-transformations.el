@@ -32,7 +32,6 @@
 
 ;; TODO: Remove dependencies after moving to symex-transformations-lisp.el
 (require 'paredit)
-(require 'lispy)
 (require 'evil)
 (require 'evil-surround)
 (require 'symex-primitives)
@@ -130,7 +129,7 @@
 
 (defun symex--emit-backward ()
   "Emit backward."
-  (when (and (lispy-left-p)
+  (when (and (symex-left-p)
              (not (symex-empty-list-p)))
     (save-excursion
       (symex--go-up)  ; need to be inside the symex to emit and capture
@@ -138,7 +137,7 @@
     (symex--go-forward)
     (when (symex-empty-list-p)
       (fixup-whitespace)
-      (re-search-forward lispy-left)
+      (re-search-forward symex--re-left)
       (symex--go-down))))
 
 (symex-define-command symex-emit-backward (count)
@@ -149,7 +148,7 @@
 
 (defun symex--emit-forward ()
   "Emit forward."
-  (when (and (lispy-left-p)
+  (when (and (symex-left-p)
              (not (symex-empty-list-p)))
     (save-excursion
       (symex--go-up)  ; need to be inside the symex to emit and capture
@@ -157,7 +156,7 @@
     (when (symex-empty-list-p)
       (symex--go-forward)
       (fixup-whitespace)
-      (re-search-backward lispy-left))))
+      (re-search-backward symex--re-left))))
 
 (symex-define-command symex-emit-forward (count)
   "Emit forward, COUNT times."
@@ -167,7 +166,7 @@
 
 (defun symex--capture-backward ()
   "Capture from behind."
-  (when (lispy-left-p)
+  (when (symex-left-p)
     (if (symex-empty-list-p)
         (forward-char)
       (symex--go-up))  ; need to be inside the symex to emit and capture
@@ -187,12 +186,16 @@
 
 (defun symex--capture-forward ()
   "Capture from the front."
-  (when (lispy-left-p)
+  (when (and (symex-left-p)
+             (not (save-excursion
+                    (symex-other)
+                    (forward-char)
+                    (symex-lisp--point-at-end-p))))
     (save-excursion
       (if (symex-empty-list-p)
           (forward-char)
         (symex--go-up))  ; need to be inside the symex to emit and capture
-      (lispy-forward-slurp-sexp 1))))
+      (paredit-forward-slurp-sexp 1))))
 
 (symex-define-command symex-capture-forward (count)
   "Capture from the front, COUNT times."
@@ -455,7 +458,7 @@ If the symex is a nested list, this operation eliminates the symex,
 putting its contents in the parent symex.  If the symex is an atom,
 then no action is taken."
   (interactive)
-  (when (or (lispy-left-p) (symex-string-p))
+  (when (or (symex-left-p) (symex-string-p))
     (if (or (symex-empty-list-p)
             (symex-empty-string-p))
         (symex-delete 1)
@@ -561,7 +564,7 @@ then no action is taken."
 (symex-define-command symex-change-delimiter ()
   "Change delimiter enclosing current symex, e.g. round -> square brackets."
   (interactive)
-  (if (or (lispy-left-p) (symex-string-p))
+  (if (or (symex-left-p) (symex-string-p))
       (evil-surround-change (following-char))
     (let ((bounds (bounds-of-thing-at-point 'sexp)))
       (evil-surround-region (car bounds) (cdr bounds) 'inclusive 40))))

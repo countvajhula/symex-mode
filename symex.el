@@ -3,7 +3,7 @@
 ;; Author: Siddhartha Kasivajhula <sid@countvajhula.com>
 ;; URL: https://github.com/drym-org/symex.el
 ;; Version: 1.0
-;; Package-Requires: ((emacs "25.1") (tsc "0.15.2") (tree-sitter "0.15.2") (lispy "0.26.0") (paredit "24") (evil "1.2.14") (evil-surround "1.0.4") (seq "2.22"))
+;; Package-Requires: ((emacs "25.1") (tsc "0.15.2") (tree-sitter "0.15.2") (paredit "24") (evil "1.2.14") (evil-surround "1.0.4") (seq "2.22"))
 ;; Keywords: lisp, convenience, languages
 
 ;; This program is "part of the world," in the sense described at
@@ -34,14 +34,12 @@
 ;; can be described using an expressive DSL, and invoked in a vim-
 ;; style modal interface.
 ;;
-;; At the moment, symex mode uses paredit and lispy to provide much of
-;; its low level functionality.  In the future, this layer of primitives
-;; may be replaced with a layer that explicitly uses the abstract syntax
+;; At the moment, symex mode uses paredit to provide much of its low
+;; level functionality.  In the future, this layer of primitives may
+;; be replaced with a layer that explicitly uses the abstract syntax
 ;; tree, for greater precision.
 
 ;;; Code:
-
-(require 'lispy)
 
 (require 'symex-evil)
 (require 'symex-interop)

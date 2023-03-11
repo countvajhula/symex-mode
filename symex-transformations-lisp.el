@@ -27,7 +27,6 @@
 
 (require 'cl-lib)
 
-(require 'lispy)
 (require 'evil)
 (require 'evil-surround)
 (require 'symex-primitives)
@@ -98,12 +97,12 @@
            ;; don't leave an empty line where the symex was
            (kill-whole-line)))
         ((or (save-excursion (evil-last-non-blank) ; (<>$
-                             (lispy-left-p)))
+                             (symex-left-p)))
          (symex--join-to-next))
         ((looking-at-p "\n") (symex--go-backward)) ; (abc <>
         ((save-excursion (back-to-indentation) ; ^<>)
                          (forward-char)
-                         (lispy-right-p))
+                         (symex-right-p))
          ;; Cases 2 and 3 in issue #18
          ;; if the deleted symex is preceded by a comment line
          ;; or if the preceding symex is followed by a comment
@@ -120,10 +119,10 @@
                              (save-excursion (evil-find-char 1 ?\;)
                                              t)
                            (error nil))
-                   (symex--join-to-match lispy-right)
+                   (symex--join-to-match symex--re-right)
                    (symex--adjust-point)))))))
         ((save-excursion (forward-char) ; ... <>)
-                         (lispy-right-p))
+                         (symex-right-p))
          (symex--go-backward))
         (t (symex--go-forward))))
 
@@ -158,7 +157,7 @@
   (evil-move-end-of-line)
   (unless (or (symex--current-line-empty-p)
               (save-excursion (backward-char)
-                              (lispy-left-p)))
+                              (symex-left-p)))
     (insert " ")))
 
 (defun symex-lisp-insert-before ()
@@ -170,14 +169,14 @@
 (defun symex-lisp-insert-at-beginning ()
   "Insert at beginning of symex."
   (interactive)
-  (when (or (lispy-left-p)
+  (when (or (symex-left-p)
             (symex-string-p))
     (forward-char)))
 
 (defun symex-lisp-insert-at-end ()
   "Insert at end of symex."
   (interactive)
-  (if (or (lispy-left-p)
+  (if (or (symex-left-p)
           (symex-string-p))
       (progn (forward-sexp)
              (backward-char))

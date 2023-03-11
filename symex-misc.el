@@ -26,7 +26,6 @@
 ;;; Code:
 
 
-(require 'lispy)
 (require 'evil)
 (require 'symex-primitives)
 (require 'symex-evaluator)
