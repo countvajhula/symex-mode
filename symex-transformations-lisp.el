@@ -69,7 +69,8 @@
                                           (insert "\"\"")))
         ((or (symex-empty-list-p)
              (symex--special-empty-list-p))
-         (forward-char (symex--form-offset)))
+         ;; nothing needs to be done
+         nil)
         (t (kill-sexp))))
 
 (defun symex-lisp-replace ()
