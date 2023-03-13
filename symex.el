@@ -34,10 +34,8 @@
 ;; can be described using an expressive DSL, and invoked in a vim-
 ;; style modal interface.
 ;;
-;; At the moment, symex mode uses paredit to provide much of its low
-;; level functionality.  In the future, this layer of primitives may
-;; be replaced with a layer that explicitly uses the abstract syntax
-;; tree, for greater precision.
+;; Under the hood, Symex mode uses paredit and Tree-Sitter for parsing
+;; the code syntax tree.
 
 ;;; Code:
 
