@@ -332,9 +332,9 @@ by default, joins next symex to current one."
                 (concat (symex-lisp-paste-after)
                         pasted-text)))
         (save-excursion
-          (forward-sexp)
+          (forward-sexp) ; go to beginning of pasted text
           (goto-char (+ (point)
-                        (length pasted-text)))
+                        (length pasted-text))) ; end of pasted text
           (symex--same-line-tidy-affected))
         ;; move to indicate appropriate posterior selection
         (forward-sexp)
