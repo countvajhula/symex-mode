@@ -166,14 +166,15 @@
 
 (defun symex--capture-backward ()
   "Capture from behind."
-  (when (symex-left-p)
+  (when (and (symex-left-p)
+             ;; paredit captures 1 ((|2 3)) -> (1 (2 3)) but we don't
+             ;; want to in this case since point indicates the inner
+             ;; symex, which cannot capture, rather than the outer
+             ;; one. We avoid this by employing a guard condition here.
+             (not (symex--point-at-first-symex-p)))
     (if (symex-empty-list-p)
         (forward-char)
       (symex--go-up))  ; need to be inside the symex to emit and capture
-    ;; paredit captures 1 ((|2 3)) -> (1 (2 3))
-    ;; but we don't want to in this case since point indicates the
-    ;; inner symex, which cannot capture, rather than the outer
-    ;; one. Just a note for the future.
     (paredit-backward-slurp-sexp 1)
     (fixup-whitespace)
     (symex--go-down)))
