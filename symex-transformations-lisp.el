@@ -225,8 +225,12 @@ text, on the respective side."
               (seq-contains-p (current-kill 0 t) ?\n))
          "\n\n")
         ((or (symex--point-at-indentation-p)
-             (save-excursion (forward-sexp)
-                             (eolp)))
+             (let ((original-line (line-number-at-pos)))
+               (save-excursion (forward-sexp)
+                               (or (eolp)
+                                   ;; for multi-line symex, add a newline
+                                   (not (= original-line
+                                           (line-number-at-pos)))))))
          "\n")
         (t " ")))
 
