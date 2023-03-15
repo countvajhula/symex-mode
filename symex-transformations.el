@@ -818,7 +818,7 @@ implementation."
 (symex-define-command symex-tidy-remaining ()
   "Tidy the remaining symexes."
   (interactive)
-  (save-excursion
+  (symex--save-point-excursion
     ;; do it once first since it will be executed as a side-effect
     ;; _after_ each step in the traversal
     (symex--tidy 1)
