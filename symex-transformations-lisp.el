@@ -99,7 +99,13 @@
         ((or (save-excursion (evil-last-non-blank) ; (<>$
                              (symex-left-p)))
          (symex--join-to-next))
-        ((looking-at-p "\n") (symex--go-backward)) ; (abc <>
+        ((looking-at-p "\n")  ; (abc <>
+         (if (save-excursion (next-line)
+                             (not (symex--current-line-empty-p)))
+             ;; only join up to the next symex if the context suggests
+             ;; that a line break is not desired
+             (symex--join-to-next)
+           (symex--go-backward)))
         ((save-excursion (back-to-indentation) ; ^<>)
                          (forward-char)
                          (symex-right-p))
