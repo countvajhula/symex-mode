@@ -346,7 +346,6 @@ as special cases here."
   "Select the appropriate symex nearest to point."
   (cond ((and (not (eobp))
               (save-excursion (forward-char) (symex-right-p))) ; |)
-         (forward-char)
          (symex-other))
         ((condition-case nil  ; (thing-at-point string) raises error at EOB
              (thing-at-point 'string)
