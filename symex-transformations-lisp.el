@@ -115,18 +115,19 @@
          ;; on the same line, then don't attempt to join lines
          (let ((original-position (point)))
            (when (symex--go-backward)
-             (let ((previous-symex-end-pos (symex--get-end-point 1)))
-               (unless (symex--intervening-comment-line-p previous-symex-end-pos
-                                                          original-position)
-                 (goto-char previous-symex-end-pos)
-                 ;; ensure that there isn't a comment on the
-                 ;; preceding line before joining lines
-                 (unless (condition-case nil
-                             (save-excursion (evil-find-char 1 ?\;)
-                                             t)
-                           (error nil))
-                   (symex--join-to-match symex--re-right)
-                   (symex--adjust-point)))))))
+             (save-excursion
+               (let ((previous-symex-end-pos (symex--get-end-point 1)))
+                 (unless (symex--intervening-comment-line-p previous-symex-end-pos
+                                                            original-position)
+                   (goto-char previous-symex-end-pos)
+                   ;; ensure that there isn't a comment on the
+                   ;; preceding line before joining lines
+                   (unless (condition-case nil
+                               (save-excursion (evil-find-char 1 ?\;)
+                                               t)
+                             (error nil))
+                     (symex--join-to-match symex--re-right)
+                     (symex--adjust-point))))))))
         ((save-excursion (forward-char) ; ... <>)
                          (symex-right-p))
          (symex--go-backward))
