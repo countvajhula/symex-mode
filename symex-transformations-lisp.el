@@ -190,6 +190,23 @@
              (backward-char))
     (forward-sexp)))
 
+(defun symex--emit-forward ()
+  "Emit forward."
+  (when (and (symex-left-p)
+             (not (symex-empty-list-p)))
+    (save-excursion
+      (symex--go-up)  ; need to be inside the symex to emit and capture
+      (paredit-forward-barf-sexp 1))
+    (when (symex-empty-list-p)
+      (symex--go-forward)
+      (fixup-whitespace)
+      (re-search-backward symex--re-left))))
+
+(defun symex-lisp-emit-forward (count)
+  "Emit forward."
+  (dotimes (_ count)
+    (symex--emit-forward)))
+
 (defun symex-lisp--paste (before after)
   "Paste before, padding on either side.
 

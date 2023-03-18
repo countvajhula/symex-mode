@@ -146,23 +146,12 @@
   (dotimes (_ count)
     (symex--emit-backward)))
 
-(defun symex--emit-forward ()
-  "Emit forward."
-  (when (and (symex-left-p)
-             (not (symex-empty-list-p)))
-    (save-excursion
-      (symex--go-up)  ; need to be inside the symex to emit and capture
-      (paredit-forward-barf-sexp 1))
-    (when (symex-empty-list-p)
-      (symex--go-forward)
-      (fixup-whitespace)
-      (re-search-backward symex--re-left))))
-
 (symex-define-command symex-emit-forward (count)
   "Emit forward, COUNT times."
   (interactive "p")
-  (dotimes (_ count)
-    (symex--emit-forward)))
+  (if tree-sitter-mode
+      (symex-ts-emit-forward count)
+    (symex-lisp-emit-forward count)))
 
 (defun symex--capture-backward ()
   "Capture from behind."

@@ -190,6 +190,10 @@ alias for inserting at the end."
     (indent-according-to-mode)
     (move-end-of-line 1)))
 
+(defun symex-ts-emit-forward (count)
+  "Emit forward"
+  nil)
+
 (defun symex-ts--paste (count direction)
   "Paste before or after symex, COUNT times, according to DIRECTION.
 
