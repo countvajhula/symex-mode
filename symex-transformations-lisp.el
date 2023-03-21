@@ -89,7 +89,7 @@
   (cond ((symex--current-line-empty-p)         ; ^<>$
          ;; only join up to the next symex if the context suggests
          ;; that a line break is not desired
-         (if (or (save-excursion (next-line)
+         (if (or (save-excursion (forward-line)
                                  (not (symex--current-line-empty-p)))
                  (save-excursion (previous-line)
                                  (symex--current-line-empty-p)))
@@ -100,7 +100,7 @@
                              (symex-left-p)))
          (symex--join-to-next))
         ((looking-at-p "\n")  ; (abc <>
-         (if (save-excursion (next-line)
+         (if (save-excursion (forward-line)
                              (not (symex--current-line-empty-p)))
              ;; only join up to the next symex if the context suggests
              ;; that a line break is not desired
@@ -225,7 +225,7 @@ text, on the respective side."
                                                       (eobp)))
                                   (previous-line)
                                 (progn (forward-sexp)
-                                       (next-line)))
+                                       (forward-line)))
                               (symex--current-line-empty-p))
               ;; and if the text to be pasted contains newlines,
               ;; then we typically want an extra newline separator
