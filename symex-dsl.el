@@ -185,6 +185,18 @@ forward, backward, up, or down."
         ((equal 'down direction)
          '(symex-make-move 0 -1))))
 
+(defmacro symex--compile-delete (count)
+  "Compile a deletion from Symex -> Lisp.
+
+COUNT - the number symexes to delete."
+  `'(delete ,count))
+
+(defmacro symex--compile-paste (side)
+  "Compile a paste from Symex -> Lisp.
+
+SIDE - the side to paste on, either before or after."
+  `'(paste ,side))
+
 ;; TODO: support args here like lambda / defun (i.e. as a list in the
 ;; binding form -- not passed in but syntactically inserted)
 ;; try a lambda / defun with args to see what I mean
@@ -216,6 +228,10 @@ a detour, a move, etc., which is specified using the Symex DSL."
          `(symex--compile-decision ,@(cdr traversal)))
         ((equal 'move (car traversal))
          `(symex--compile-move ,@(cdr traversal)))
+        ((equal 'delete (car traversal))
+         `(symex--compile-delete ,@(cdr traversal)))
+        ((equal 'paste (car traversal))
+         `(symex--compile-paste ,@(cdr traversal)))
         (t traversal)))  ; function-valued symbols wind up here
 
 (defmacro symex-deftraversal (name traversal &optional docstring)
