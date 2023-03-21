@@ -216,9 +216,16 @@ text, on the respective side."
                               (eolp))
               ;; and if the side we want to paste on already
               ;; contains an empty line,
-              (save-excursion (if before
+              (save-excursion (if (or before
+                                      ;; if we happen to be at the end
+                                      ;; of the buffer for pasting after,
+                                      ;; then check the opposite side instead
+                                      ;; for the clue on what's expected
+                                      (save-excursion (forward-sexp)
+                                                      (eobp)))
                                   (previous-line)
-                                (progn (forward-sexp) (next-line)))
+                                (progn (forward-sexp)
+                                       (next-line)))
                               (symex--current-line-empty-p))
               ;; and if the text to be pasted contains newlines,
               ;; then we typically want an extra newline separator
