@@ -112,8 +112,8 @@ Examples
 
   (symex-execute-traversal
     (symex-traversal
-      (maneuver (maneuver (move up)
-                          (circuit (move forward)))
+      (maneuver (move up)
+                (circuit (move forward))
                 (move up))))
 
 venture
