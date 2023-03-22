@@ -246,16 +246,25 @@ Evaluates to a COMPUTATION on the traversal actually executed."
 
 Evaluates to a COMPUTATION on the traversal actually executed."
   (let ((count (symex--deletion-count deletion)))
-    (symex-delete count)))
+    (symex-delete count)
+    ;; TODO: compute based on an appropriate result here
+    (symex--compute-results symex--move-zero
+                            nil
+                            computation)))
 
 (defun symex-execute-paste (paste computation)
   "Attempt to execute a given PASTE.
 
 Evaluates to a COMPUTATION on the traversal actually executed."
   (let ((side (symex--paste-side paste)))
-    (if (eq 'before side)
-        (symex-paste-before count)
-      (symex-paste-after count))))
+    (let ((result (if (eq 'before side)
+                      (symex-paste-before 1)
+                    (symex-paste-after 1))))
+      ;; TODO: compute based on an appropriate result here
+      (when result
+        (symex--compute-results symex--move-zero
+                                nil
+                                computation)))))
 
 (defun symex--execute-traversal (traversal computation)
   "Helper to execute TRAVERSAL and perform COMPUTATION."
