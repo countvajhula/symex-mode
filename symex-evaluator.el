@@ -162,12 +162,18 @@ Evaluates to a COMPUTATION on the traversal actually executed."
               (> times 0))
       (let ((result (symex-execute-traversal traversal
                                              computation)))
-        (when result
-          (let ((executed-remaining-circuit
-                 (symex-execute-traversal remaining-circuit
-                                          computation)))
-            (symex--compute-results result
-                                    executed-remaining-circuit
+        (if result
+            (let ((executed-remaining-circuit
+                   (symex-execute-traversal remaining-circuit
+                                            computation)))
+              (symex--compute-results result
+                                      executed-remaining-circuit
+                                      computation))
+          (when (not times)
+            ;; if looping indefinitely, then count 0
+            ;; times executed as success
+            (symex--compute-results symex--move-zero
+                                    nil
                                     computation)))))))
 
 (defun symex-execute-detour (detour computation)
