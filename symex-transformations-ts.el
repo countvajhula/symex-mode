@@ -186,7 +186,7 @@ alias for inserting at the end."
   (when (symex-ts-get-current-node)
     (goto-char (tsc-node-start-position (symex-ts-get-current-node)))
     (newline-and-indent)
-    (evil-previous-line)
+    (forward-line -1)
     (indent-according-to-mode)
     (move-end-of-line 1)))
 

@@ -164,7 +164,7 @@
   "Open new line before symex."
   (interactive)
   (newline-and-indent)
-  (evil-previous-line)
+  (forward-line -1)
   (indent-according-to-mode)
   (evil-move-end-of-line)
   (unless (or (symex--current-line-empty-p)
