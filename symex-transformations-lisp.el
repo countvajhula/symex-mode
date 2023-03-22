@@ -80,22 +80,24 @@
   (let ((last-command nil)  ; see symex-yank re: last-command
         (start (point))
         (end (symex--get-end-point count)))
-    (kill-region start end)))
+    (when (> end start)
+      (kill-region start end)
+      t)))
 
 (defun symex-lisp-delete (count)
   "Delete COUNT symexes."
   (interactive "p")
-  (symex-lisp--delete count)
-  (cond ((symex--current-line-empty-p)         ; ^<>$
-         ;; only join up to the next symex if the context suggests
-         ;; that a line break is not desired
-         (if (or (save-excursion (forward-line)
-                                 (not (symex--current-line-empty-p)))
-                 (save-excursion (previous-line)
-                                 (symex--current-line-empty-p)))
-             (symex--join-to-next)
-           ;; don't leave an empty line where the symex was
-           (delete-region (line-beginning-position)
+  (let ((result (symex-lisp--delete count)))
+    (cond ((symex--current-line-empty-p)         ; ^<>$
+           ;; only join up to the next symex if the context suggests
+           ;; that a line break is not desired
+           (if (or (save-excursion (forward-line)
+                                   (not (symex--current-line-empty-p)))
+                   (save-excursion (forward-line -1)
+                                   (symex--current-line-empty-p)))
+               (symex--join-to-next)
+             ;; don't leave an empty line where the symex was
+             (delete-region (line-beginning-position)
                           (1+ (line-end-position)))))
         ((or (save-excursion (evil-last-non-blank) ; (<>$
                              (symex-left-p)))
@@ -132,7 +134,9 @@
         ((save-excursion (forward-char) ; ... <>)
                          (symex-right-p))
          (symex--go-backward))
-        (t (symex--go-forward))))
+        (t (symex--go-forward)))
+    ;; should we return the actual motion we took?
+    result))
 
 (defun symex-lisp-delete-backwards (count)
   "Delete COUNT symexes backwards."
