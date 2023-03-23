@@ -146,12 +146,24 @@
   (dotimes (_ count)
     (symex--emit-backward)))
 
+(defvar symex--traversal-emit-forward
+  (symex-traversal
+   (maneuver (move up)
+             (circuit (move forward))
+             (delete)
+             (move down)
+             (paste after)))
+  "Emit forward.")
+
+(defun symex--emit-forward (count)
+  "Emit forward."
+  (dotimes (_ count)
+    (symex-execute-traversal symex--traversal-emit-forward)))
+
 (symex-define-command symex-emit-forward (count)
   "Emit forward, COUNT times."
   (interactive "p")
-  (if tree-sitter-mode
-      (symex-ts-emit-forward count)
-    (symex-lisp-emit-forward count)))
+  (symex--emit-forward count))
 
 (defun symex--capture-backward ()
   "Capture from behind."

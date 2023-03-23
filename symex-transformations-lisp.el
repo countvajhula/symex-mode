@@ -194,22 +194,6 @@
              (backward-char))
     (forward-sexp)))
 
-(defvar symex--traversal-emit-forward
-  (symex-traversal
-   (maneuver (move up)
-             (circuit (move forward))
-             (delete 1) ; probably just delete or "cut" w/ no parens or count
-             (move down)
-             ;; maybe plant/graft/place/put/attach
-             ;; but first get it to work
-             (paste after)))
-  "Emit forward.")
-
-(defun symex-lisp-emit-forward (count)
-  "Emit forward."
-  (dotimes (_ count)
-    (symex-execute-traversal symex--traversal-emit-forward)))
-
 (defun symex-lisp--paste (before after)
   "Paste before, padding on either side.
 
