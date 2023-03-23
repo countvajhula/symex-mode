@@ -35,6 +35,38 @@
 ;;; TRAVERSALS ;;;
 ;;;;;;;;;;;;;;;;;;
 
+(defun symex-go-forward (count)
+  "Move forward COUNT symexes."
+  (interactive "p")
+  ;; TODO: these should be compiled
+  ;; so that the actual executed traversal
+  ;; is (move N 0) rather than
+  ;; (move 1 0) executed N times
+  (symex-execute-traversal
+   (symex-traversal (circuit (move forward)
+                             count))))
+
+(defun symex-go-backward (count)
+  "Move backward COUNT symexes."
+  (interactive "p")
+  (symex-execute-traversal
+   (symex-traversal (circuit (move backward)
+                             count))))
+
+(defun symex-go-up (count)
+  "Move up COUNT symexes."
+  (interactive "p")
+  (symex-execute-traversal
+   (symex-traversal (circuit (move up)
+                             count))))
+
+(defun symex-go-down (count)
+  "Move down COUNT symexes."
+  (interactive "p")
+  (symex-execute-traversal
+   (symex-traversal (circuit (move down)
+                             count))))
+
 (symex-deftraversal symex--traversal-goto-first
   (circuit (move backward))
   "Go to first symex on the present branch.")

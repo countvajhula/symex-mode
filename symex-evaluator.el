@@ -69,26 +69,6 @@ Optional argument COMPUTATION currently unused."
     (when executed-move
       (list executed-move))))
 
-(cl-defun symex-go-forward (&optional (count 1))
-  "Move forward COUNT symexes."
-  (interactive)
-  (symex--execute-tree-move (symex-make-move count 0)))
-
-(cl-defun symex-go-backward (&optional (count 1))
-  "Move backward COUNT symexes."
-  (interactive)
-  (symex--execute-tree-move (symex-make-move (- count) 0)))
-
-(cl-defun symex-go-up (&optional (count 1))
-  "Move up COUNT symexes."
-  (interactive)
-  (symex--execute-tree-move (symex-make-move 0 count)))
-
-(cl-defun symex-go-down (&optional (count 1))
-  "Move down COUNT symexes."
-  (interactive)
-  (symex--execute-tree-move (symex-make-move 0 (- count))))
-
 (defun symex--compute-results (a b computation)
   "Combine component computed results A and B into an aggregate result.
 
