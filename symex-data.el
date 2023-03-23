@@ -348,9 +348,8 @@ This is the traversal that will be chosen if the condition is false."
              (nth 0 obj))
     (error nil)))
 
-;; TODO: eliminate count since we can use circuit
-(defun symex--deletion-count (deletion)
-  "Get the count component of a DELETION."
+(defun symex--deletion-what (deletion)
+  "Get the 'what' component of a DELETION."
   (nth 1 deletion))
 
 (defun symex-paste-p (obj)

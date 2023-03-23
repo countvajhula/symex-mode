@@ -231,8 +231,9 @@ Evaluates to a COMPUTATION on the traversal actually executed."
   "Attempt to execute a given DELETION.
 
 Evaluates to a COMPUTATION on the traversal actually executed."
-  (let ((count (symex--deletion-count deletion)))
-    (symex-delete count)
+  (let ((what (symex--deletion-what deletion)))
+    ;; TODO: "what" is currently ignored
+    (symex-delete 1)
     ;; TODO: compute based on an appropriate result here
     (symex--compute-results symex--move-zero
                             nil

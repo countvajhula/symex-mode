@@ -185,11 +185,12 @@ forward, backward, up, or down."
         ((equal 'down direction)
          '(symex-make-move 0 -1))))
 
-(defmacro symex--compile-delete (count)
+(defmacro symex--compile-delete (&optional what)
   "Compile a deletion from Symex -> Lisp.
 
-COUNT - the number symexes to delete."
-  `'(delete ,count))
+WHAT - what to delete, either this, previous, next, remaining or until."
+  (let ((what (or what 'this)))
+    `'(delete ,what)))
 
 (defmacro symex--compile-paste (side)
   "Compile a paste from Symex -> Lisp.
