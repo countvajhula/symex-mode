@@ -95,7 +95,8 @@
                                  (symex--current-line-empty-p)))
              (symex--join-to-next)
            ;; don't leave an empty line where the symex was
-           (kill-whole-line)))
+           (delete-region (line-beginning-position)
+                          (1+ (line-end-position)))))
         ((or (save-excursion (evil-last-non-blank) ; (<>$
                              (symex-left-p)))
          (symex--join-to-next))
