@@ -297,27 +297,7 @@ by default, joins next symex to current one."
   (setq this-command 'evil-paste-before)
   (if (symex-tree-sitter-p)
       (symex-ts-paste-before count)
-    (symex--with-undo-collapse
-      (let ((pasted-text ""))
-        (dotimes (_ count)
-          (setq pasted-text
-                (concat (symex-lisp-paste-before)
-                        pasted-text)))
-        (save-excursion
-          (let* ((end (+ (point) (length pasted-text)))
-                 (end-line (line-number-at-pos end)))
-            ;; we use end + 1 here since end is the point
-            ;; right before the initial expression, which
-            ;; won't be indented as it thus would fall
-            ;; outside the region to be indented.
-            (indent-region (point) (1+ end))
-            ;; indenting may add characters (e.g. spaces)
-            ;; to the buffer, so we rely on the line number
-            ;; instead.
-            (symex--goto-line end-line)
-            ;; if the last line has any trailing forms,
-            ;; indent them.
-            (symex--same-line-tidy-affected)))))))
+    (symex-lisp-paste-before count)))
 
 (symex-define-command symex-paste-after (count)
   "Paste after symex, COUNT times."
@@ -325,20 +305,7 @@ by default, joins next symex to current one."
   (setq this-command 'evil-paste-after)
   (if (symex-tree-sitter-p)
       (symex-ts-paste-after count)
-    (symex--with-undo-collapse
-      (let ((pasted-text ""))
-        (dotimes (_ count)
-          (setq pasted-text
-                (concat (symex-lisp-paste-after)
-                        pasted-text)))
-        (save-excursion
-          (forward-sexp) ; go to beginning of pasted text
-          (goto-char (+ (point)
-                        (length pasted-text))) ; end of pasted text
-          (symex--same-line-tidy-affected))
-        ;; move to indicate appropriate posterior selection
-        (forward-sexp)
-        (forward-char)))))
+    (symex-lisp-paste-after count)))
 
 (symex-define-insertion-command symex-open-line-after ()
   "Open new line after symex."

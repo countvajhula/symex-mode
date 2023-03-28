@@ -242,19 +242,59 @@ text, on the respective side."
          "\n")
         (t " ")))
 
-(defun symex-lisp-paste-before ()
+(defun symex-lisp--paste-before ()
   "Paste before symex."
   (interactive)
   (symex-lisp--paste ""
                      (symex-lisp--padding t)))
 
-(defun symex-lisp-paste-after ()
+(defun symex-lisp-paste-before (count)
+  (symex--with-undo-collapse
+    (let ((pasted-text ""))
+      (dotimes (_ count)
+        (setq pasted-text
+              (concat (symex-lisp--paste-before)
+                      pasted-text)))
+      (save-excursion
+        (let* ((end (+ (point) (length pasted-text)))
+               (end-line (line-number-at-pos end)))
+          ;; we use end + 1 here since end is the point
+          ;; right before the initial expression, which
+          ;; won't be indented as it thus would fall
+          ;; outside the region to be indented.
+          (indent-region (point) (1+ end))
+          ;; indenting may add characters (e.g. spaces)
+          ;; to the buffer, so we rely on the line number
+          ;; instead.
+          (symex--goto-line end-line)
+          ;; if the last line has any trailing forms,
+          ;; indent them.
+          (symex--same-line-tidy-affected))))))
+
+(defun symex-lisp--paste-after ()
   "Paste after symex."
   (interactive)
   (let ((padding (symex-lisp--padding nil)))
     (save-excursion (forward-sexp)
                     (symex-lisp--paste padding
                                        ""))))
+
+(defun symex-lisp-paste-after (count)
+  "Paste after symex."
+  (symex--with-undo-collapse
+    (let ((pasted-text ""))
+      (dotimes (_ count)
+        (setq pasted-text
+              (concat (symex-lisp--paste-after)
+                      pasted-text)))
+      (save-excursion
+        (forward-sexp) ; go to beginning of pasted text
+        (goto-char (+ (point)
+                      (length pasted-text))) ; end of pasted text
+        (symex--same-line-tidy-affected))
+      ;; move to indicate appropriate posterior selection
+      (forward-sexp)
+      (forward-char))))
 
 (defun symex-lisp-yank (count)
   "Yank (copy) COUNT symexes."
