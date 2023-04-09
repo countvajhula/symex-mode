@@ -244,9 +244,12 @@ Evaluates to a COMPUTATION on the traversal actually executed."
 
 Evaluates to a COMPUTATION on the traversal actually executed."
   (let ((side (symex--paste-side paste)))
-    (let ((result (save-excursion
-                    (if (eq 'before side)
-                        (symex-paste-before 1)
+    (let ((result (if (eq 'before side)
+                      ;; TODO: ensure point invariance
+                      ;; at the command level
+                      (progn (symex-paste-before 1)
+                             (symex--go-forward))
+                    (save-excursion
                       (symex-paste-after 1)))))
       ;; TODO: compute based on an appropriate result here
       (when result
