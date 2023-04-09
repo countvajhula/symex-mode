@@ -311,6 +311,13 @@ text, on the respective side."
                       (length pasted-text))) ; end of pasted text
         (symex--same-line-tidy-affected))
       ;; move to indicate appropriate posterior selection
+      ;; TODO: this should probably be at the "user" level
+      ;; suggesting there should be 4 levels rather than 3:
+      ;; 0. primitives
+      ;; 1. tractable, deterministic symex commands
+      ;; 2. DSL over those primitives and commands
+      ;; 3. user commands that use the DSL and include UX specifics like which expression
+      ;;    should be selected after the fact, and configurable things
       (forward-sexp)
       (forward-char))))
 

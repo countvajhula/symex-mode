@@ -244,9 +244,10 @@ Evaluates to a COMPUTATION on the traversal actually executed."
 
 Evaluates to a COMPUTATION on the traversal actually executed."
   (let ((side (symex--paste-side paste)))
-    (let ((result (if (eq 'before side)
-                      (symex-paste-before 1)
-                    (symex-paste-after 1))))
+    (let ((result (save-excursion
+                    (if (eq 'before side)
+                        (symex-paste-before 1)
+                      (symex-paste-after 1)))))
       ;; TODO: compute based on an appropriate result here
       (when result
         (symex--compute-results symex--move-zero
