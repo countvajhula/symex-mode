@@ -101,42 +101,39 @@
              ;; don't leave an empty line where the symex was
              (delete-region (line-beginning-position)
                           (1+ (line-end-position)))))
-        ((or (save-excursion (evil-last-non-blank) ; (<>$
-                             (symex-left-p)))
-         (symex--join-to-next))
-        ((looking-at-p "\n")  ; (abc <>
-         (if (save-excursion (forward-line)
-                             (not (symex--current-line-empty-p)))
-             ;; only join up to the next symex if the context suggests
-             ;; that a line break is not desired
-             (symex--join-to-next)
-           (symex--go-backward)))
-        ((save-excursion (back-to-indentation) ; ^<>)
-                         (forward-char)
-                         (symex-right-p))
-         ;; Cases 2 and 3 in issue #18
-         ;; if the deleted symex is preceded by a comment line
-         ;; or if the preceding symex is followed by a comment
-         ;; on the same line, then don't attempt to join lines
-         (let ((original-position (point)))
-           (when (symex--go-backward)
-             (save-excursion
-               (let ((previous-symex-end-pos (symex--get-end-point 1)))
-                 (unless (symex--intervening-comment-line-p previous-symex-end-pos
-                                                            original-position)
-                   (goto-char previous-symex-end-pos)
-                   ;; ensure that there isn't a comment on the
-                   ;; preceding line before joining lines
-                   (unless (condition-case nil
-                               (save-excursion (evil-find-char 1 ?\;)
+          ((or (save-excursion (evil-last-non-blank) ; (<>$
+                               (symex-left-p)))
+           (symex--join-to-next))
+          ((looking-at-p "\n")  ; (abc <>
+           (if (save-excursion (forward-line)
+                               (not (symex--current-line-empty-p)))
+               ;; only join up to the next symex if the context suggests
+               ;; that a line break is not desired
+               (symex--join-to-next)
+             (symex--go-backward)))
+          ((save-excursion (back-to-indentation) ; ^<>)
+                           (symex-right-p))
+           ;; Cases 2 and 3 in issue #18
+           ;; if the deleted symex is preceded by a comment line
+           ;; or if the preceding symex is followed by a comment
+           ;; on the same line, then don't attempt to join lines
+           (let ((original-position (point)))
+             (when (symex--go-backward)
+               (save-excursion
+                 (let ((previous-symex-end-pos (symex--get-end-point 1)))
+                   (unless (symex--intervening-comment-line-p previous-symex-end-pos
+                                                              original-position)
+                     (goto-char previous-symex-end-pos)
+                     ;; ensure that there isn't a comment on the
+                     ;; preceding line before joining lines
+                     (unless (condition-case nil
+                                 (save-excursion (evil-find-char 1 ?\;)
                                                t)
-                             (error nil))
-                     (symex--join-to-match symex--re-right)
-                     (symex--adjust-point))))))))
-        ((save-excursion (forward-char) ; ... <>)
-                         (symex-right-p))
-         (symex--go-backward))
-        (t (symex--go-forward)))
+                               (error nil))
+                       (symex--join-to-match symex--re-right))))))))
+          ((symex-right-p) ; ... <>)
+           (symex--go-backward))
+          (t (symex--go-forward)))
     ;; should we return the actual motion we took?
     result))
 
