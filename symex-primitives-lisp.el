@@ -355,7 +355,13 @@ as special cases here."
 
 (defun symex-lisp-select-nearest ()
   "Select the appropriate symex nearest to point."
-  (cond ((and (not (eobp))
+  (cond ((and (not (bobp))
+              (save-excursion (backward-char)
+                              (symex-left-p))
+              (not (eobp))
+              (symex-right-p)) ; (|)
+         nil) ; don't change level in selection
+        ((and (not (eobp))
               (symex-right-p)) ; |)
          (symex-other))
         ((condition-case nil  ; (thing-at-point string) raises error at EOB
