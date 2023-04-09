@@ -96,8 +96,8 @@ Evaluates to a COMPUTATION on the traversal actually executed."
                                                      computation)))
         (when executed-phase
           (let ((executed-remaining-phases
-                 (symex-execute-traversal remaining-maneuver
-                                          computation)))
+                 (symex-execute-maneuver remaining-maneuver
+                                         computation)))
             (when executed-remaining-phases
               (symex--compute-results executed-phase
                                       (if (equal executed-remaining-phases
@@ -123,8 +123,8 @@ Evaluates to a COMPUTATION on the traversal actually executed."
                                                      computation)))
         (when executed-phase
           (let ((executed-remaining-phases
-                 (symex-execute-traversal remaining-venture
-                                          computation)))
+                 (symex-execute-venture remaining-venture
+                                        computation)))
             (symex--compute-results executed-phase
                                     executed-remaining-phases
                                     computation)))))))
@@ -144,8 +144,8 @@ Evaluates to a COMPUTATION on the traversal actually executed."
                                              computation)))
         (if result
             (let ((executed-remaining-circuit
-                   (symex-execute-traversal remaining-circuit
-                                            computation)))
+                   (symex-execute-circuit remaining-circuit
+                                          computation)))
               (symex--compute-results result
                                       executed-remaining-circuit
                                       computation))
@@ -208,8 +208,8 @@ Evaluates to a COMPUTATION on the traversal actually executed."
                                                       computation)))
         (if executed-option
             executed-option
-          (symex-execute-traversal remaining-protocol
-                                   computation))))))
+          (symex-execute-protocol remaining-protocol
+                                  computation))))))
 
 (defun symex-execute-decision (decision computation)
   "Attempt to execute a given DECISION.
