@@ -54,8 +54,10 @@
     (error nil))
   (let ((start (point))
         (end (save-excursion
-               (dotimes (_ count)
-                 (forward-sexp))
+               (condition-case nil
+                   (dotimes (_ count)
+                     (forward-sexp))
+                 (error nil))
                (point))))
     (indent-region start end))
   (symex-lisp-select-nearest))
