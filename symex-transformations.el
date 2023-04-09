@@ -140,11 +140,23 @@
       (re-search-forward symex--re-left)
       (symex--go-down))))
 
+(defvar symex--traversal-emit-backward
+  (symex-traversal
+   (maneuver (move up)
+             (delete)
+             (move down)
+             (paste before)))
+  "Emit backward.")
+
+(defun symex--emit-backward (count)
+  "Emit backward."
+  (dotimes (_ count)
+    (symex-execute-traversal symex--traversal-emit-backward)))
+
 (symex-define-command symex-emit-backward (count)
   "Emit backward, COUNT times."
   (interactive "p")
-  (dotimes (_ count)
-    (symex--emit-backward)))
+  (symex--emit-backward count))
 
 (defvar symex--traversal-emit-forward
   (symex-traversal
