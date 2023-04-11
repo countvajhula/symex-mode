@@ -220,22 +220,38 @@ text, on the respective side."
   (let* ((after (not before))
          (island
           (and (bolp)
-               (save-excursion (forward-sexp)
-                               (eolp))))
+               (condition-case nil
+                   (save-excursion (forward-sexp)
+                                   (eolp))
+                 (error nil))))
          (at-eob
-          (save-excursion (forward-sexp)
-                          (eobp)))
+          (condition-case nil
+              (save-excursion (forward-sexp)
+                              (eobp))
+            (error nil)))
          (previous-line-empty
           (save-excursion (forward-line -1)
                           (symex--current-line-empty-p)))
          (next-line-empty
-          (save-excursion (forward-sexp)
-                          (forward-line)
-                          (symex--current-line-empty-p)))
+          (condition-case nil
+              (save-excursion (forward-sexp)
+                              (forward-line)
+                              (symex--current-line-empty-p))
+            (error nil)))
          (surrounding-lines-empty (and previous-line-empty
                                        next-line-empty))
          (paste-text-contains-newlines
-          (seq-contains-p (current-kill 0 t) ?\n)))
+          (seq-contains-p (current-kill 0 t) ?\n))
+         (at-eol (condition-case nil
+                     (save-excursion (forward-sexp)
+                                     (eolp))
+                   (error nil)))
+         (multiline (let ((original-line (line-number-at-pos)))
+                      (condition-case nil
+                          (save-excursion (forward-sexp)
+                                          (not (= original-line
+                                                  (line-number-at-pos))))
+                        (error nil)))))
     (cond ((and island
                 ;; if we're at the toplevel, on an "island" symex
                 ;; (i.e. with no peers occupying the same lines),
@@ -256,12 +272,8 @@ text, on the respective side."
                 ;; then we typically want an extra newline separator
            "\n\n")
           ((or (symex--point-at-indentation-p)
-               (let ((original-line (line-number-at-pos)))
-                 (save-excursion (forward-sexp)
-                                 (or (eolp)
-                                     ;; for multi-line symex, add a newline
-                                     (not (= original-line
-                                             (line-number-at-pos)))))))
+               at-eol
+               multiline)
            "\n")
           (t " "))))
 
