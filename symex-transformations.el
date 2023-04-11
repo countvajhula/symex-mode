@@ -76,6 +76,7 @@
      ,@body
      (symex-enter-lowest)))
 
+;; TODO: the return value is lost in the macro
 (symex-define-command symex-delete (count)
   "Delete COUNT symexes."
   (interactive "p")

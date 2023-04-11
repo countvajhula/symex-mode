@@ -233,11 +233,12 @@ Evaluates to a COMPUTATION on the traversal actually executed."
 Evaluates to a COMPUTATION on the traversal actually executed."
   (let ((what (symex--deletion-what deletion)))
     ;; TODO: "what" is currently ignored
-    (symex-delete 1)
-    ;; TODO: compute based on an appropriate result here
-    (symex--compute-results symex--move-zero
-                            nil
-                            computation)))
+    (let ((result (symex-delete 1)))
+      ;; TODO: compute based on an appropriate result here
+      (when result
+        (symex--compute-results symex--move-zero
+                                nil
+                                computation)))))
 
 (defun symex-execute-paste (paste computation)
   "Attempt to execute a given PASTE.
