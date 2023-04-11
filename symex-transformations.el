@@ -52,14 +52,22 @@
 ;; TODO: dot operator disrupts scroll margins
 ;; TODO: maybe identify "non-disorienting" commands and define a new macro for them. E.g. symex-tidy is itself a command. it that bad?
 
-(defmacro symex-define-command (name args docstring &rest body)
+(defmacro symex-define-command (name
+                                args
+                                docstring
+                                interactive-decl
+                                &rest
+                                body)
   "Define a symex command."
   (declare (indent defun))
-  `(defun ,name ,args
-     ,docstring
-     ,@body
-     (symex-select-nearest)
-     (symex--tidy 1)))
+  (let ((result (gensym)))
+    `(defun ,name ,args
+       ,docstring
+       ,interactive-decl
+       (let ((,result (progn ,@body)))
+         (symex-select-nearest)
+         (symex--tidy 1)
+         ,result))))
 
 (defmacro symex-define-insertion-command (name
                                           args
@@ -76,7 +84,6 @@
      ,@body
      (symex-enter-lowest)))
 
-;; TODO: the return value is lost in the macro
 (symex-define-command symex-delete (count)
   "Delete COUNT symexes."
   (interactive "p")
