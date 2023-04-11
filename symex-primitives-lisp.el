@@ -524,28 +524,30 @@ If the current character is non-whitespace, point is not moved."
 (defun symex-lisp--go-up-by-one ()
   "Go up one level."
   (let ((result 1))
-    (if (or (symex-empty-list-p)
-            (symex--special-empty-list-p))
-        (setq result 0)
-      (cond ((symex-left-p) (forward-char))
-            ;; note that at least some symex features would benefit by
-            ;; treating these special cases as "symex-left-p" but it
-            ;; would likely be too much special case handling to be
-            ;; worth it to support those cases naively, without an AST
-            ((or (symex--racket-syntax-object-p)
-                 (symex--splicing-unquote-p)
-                 (symex--racket-unquote-syntax-p))
-             (forward-char 3))
-            ((symex--racket-splicing-unsyntax-p)
-             (forward-char 4))
-            ((or (symex--quoted-list-p)
-                 (symex--unquoted-list-p)
-                 (symex--clojure-deref-reader-macro-p)
-                 (symex--clojure-literal-lambda-p))
-             (forward-char 2))
-            (t (setq result 0)))
-      ;; find first non-whitespace character
-      (symex-lisp--go-to-next-non-whitespace-char))
+    ;; TODO: this should enter at the primitive / command level
+    ;; but perhaps not at the user level
+    (cond ((or (symex-empty-list-p)
+               (symex--special-empty-list-p))
+           (forward-char (symex--form-offset)))
+          ((symex-left-p) (forward-char))
+          ;; note that at least some symex features would benefit by
+          ;; treating these special cases as "symex-left-p" but it
+          ;; would likely be too much special case handling to be
+          ;; worth it to support those cases naively, without an AST
+          ((or (symex--racket-syntax-object-p)
+               (symex--splicing-unquote-p)
+               (symex--racket-unquote-syntax-p))
+           (forward-char 3))
+          ((symex--racket-splicing-unsyntax-p)
+           (forward-char 4))
+          ((or (symex--quoted-list-p)
+               (symex--unquoted-list-p)
+               (symex--clojure-deref-reader-macro-p)
+               (symex--clojure-literal-lambda-p))
+           (forward-char 2))
+          (t (setq result 0)))
+    ;; find first non-whitespace character
+    (symex-lisp--go-to-next-non-whitespace-char)
     result))
 
 (defun symex-lisp--go-up (&optional count)
