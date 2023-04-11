@@ -177,26 +177,24 @@
   (interactive "p")
   (symex--emit-forward count))
 
-(defun symex--capture-backward ()
+(defvar symex--traversal-capture-backward
+  (symex-traversal
+   (maneuver (move backward)
+             (delete)
+             (move up)
+             (paste before)
+             (move down)))
+  "Capture backward.")
+
+(defun symex--capture-backward (count)
   "Capture from behind."
-  (when (and (symex-left-p)
-             ;; paredit captures 1 ((|2 3)) -> (1 (2 3)) but we don't
-             ;; want to in this case since point indicates the inner
-             ;; symex, which cannot capture, rather than the outer
-             ;; one. We avoid this by employing a guard condition here.
-             (not (symex--point-at-first-symex-p)))
-    (if (symex-empty-list-p)
-        (forward-char)
-      (symex--go-up))  ; need to be inside the symex to emit and capture
-    (paredit-backward-slurp-sexp 1)
-    (fixup-whitespace)
-    (symex--go-down)))
+  (dotimes (_ count)
+    (symex-execute-traversal symex--traversal-capture-backward)))
 
 (symex-define-command symex-capture-backward (count)
   "Capture from behind, COUNT times."
   (interactive "p")
-  (dotimes (_ count)
-    (symex--capture-backward)))
+  (symex--capture-backward count))
 
 (defun symex--capture-forward ()
   "Capture from the front."
