@@ -135,19 +135,6 @@
       (symex-ts-clear)
     (symex-lisp-clear)))
 
-(defun symex--emit-backward ()
-  "Emit backward."
-  (when (and (symex-left-p)
-             (not (symex-empty-list-p)))
-    (save-excursion
-      (symex--go-up)  ; need to be inside the symex to emit and capture
-      (paredit-backward-barf-sexp 1))
-    (symex--go-forward)
-    (when (symex-empty-list-p)
-      (fixup-whitespace)
-      (re-search-forward symex--re-left)
-      (symex--go-down))))
-
 (defvar symex--traversal-emit-backward
   (symex-traversal
    (maneuver (move up)
