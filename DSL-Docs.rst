@@ -431,9 +431,9 @@ Here, you can substitute the contents of ``(symex-traversal ...)`` with whatever
 Using a Debugger (EDebug)
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Another way is to use the ELisp Debugger, EDebug. This can be helpful to see the exact steps the DSL evaluator goes through in executing a traversal, and can be helpful for cases where the traversal isn't doing what you think it should be and you want to understand why (or even if you just want to understand how the evaluator works).
+Another way is to use the ELisp Debugger, EDebug. This allows you to see the exact steps the DSL evaluator goes through in executing a traversal and the effects it has on the code, and can be helpful if you want to understand why a traversal isn't doing what you think it should be doing (or even if you just want to understand how the DSL works). A good debugger isn't just for debugging problems, it's also an exploratory tool for quick feedback at the creative stage when you're implementing new functionality. It can help you be more efficient at every stage of development.
 
-To use it, first evaluate the ``symex-execute-traversal`` function for debugging by placing point somewhere within it and then invoking ``M-x edebug-defun`` (I personally have this bound in an ELisp specific leader / Hydra). Now, if you execute a traversal (e.g. via the REPL as in the recipe above), it will put you in the debugger and allow you to step through the code. Handy commands for EDebug:
+To use it, first evaluate the relevant traversal evaluator (for instance, the ``symex-execute-traversal`` function) for debugging by placing point somewhere within it and then invoking ``M-x edebug-defun`` (I personally have this bound in an ELisp specific leader / Hydra). Now, if you execute a traversal (e.g. via the REPL as in the recipe above, with a test expression in the Scratch buffer -- or even just by invoking the relevant feature on source code while in Symex mode), it will put you in the debugger and allow you to step through the code. Handy commands for EDebug:
 
 * ``s`` -- step forward
 * ``i`` -- step in
@@ -443,13 +443,22 @@ To use it, first evaluate the ``symex-execute-traversal`` function for debugging
 
 There are also lots of other features like setting and unsetting breakpoints (``b`` and ``u``), seeing a backtrace (``d``), evaluating expressions in the evaluation context (``e``), and lots more, making it an indispensible tool for ELisp debugging.
 
-Note that if you are attempting to debug a feature implemented as a macro like ``symex-define-command``, you may need to copy the contents of the command to a new function and call that function from the macro, in order to be able to debug it. You would need to evaluate the function for debugging rather than the macro. Naively, if you attempt to debug the macro, the debugger is triggered at compile time (i.e. as soon as you attempt to evaluate it for debugging!) and not at runtime when you're actually interested in using it.
-
-Sometimes, the debugger appears to get overridden by Evil keybindings, complaining that the "Buffer is read-only" when you attempt to ``s`` to step forward. Saving the buffer (as opposed to debugging an unsaved buffer) seems to solve these issues, and if not, killing and reopening the buffer does.
-
-When you're done debugging, you can remove the debugger hooks by just evaluating the debugged functions in the usual way (e.g. via ``M-x eval-defun``).
+When you're done debugging, you can remove the debugger hooks by just evaluating the debugged functions in the usual way (e.g. via ``M-x eval-defun`` or ``M-x eval-buffer``).
 
 Also see `this series on ELisp debugging <https://endlessparentheses.com/debugging-emacs-lisp-part-1-earn-your-independence.html>`__ for more tips.
+
+Troubleshooting
+~~~~~~~~~~~~~~~
+
+Debugging Macros vs Functions
+`````````````````````````````
+
+If you are attempting to debug a feature implemented as a macro like ``symex-define-command``, you would need to evaluate the primitive functions for debugging, rather than the macro, or if necessary, copy the contents of the command to a new function and call that function from the macro, in order to be able to debug it. To be clear, you would need to evaluate the *function* for debugging rather than the macro. Naively, if you attempt to debug the macro, the debugger is triggered at compile time (i.e. as soon as you attempt to evaluate it for debugging!) and not at runtime when you're actually interested in using it. For the same reason, if you attempt to "step into" a macro invocation while the debugger is active, it won't do anything. You can only debug functions. If what you are interested in debugging is not a function, then put it in a function and debug that.
+
+"Buffer is read-only"
+`````````````````````
+
+Sometimes, the debugger appears to get overridden by Evil keybindings, complaining that the "Buffer is read-only" when you attempt to ``s`` to step forward. Saving the buffer (as opposed to debugging an unsaved buffer) seems to solve these issues, and if not, killing and reopening the buffer does.
 
 Print Statements and Asserts
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
