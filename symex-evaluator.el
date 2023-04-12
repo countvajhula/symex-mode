@@ -230,10 +230,22 @@ Evaluates to a COMPUTATION on the traversal actually executed."
 (defun symex-execute-deletion (deletion computation)
   "Attempt to execute a given DELETION.
 
+This could delete `this`, `previous` or `next`. Of these, favor the
+latter two as those are explicit that the placement of point is
+unaffected by the transformation. On the other hand, the first is
+provided as a convenience for cases where posterior placement of point
+is irrelevant for the purposes of the traversal, because, indeed,
+there is no fixed rule on where it will be placed.
+
+TODO: either there should be no guarantee and either next or previous
+could be selected, or it should leave a void and have point indicate
+the whitespace there rather than explicitly select either the next or
+previous expression.
+
 Evaluates to a COMPUTATION on the traversal actually executed."
   (let ((what (symex--deletion-what deletion)))
     ;; TODO: "what" is currently ignored
-    (let ((result (symex-delete 1)))
+    (let ((result (symex-prim-delete what)))
       ;; TODO: compute based on an appropriate result here
       (when result
         (symex--compute-results symex--move-zero

@@ -136,6 +136,14 @@
       (symex-right-p)
     (error nil)))
 
+(defun symex-lisp--previous-p ()
+  "Check if a preceding symex exists at this level."
+  (save-excursion (symex-lisp--backward)))
+
+(defun symex-lisp--next-p ()
+  "Check if a succeeding symex exists at this level."
+  (save-excursion (symex-lisp--forward)))
+
 ;; From Lispy
 (defvar symex--re-left "[([{]"
   "Opening delimiter.")

@@ -95,6 +95,18 @@
       (symex-ts--point-at-start-p)
     (symex-lisp--point-at-start-p)))
 
+(defun symex--previous-p ()
+  "Check if a preceding symex exists at this level."
+  (if (symex-tree-sitter-p)
+      (symex-ts--previous-p)
+    (symex-lisp--previous-p)))
+
+(defun symex--next-p ()
+  "Check if a succeeding symex exists at this level."
+  (if (symex-tree-sitter-p)
+      (symex-ts--next-p)
+    (symex-lisp--next-p)))
+
 ;;; Navigation
 
 (defun symex--go-forward (&optional count)
