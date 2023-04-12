@@ -179,6 +179,36 @@ when the way is blocked.")
                      (precaution symex--traversal-goto-first
                                  (beforehand (not (at root)))))))
 
+(symex-deftraversal symex--traversal-emit-backward
+  (maneuver (move up)
+            (delete)
+            (move down)
+            (paste before))
+  "Emit backward.")
+
+(symex-deftraversal symex--traversal-emit-forward
+  (maneuver (move up)
+            (circuit (move forward))
+            (delete)
+            (move down)
+            (paste after))
+  "Emit forward.")
+
+(symex-deftraversal symex--traversal-capture-backward
+  (maneuver (delete previous)
+            (move up)
+            (paste before)
+            (move down))
+  "Capture backward.")
+
+(symex-deftraversal symex--traversal-capture-forward
+  (maneuver (delete next)
+            (move up)
+            (circuit (move forward))
+            (paste after)
+            (move down))
+  "Capture forward.")
+
 (symex-define-motion symex-traverse-forward (count)
   "Traverse symex as a tree, using pre-order traversal.
 

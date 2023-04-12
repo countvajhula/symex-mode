@@ -161,14 +161,6 @@ WHAT could be `this`, `next`, or `previous`."
       (symex-ts-clear)
     (symex-lisp-clear)))
 
-(defvar symex--traversal-emit-backward
-  (symex-traversal
-   (maneuver (move up)
-             (delete)
-             (move down)
-             (paste before)))
-  "Emit backward.")
-
 (defun symex--emit-backward (count)
   "Emit backward."
   (dotimes (_ count)
@@ -178,15 +170,6 @@ WHAT could be `this`, `next`, or `previous`."
   "Emit backward, COUNT times."
   (interactive "p")
   (symex--emit-backward count))
-
-(defvar symex--traversal-emit-forward
-  (symex-traversal
-   (maneuver (move up)
-             (circuit (move forward))
-             (delete)
-             (move down)
-             (paste after)))
-  "Emit forward.")
 
 (defun symex--emit-forward (count)
   "Emit forward."
@@ -198,14 +181,6 @@ WHAT could be `this`, `next`, or `previous`."
   (interactive "p")
   (symex--emit-forward count))
 
-(defvar symex--traversal-capture-backward
-  (symex-traversal
-   (maneuver (delete previous)
-             (move up)
-             (paste before)
-             (move down)))
-  "Capture backward.")
-
 (defun symex--capture-backward (count)
   "Capture from behind."
   (dotimes (_ count)
@@ -215,15 +190,6 @@ WHAT could be `this`, `next`, or `previous`."
   "Capture from behind, COUNT times."
   (interactive "p")
   (symex--capture-backward count))
-
-(defvar symex--traversal-capture-forward
-  (symex-traversal
-   (maneuver (delete next)
-             (move up)
-             (circuit (move forward))
-             (paste after)
-             (move down)))
-  "Capture forward.")
 
 (defun symex--capture-forward (count)
   "Capture from the front."
