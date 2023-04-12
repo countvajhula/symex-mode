@@ -248,8 +248,9 @@ Evaluates to a COMPUTATION on the traversal actually executed."
     (let ((result (if (eq 'before side)
                       ;; TODO: ensure point invariance
                       ;; at the command level
-                      (progn (symex-paste-before 1)
-                             (symex--go-forward))
+                      (let ((result (symex-paste-before 1)))
+                        (symex--go-forward)
+                        result)
                     (save-excursion
                       (symex-paste-after 1)))))
       ;; TODO: compute based on an appropriate result here
@@ -333,6 +334,10 @@ Evaluates to a COMPUTATION on the traversal actually executed."
         (if result
             (progn (funcall side-effect)
                    result)
+          ;; TODO: simply returning to the original location
+          ;; isn't enough when the traversal might include
+          ;; transformations. It may be necessary to execute
+          ;; traversals in a temporary buffer.
           (goto-char original-location)
           (symex-select-nearest)
           (let* ((current-point-height-offset (symex--point-height-offset))

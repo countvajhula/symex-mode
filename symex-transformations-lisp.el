@@ -304,7 +304,8 @@ text, on the respective side."
           (symex--goto-line end-line)
           ;; if the last line has any trailing forms,
           ;; indent them.
-          (symex--same-line-tidy-affected))))))
+          (symex--same-line-tidy-affected)
+          (not (equal pasted-text "")))))))
 
 (defun symex-lisp--paste-after ()
   "Paste after symex."
@@ -336,7 +337,8 @@ text, on the respective side."
       ;; 3. user commands that use the DSL and include UX specifics like which expression
       ;;    should be selected after the fact, and configurable things
       (forward-sexp)
-      (forward-char))))
+      (forward-char)
+      (not (equal pasted-text "")))))
 
 (defun symex-lisp-yank (count)
   "Yank (copy) COUNT symexes."
