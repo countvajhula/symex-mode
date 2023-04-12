@@ -191,24 +191,26 @@
   (interactive "p")
   (symex--capture-backward count))
 
-(defun symex--capture-forward ()
+(defvar symex--traversal-capture-forward
+  (symex-traversal
+   (maneuver (move forward)
+             (delete)
+             (move backward) ; use (delete next) instead
+             (move up)
+             (circuit (move forward))
+             (paste after)
+             (move down)))
+  "Capture forward.")
+
+(defun symex--capture-forward (count)
   "Capture from the front."
-  (when (and (symex-left-p)
-             (not (save-excursion
-                    (symex-other)
-                    (forward-char)
-                    (symex-lisp--point-at-end-p))))
-    (save-excursion
-      (if (symex-empty-list-p)
-          (forward-char)
-        (symex--go-up))  ; need to be inside the symex to emit and capture
-      (paredit-forward-slurp-sexp 1))))
+  (dotimes (_ count)
+    (symex-execute-traversal symex--traversal-capture-forward)))
 
 (symex-define-command symex-capture-forward (count)
   "Capture from the front, COUNT times."
   (interactive "p")
-  (dotimes (_ count)
-    (symex--capture-forward)))
+  (symex--capture-forward count))
 
 (symex-define-command symex-split ()
   "Split symex into two."
