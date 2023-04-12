@@ -114,9 +114,11 @@
 
 Go forward COUNT times, defaulting to one.
 
-This is an internal utility that avoids any user-level concerns
-such as symex selection via advice.  This should be used in all
-internal operations that are not primarily user-directed."
+This is a Lisp motion primitive. It is an internal utility that avoids
+any user-level concerns such as symex selection via advice.  This
+should be used in all internal operations _above_ the primitive layer
+(e.g. favoring it over Emacs internal utilities like `forward-sexp`)
+that are not primarily user-directed."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-move-next-sibling count)
@@ -127,9 +129,11 @@ internal operations that are not primarily user-directed."
 
 Go backward COUNT times, defaulting to one.
 
-This is an internal utility that avoids any user-level concerns
-such as symex selection via advice.  This should be used in all
-internal operations that are not primarily user-directed."
+This is a Lisp motion primitive. It is an internal utility that avoids
+any user-level concerns such as symex selection via advice.  This
+should be used in all internal operations _above_ the primitive layer
+(e.g. favoring it over Emacs internal utilities like `forward-sexp`)
+that are not primarily user-directed."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-move-prev-sibling count)
@@ -140,9 +144,11 @@ internal operations that are not primarily user-directed."
 
 Enter COUNT times, defaulting to one.
 
-This is an internal utility that avoids any user-level concerns
-such as symex selection via advice.  This should be used in all
-internal operations that are not primarily user-directed."
+This is a Lisp motion primitive. It is an internal utility that avoids
+any user-level concerns such as symex selection via advice.  This
+should be used in all internal operations _above_ the primitive layer
+(e.g. favoring it over Emacs internal utilities like `forward-sexp`)
+that are not primarily user-directed."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-move-child count)
@@ -153,9 +159,11 @@ internal operations that are not primarily user-directed."
 
 Exit COUNT times, defaulting to one.
 
-This is an internal utility that avoids any user-level concerns
-such as symex selection via advice.  This should be used in all
-internal operations that are not primarily user-directed."
+This is a Lisp motion primitive. It is an internal utility that avoids
+any user-level concerns such as symex selection via advice.  This
+should be used in all internal operations _above_ the primitive layer
+(e.g. favoring it over Emacs internal utilities like `forward-sexp`)
+that are not primarily user-directed."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-move-parent count)
