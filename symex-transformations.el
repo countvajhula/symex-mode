@@ -102,28 +102,6 @@
       (symex-ts-delete-node-backward count)
     (symex-lisp-delete-backwards count)))
 
-(defun symex-prim-delete (what)
-  "Delete WHAT symex.
-
-WHAT could be `this`, `next`, or `previous`."
-  (let ((result
-         (cond ((eq 'this what) (symex--delete 1))
-               ((eq 'previous what)
-                (when (symex--previous-p)
-                  (symex--go-backward)
-                  (let ((result (symex-lisp--delete 1)))
-                    (symex--go-forward)
-                    result)))
-               ((eq 'next what)
-                (when (symex--next-p)
-                  (symex--go-forward)
-                  (let ((result (symex-lisp--delete 1)))
-                    (symex--go-backward)
-                    result)))
-               (t (error "Invalid argument for primitive delete!")))))
-    (symex--tidy 1)
-    result))
-
 (symex-define-command symex-delete-remaining ()
   "Delete remaining symexes at this level."
   (interactive)

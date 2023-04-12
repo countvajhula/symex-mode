@@ -169,6 +169,29 @@ that are not primarily user-directed."
       (symex-ts-move-parent count)
     (symex-lisp--go-down count)))
 
+;;; Transformations
+
+(defun symex-prim-delete (what)
+  "Delete WHAT symex.
+
+WHAT could be `this`, `next`, or `previous`."
+  (let ((result))
+    (cond ((eq 'this what)
+           (setq result (symex--delete 1)))
+          ((eq 'previous what)
+           (when (symex--previous-p)
+             (symex--go-backward)
+             (setq result (symex-lisp--delete 1))
+             (symex--go-forward)))
+          ((eq 'next what)
+           (when (symex--next-p)
+             (symex--go-forward)
+             (setq result (symex-lisp--delete 1))
+             (symex--go-backward)))
+          (t (error "Invalid argument for primitive delete!")))
+    (symex--tidy 1)
+    result))
+
 ;;; Utilities
 
 (defmacro symex-save-excursion (&rest body)
