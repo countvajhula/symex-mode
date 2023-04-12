@@ -275,6 +275,7 @@ text, on the respective side."
                at-eol
                multiline)
            "\n")
+          ((symex-inside-empty-form-p) "")
           (t " "))))
 
 (defun symex-lisp--paste-before ()
@@ -311,7 +312,9 @@ text, on the respective side."
   "Paste after symex."
   (interactive)
   (let ((padding (symex-lisp--padding nil)))
-    (save-excursion (forward-sexp)
+    (save-excursion (condition-case nil
+                        (forward-sexp)
+                      (error nil))
                     (symex-lisp--paste padding
                                        ""))))
 

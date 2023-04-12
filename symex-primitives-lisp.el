@@ -247,6 +247,15 @@
          (progn (forward-char 1)
                 (symex-string-p)))))
 
+(defun symex-inside-empty-form-p ()
+  "Check if point is inside an empty form."
+  (and (looking-back (concat symex--re-left
+                             symex--re-whitespace)
+                     (line-beginning-position))
+       (looking-at-p
+        (concat symex--re-whitespace
+                symex--re-right))))
+
 (defun symex--racket-syntax-object-p ()
   "Check if the symex is a racket syntax object."
   (looking-at-p symex--re-racket-syntax-object))
