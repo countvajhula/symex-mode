@@ -200,8 +200,7 @@ WHAT could be `this`, `next`, or `previous`."
 
 (defvar symex--traversal-capture-backward
   (symex-traversal
-   (maneuver (move backward)
-             (delete)
+   (maneuver (delete previous)
              (move up)
              (paste before)
              (move down)))
@@ -219,9 +218,7 @@ WHAT could be `this`, `next`, or `previous`."
 
 (defvar symex--traversal-capture-forward
   (symex-traversal
-   (maneuver (move forward)
-             (delete)
-             (move backward) ; use (delete next) instead
+   (maneuver (delete next)
              (move up)
              (circuit (move forward))
              (paste after)
