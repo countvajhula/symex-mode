@@ -32,8 +32,7 @@
 
 ;; TODO: Remove dependencies after moving to symex-transformations-lisp.el
 (require 'paredit)
-(require 'evil)
-(require 'evil-surround)
+(require 'evil nil :no-error)
 (require 'symex-primitives)
 (require 'symex-primitives-lisp)
 (require 'symex-utils)
@@ -80,7 +79,8 @@
   `(defun ,name ,args
      ,docstring
      ,interactive-decl
-     (evil-start-undo-step)
+     (when (symex--evil-installed-p)
+       (evil-start-undo-step))
      ,@body
      (symex-enter-lowest)))
 
@@ -313,7 +313,8 @@ by default, joins next symex to current one."
 (symex-define-command symex-paste-before (count)
   "Paste before symex, COUNT times."
   (interactive "p")
-  (setq this-command 'evil-paste-before)
+  (when (symex--evil-installed-p)
+    (setq this-command 'evil-paste-before))
   (if (symex-tree-sitter-p)
       (symex-ts-paste-before count)
     (symex-lisp-paste-before count)))
@@ -321,7 +322,8 @@ by default, joins next symex to current one."
 (symex-define-command symex-paste-after (count)
   "Paste after symex, COUNT times."
   (interactive "p")
-  (setq this-command 'evil-paste-after)
+  (when (symex--evil-installed-p)
+    (setq this-command 'evil-paste-after))
   (if (symex-tree-sitter-p)
       (symex-ts-paste-after count)
     (symex-lisp-paste-after count)))
@@ -439,6 +441,21 @@ in the parent symex."
     (paredit-splice-sexp-killing-forward)
     (symex--go-backward)))
 
+(defun symex--delete-pair ()
+  "Delete a pair of characters enclosing sexps that follow point."
+  (save-excursion
+    (skip-chars-forward " \t")
+    (save-excursion
+      (let ((open-char (char-after)))
+        (forward-sexp)
+        (unless (member (list open-char (char-before))
+                        (mapcar (lambda (p)
+                                  (if (= (length p) 3) (cdr p) p))
+                                insert-pair-alist))
+          (error "Not before matching pair"))
+        (delete-char -1)))
+    (delete-char 1)))
+
 (symex-define-command symex-splice ()
   "Splice or 'clip' symex.
 
@@ -451,7 +468,7 @@ then no action is taken."
             (symex-empty-string-p))
         (symex-delete 1)
       (save-excursion
-        (evil-surround-delete (char-after))
+        (symex--delete-pair)
         (symex--go-down)))))
 
 (symex-define-command symex-wrap-round ()
@@ -470,13 +487,13 @@ then no action is taken."
   "Wrap with {}."
   (interactive)
   (paredit-wrap-curly)
-  (evil-find-char-backward nil 123))
+  (search-backward "{"))
 
 (symex-define-command symex-wrap-angled ()
   "Wrap with <>."
   (interactive)
   (paredit-wrap-angled)
-  (evil-find-char-backward nil 60))
+  (search-backward "<"))
 
 (symex-define-insertion-command symex-wrap ()
   "Wrap with containing symex."
@@ -549,13 +566,37 @@ then no action is taken."
                 (= row (line-number-at-pos)))
       (symex--shift-forward))))
 
+(defvar symex--delimiters
+  '(("(" . ")") ("[" . "]") ("{" . "}") ("<" . ">") ("\"" . "\"")))
+
+(defun symex--surround (open-delimiter close-delimiter start end)
+  (goto-char end)
+  (insert close-delimiter)
+  (goto-char start)
+  (insert open-delimiter))
+
+(defun symex--change-delimiter (&optional no-trim)
+  (let* ((open-delimiter (completing-read "Choose opening delimiter: " (mapcar 'car symex--delimiters)))
+         (close-delimiter (or (cdr (assoc open-delimiter symex--delimiters))
+                              open-delimiter))
+         (start (point-marker))
+         (end (progn (forward-sexp) (point-marker))))
+    (if no-trim
+        (symex--surround open-delimiter close-delimiter start end)
+      (progn
+        (goto-char start)
+        (delete-char 1)
+        (insert open-delimiter)
+        (goto-char (1- end))
+        (delete-char 1)
+        (insert close-delimiter)))))
+
 (symex-define-command symex-change-delimiter ()
   "Change delimiter enclosing current symex, e.g. round -> square brackets."
   (interactive)
-  (if (or (symex-left-p) (symex-string-p))
-      (evil-surround-change (following-char))
-    (let ((bounds (bounds-of-thing-at-point 'sexp)))
-      (evil-surround-region (car bounds) (cdr bounds) 'inclusive 40))))
+  (save-excursion (if (or (symex-left-p) (symex-string-p))
+                      (symex--change-delimiter)
+                    (symex--change-delimiter :no-trim))))
 
 (symex-define-command symex-comment (count)
   "Comment out COUNT symexes."

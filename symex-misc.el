@@ -26,7 +26,7 @@
 ;;; Code:
 
 
-(require 'evil)
+(require 'evil nil :no-error)
 (require 'symex-primitives)
 (require 'symex-evaluator)
 (require 'symex-traversals)
@@ -55,17 +55,18 @@
 ;;; MISCELLANEOUS ;;;
 ;;;;;;;;;;;;;;;;;;;;;
 
-(evil-define-state emacslike
-  "An Emacs-like state."
-  :tag " <E> "
-  :message "-- EMACHS --"
-  :enable (emacs))
+(when (symex--evil-installed-p)
+  (evil-define-state emacslike
+    "An Emacs-like state."
+    :tag " <E> "
+    :message "-- EMACHS --"
+    :enable (emacs))
 
-(evil-define-state normallike
-  "A Normal-like state."
-  :tag " <N> "
-  :message "-- NORMALE --"
-  :enable (normal))
+  (evil-define-state normallike
+    "A Normal-like state."
+    :tag " <N> "
+    :message "-- NORMALE --"
+    :enable (normal)))
 
 (defun symex--evaluate ()
   "Evaluate symex."

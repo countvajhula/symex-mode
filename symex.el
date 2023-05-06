@@ -3,7 +3,7 @@
 ;; Author: Siddhartha Kasivajhula <sid@countvajhula.com>
 ;; URL: https://github.com/drym-org/symex.el
 ;; Version: 1.0
-;; Package-Requires: ((emacs "25.1") (tsc "0.15.2") (tree-sitter "0.15.2") (paredit "24") (evil "1.2.14") (evil-surround "1.0.4") (seq "2.22"))
+;; Package-Requires: ((emacs "25.1") (tsc "0.15.2") (tree-sitter "0.15.2") (paredit "24") (seq "2.22"))
 ;; Keywords: lisp, convenience, languages
 
 ;; This program is "part of the world," in the sense described at
@@ -39,9 +39,11 @@
 
 ;;; Code:
 
-(require 'symex-evil)
 (require 'symex-interop)
+(when (symex--evil-installed-p)
+  (require 'symex-evil))
 (require 'symex-misc)
+(require 'symex-transformations)
 (require 'symex-primitives)
 (require 'symex-custom)
 (require 'tree-sitter)
@@ -96,13 +98,14 @@
 
 (defun symex--enter-mode ()
   "Load the modal interface."
-  (unless (symex--rigpa-enabled-p)
-    ;; the minor mode needs to be enabled prior to entering the
-    ;; evil state or the keybindings won't take effect. So we
-    ;; can't do it in the state entry hook, which would
-    ;; otherwise be preferable
-    (symex-enable-editing-minor-mode))
-  (evil-symex-state))
+  (when (symex--evil-installed-p)
+    (unless (symex--rigpa-enabled-p)
+     ;; the minor mode needs to be enabled prior to entering the
+     ;; evil state or the keybindings won't take effect. So we
+     ;; can't do it in the state entry hook, which would
+     ;; otherwise be preferable
+     (symex-enable-editing-minor-mode))
+   (evil-symex-state)))
 
 (defun symex-enter-mode ()
   "Take necessary action upon symex mode entry."
@@ -142,7 +145,8 @@
 
 (defun symex-modal-provider-initialize ()
   "Initialize the modal interface provider."
-  (symex-evil-initialize))
+  (when (symex--evil-installed-p)
+    (symex-evil-initialize)))
 
 ;;;###autoload
 (defun symex-initialize ()

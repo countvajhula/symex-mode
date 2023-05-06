@@ -27,8 +27,6 @@
 
 (require 'cl-lib)
 
-(require 'evil)
-(require 'evil-surround)
 (require 'symex-primitives)
 (require 'symex-primitives-lisp)
 (require 'symex-utils)
@@ -99,7 +97,7 @@
            ;; don't leave an empty line where the symex was
            (delete-region (line-beginning-position)
                           (1+ (line-end-position)))))
-        ((or (save-excursion (evil-last-non-blank) ; (<>$
+        ((or (save-excursion (end-of-line) (skip-chars-backward " \t") ; (<>$
                              (symex-left-p)))
          (symex--join-to-next))
         ((looking-at-p "\n")         ; (abc <>
@@ -125,7 +123,8 @@
                    ;; ensure that there isn't a comment on the
                    ;; preceding line before joining lines
                    (unless (condition-case nil
-                               (progn (evil-find-char 1 ?\;)
+                               (progn (search-forward ";" (save-excursion
+                                                            (end-of-line) (point)))
                                       t)
                              (error nil))
                      (symex--join-to-match symex--re-right))))))))
@@ -170,7 +169,7 @@
   (newline-and-indent)
   (forward-line -1)
   (indent-according-to-mode)
-  (evil-move-end-of-line)
+  (move-end-of-line 1)
   (unless (or (symex--current-line-empty-p)
               (save-excursion (backward-char)
                               (symex-left-p)))

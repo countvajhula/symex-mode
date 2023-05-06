@@ -25,7 +25,7 @@
 
 ;;; Code:
 
-(require 'evil)
+(require 'evil nil :no-error)
 (require 'symex-interop)
 
 (defun symex-eval-elisp ()
@@ -68,11 +68,15 @@ open in most recently used other window."
   (let ((window (get-buffer-window "*ielm*")))
     (cond (window (select-window window))
           ((= 1 (length (window-list)))
-           (evil-window-vsplit)
-           (evil-window-right 1)
+           (split-window-right)
+           (windmove-right)
            (ielm))
-          (t (evil-window-mru)  ; better LRU
-             (ielm)))
+          ((symex--evil-installed-p)
+           (evil-window-mru)            ; better LRU
+           (ielm))
+          (t
+           (other-window -1)
+           (ielm)))
     (goto-char (point-max))
     (symex-enter-lowest)))
 
