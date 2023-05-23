@@ -253,36 +253,6 @@ Move COUNT times, defaulting to 1."
   (interactive "p")
   (symex-ts--move-with-count #'symex-ts--descend-to-child-with-sibling (symex-make-move 0 1) count))
 
-;;; Transformations
-
-(defun symex-ts-prim-delete (what &optional keep-empty-lines)
-  "Delete WHAT node neighboring the current node.
-
-WHAT could be `this`, `next`, or `previous`.
-
-If KEEP-EMPTY-LINES is set then if the deletion results in an
-empty line it will be kept. By default empty lines are deleted
-too."
-  (interactive "p")
-  (symex-ts--handle-tree-modification
-   (let* ((node (cond ((eq 'this what) (symex-ts-get-current-node))
-                      ((eq 'next what) (symex-ts-get-current-node))))
-          (start-pos (tsc-node-start-position node))
-          (end-pos (tsc-node-end-position
-                    (if (> count 1)
-                        (symex-ts--get-nth-sibling-from-node
-                         node
-                         #'tsc-get-next-named-sibling count)
-                      node))))
-
-     ;; Delete the node's region
-     (kill-region start-pos end-pos)
-
-     ;; Remove all empty lines following the deletion
-     (when (not keep-empty-lines)
-       (let ((cont t))
-         (while cont (setq cont (symex-ts--delete-current-line-if-empty start-pos))))))))
-
 ;;; Utilities
 
 (defmacro symex-ts-save-excursion (&rest body)
