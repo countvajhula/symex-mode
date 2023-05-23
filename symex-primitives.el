@@ -171,22 +171,28 @@ that are not primarily user-directed."
 
 ;;; Transformations
 
+(defun symex--prim-delete ()
+  "Delete current symex."
+  (if (symex-tree-sitter-p)
+      (symex-ts-delete-node-forward 1)
+    (symex-lisp--delete 1)))
+
 (defun symex-prim-delete (what)
   "Delete WHAT symex.
 
 WHAT could be `this`, `next`, or `previous`."
   (let ((result))
     (cond ((eq 'this what)
-           (setq result (symex--delete 1)))
+           (setq result (symex--prim-delete)))
           ((eq 'previous what)
            (when (symex--previous-p)
              (symex--go-backward)
-             (setq result (symex-lisp--delete 1))
+             (setq result (symex--prim-delete))
              (symex--go-forward)))
           ((eq 'next what)
            (when (symex--next-p)
              (symex--go-forward)
-             (setq result (symex-lisp--delete 1))
+             (setq result (symex--prim-delete))
              (symex--go-backward)))
           (t (error "Invalid argument for primitive delete!")))
     (symex--tidy 1)

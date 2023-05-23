@@ -223,6 +223,14 @@ Note that this does not consider global root to be a tree root."
   (let ((cur (symex-ts-get-current-node)))
     (= (point) (tsc-node-start-position cur))))
 
+(defun symex-ts--previous-p ()
+  "Check if a preceding symex exists at this level."
+  (symex-ts-save-excursion (symex-ts-move-prev-sibling)))
+
+(defun symex-ts--next-p ()
+  "Check if a succeeding symex exists at this level."
+  (symex-ts-save-excursion (symex-ts-move-next-sibling)))
+
 ;;; Navigations
 
 (defun symex-ts-move-prev-sibling (&optional count)
