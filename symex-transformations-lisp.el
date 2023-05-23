@@ -220,6 +220,7 @@ text, on the respective side."
                      (symex-lisp--padding t)))
 
 (defun symex-lisp-paste-before (count)
+  "Paste before symex, COUNT times."
   (symex--with-undo-collapse
     (let ((pasted-text ""))
       (dotimes (_ count)
@@ -254,7 +255,7 @@ text, on the respective side."
                                        ""))))
 
 (defun symex-lisp-paste-after (count)
-  "Paste after symex."
+  "Paste after symex, COUNT times."
   (symex--with-undo-collapse
     (let ((pasted-text ""))
       (dotimes (_ count)

@@ -244,7 +244,6 @@ previous expression.
 
 Evaluates to a COMPUTATION on the traversal actually executed."
   (let ((what (symex--deletion-what deletion)))
-    ;; TODO: "what" is currently ignored
     (let ((result (symex-prim-delete what)))
       ;; TODO: compute based on an appropriate result here
       (when result
@@ -321,6 +320,10 @@ Evaluates to a COMPUTATION on the traversal actually executed."
 
 (defun symex-execute-traversal (traversal &optional computation side-effect)
   "Execute a tree TRAVERSAL.
+
+TRAVERSAL could be a move, a maneuver, or any other Symex traversal.
+If it is not a Symex expression, then it is assumed to be an ELisp
+function, and the rule for interpretation is to apply the function.
 
 SIDE-EFFECT is the operation to perform as part of the traversal
 \(none by default).

@@ -233,6 +233,8 @@ a detour, a move, etc., which is specified using the Symex DSL."
          `(symex--compile-delete ,@(cdr traversal)))
         ((equal 'paste (car traversal))
          `(symex--compile-paste ,@(cdr traversal)))
+        ;; TODO: instead of an implicit escape, it may be better
+        ;; to use an explicit one like (esc ...) or (lisp ...)
         (t traversal)))  ; function-valued symbols wind up here
 
 (defmacro symex-deftraversal (name traversal &optional docstring)
