@@ -372,11 +372,10 @@ as special cases here."
 
 (defun symex-lisp-select-nearest ()
   "Select the appropriate symex nearest to point."
-  (cond ((and (not (bobp))
-              (save-excursion (backward-char)
-                              (symex-left-p))
-              (not (eobp))
-              (symex-right-p)) ; (|)
+  (cond ((symex-left-p) nil)
+        ((and (symex-right-p)
+              (looking-back symex--re-left
+                            (line-beginning-position))) ; (|)
          nil) ; don't change level in selection
         ((and (not (eobp))
               (symex-right-p)) ; |)
@@ -385,7 +384,7 @@ as special cases here."
              (thing-at-point 'string)
            (error nil))       ; "som|e string"
          (beginning-of-thing 'string))
-        ((thing-at-point 'sexp)       ; som|ething
+        ((thing-at-point 'sexp) ; som|ething or even (something)|
          (beginning-of-thing 'sexp))
         (t (symex-lisp--if-stuck (symex-lisp--backward)
                                  (symex-lisp--forward)))))
