@@ -241,7 +241,6 @@ symexes, returns the end point of the last one found."
 
 (defun symex-select-nearest ()
   "Select symex nearest to point."
-  (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-set-current-node-from-point)
     (symex-lisp-select-nearest))

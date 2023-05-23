@@ -34,6 +34,7 @@
 (require 'paredit)
 (require 'evil)
 (require 'evil-surround)
+(require 'symex-misc)
 (require 'symex-primitives)
 (require 'symex-primitives-lisp)
 (require 'symex-utils)
@@ -65,7 +66,7 @@
        ,docstring
        ,interactive-decl
        (let ((,result (progn ,@body)))
-         (symex-select-nearest)
+         (symex-user-select-nearest)
          (symex--tidy 1)
          ,result))))
 

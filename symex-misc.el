@@ -204,6 +204,21 @@ Version 2017-11-01"
   (recenter)
   (evil-window-mru))
 
+(defun symex-user-select-nearest ()
+  "Select symex nearest to point.
+
+This user-level interface does the most intuitive thing from the perspective
+of the user, and isn't necessarily deterministic. It may select the next
+expression, the previous one, or the containing one, depending on context.
+For the deterministic version used at the primitive level, see
+`symex-select-nearest`."
+  (interactive)
+  (symex-select-nearest)
+  (when (and (symex-right-p)
+             (looking-back symex--re-left
+                           (line-beginning-position)))
+    (symex-go-down 1)))
+
 (defun symex-select-nearest-in-line ()
   "Select symex nearest to point that's on the current line."
   (interactive)
@@ -434,7 +449,7 @@ the implementation."
   "Advice to select the nearest symex."
   (when (and (fboundp 'evil-symex-state-p)
              (evil-symex-state-p))
-    (symex-select-nearest)))
+    (symex-user-select-nearest)))
 
 (defun symex--selection-side-effects ()
   "Things to do as part of symex selection, e.g. after navigations."
@@ -487,7 +502,7 @@ is expected to handle in Emacs)."
   (advice-add #'symex-goto-last :around #'symex-selection-advice)
   (advice-add #'symex-goto-lowest :around #'symex-selection-advice)
   (advice-add #'symex-goto-highest :around #'symex-selection-advice)
-  (advice-add #'symex-select-nearest :around #'symex-selection-advice))
+  (advice-add #'symex-user-select-nearest :around #'symex-selection-advice))
 
 (defun symex--remove-selection-advice ()
   "Remove selection advice."
@@ -507,7 +522,7 @@ is expected to handle in Emacs)."
   (advice-remove #'symex-goto-last #'symex-selection-advice)
   (advice-remove #'symex-goto-lowest #'symex-selection-advice)
   (advice-remove #'symex-goto-highest #'symex-selection-advice)
-  (advice-remove #'symex-select-nearest #'symex-selection-advice))
+  (advice-remove #'symex-user-select-nearest #'symex-selection-advice))
 
 (defun symex--remember-branch-position (orig-fn &rest args)
   "Remember branch position when descending the tree.

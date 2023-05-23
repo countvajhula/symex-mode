@@ -112,7 +112,7 @@
   (symex--adjust-point-on-entry)
   (when symex-remember-branch-positions-p
     (symex--clear-branch-memory))
-  (symex-select-nearest)
+  (symex-user-select-nearest)
   (when symex-refocus-p
     ;; smooth scrolling currently not supported
     ;; may add it back in the future
