@@ -650,6 +650,70 @@ match."
                                   (match-beginning 0))))
         (delete-region start end))))
 
+(defun symex-lisp--reset-after-delete ()
+  "Tidy after deletion and select the appropriate symex."
+  (cond ((symex--current-line-empty-p) ; ^<>$
+         ;; only join up to the next symex if the context suggests
+         ;; that a line break is not desired
+         (if (or (save-excursion (forward-line)
+                                 (not (symex--current-line-empty-p)))
+                 (save-excursion (forward-line -1)
+                                 (symex--current-line-empty-p)))
+             (symex--join-to-next)
+           ;; don't leave an empty line where the symex was
+           (delete-region (line-beginning-position)
+                          (1+ (line-end-position)))))
+        ((or (save-excursion (evil-last-non-blank) ; (<>$
+                             (symex-left-p)))
+         (symex--join-to-next))
+        ((looking-at-p "\n")         ; (abc <>
+         (if (save-excursion (forward-line)
+                             (not (symex--current-line-empty-p)))
+             ;; only join up to the next symex if the context suggests
+             ;; that a line break is not desired
+             (symex--join-to-next)
+           (symex--go-backward)))
+        ((save-excursion (back-to-indentation) ; ^<>)
+                         (symex-right-p))
+         ;; Cases 2 and 3 in issue #18
+         ;; if the deleted symex is preceded by a comment line
+         ;; or if the preceding symex is followed by a comment
+         ;; on the same line, then don't attempt to join lines
+         (let ((original-position (point)))
+           (when (symex--go-backward)
+             (save-excursion
+               (let ((previous-symex-end-pos (symex--get-end-point 1)))
+                 (unless (symex--intervening-comment-line-p previous-symex-end-pos
+                                                            original-position)
+                   (goto-char previous-symex-end-pos)
+                   ;; ensure that there isn't a comment on the
+                   ;; preceding line before joining lines
+                   (unless (condition-case nil
+                               (save-excursion (evil-find-char 1 ?\;)
+                                               t)
+                             (error nil))
+                     (symex--join-to-match symex--re-right))))))))
+        ((symex-right-p)             ; ... <>)
+         (symex--go-backward))
+        (t (symex--go-forward))))
+
+(defun symex-lisp--delete (count)
+  "Delete COUNT symexes."
+  (let ((last-command nil)  ; see symex-yank re: last-command
+        (start (point))
+        (end (symex--get-end-point count)))
+    (when (> end start)
+      (kill-region start end)
+      t)))
+
+(defun symex-lisp-delete (count)
+  "Delete COUNT symexes."
+  (let ((result (symex-lisp--delete count)))
+    (when result
+      (symex-lisp--reset-after-delete)
+      ;; should we return the actual motion we took?
+      result)))
+
 ;;; Utilities
 
 (defun symex-lisp-exit ()
