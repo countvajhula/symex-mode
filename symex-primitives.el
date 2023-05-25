@@ -175,7 +175,7 @@ that are not primarily user-directed."
   "Delete current symex."
   (if (symex-tree-sitter-p)
       (symex-ts-delete-node-forward 1)
-    (symex-lisp--delete 1)))
+    (symex-lisp-delete 1)))
 
 (defun symex-prim-delete (what)
   "Delete WHAT symex.
@@ -186,14 +186,21 @@ WHAT could be `this`, `next`, or `previous`."
            (setq result (symex--prim-delete)))
           ((eq 'previous what)
            (when (symex--previous-p)
-             (symex--go-backward)
-             (setq result (symex--prim-delete))
-             (symex--go-forward)))
+             ;; not sure how reliable `save-excursion` is when
+             ;; the buffer is being mutated. If we encounter
+             ;; any issues we could try `symex--save-point-excursion`
+             ;; or otherwise, note the bounds of the mutated region
+             ;; and manually preserve point where we need it, or
+             ;; if necessary, preserve point structurally by using
+             ;; a primitive version of `symex-index`.
+             (save-excursion
+               (symex--go-backward)
+               (setq result (symex--prim-delete)))))
           ((eq 'next what)
            (when (symex--next-p)
-             (symex--go-forward)
-             (setq result (symex--prim-delete))
-             (symex--go-backward)))
+             (save-excursion
+               (symex--go-forward)
+               (setq result (symex--prim-delete)))))
           (t (error "Invalid argument for primitive delete!")))
     (symex--tidy 1)
     result))
