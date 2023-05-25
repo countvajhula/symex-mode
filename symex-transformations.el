@@ -85,23 +85,21 @@
      ,@body
      (symex-enter-lowest)))
 
-(defun symex--delete (count)
-  "Delete COUNT symexes."
-  (if (symex-tree-sitter-p)
-      (symex-ts-delete-node-forward count)
-    (symex-lisp-delete count)))
-
 (symex-define-command symex-delete (count)
   "Delete COUNT symexes."
   (interactive "p")
-  (symex--delete count))
+  (symex-execute-traversal
+   (symex-traversal
+    (circuit (delete this)
+             count))))
 
 (symex-define-command symex-delete-backwards (count)
   "Delete COUNT symexes backwards."
   (interactive "p")
-  (if (symex-tree-sitter-p)
-      (symex-ts-delete-node-backward count)
-    (symex-lisp-delete-backwards count)))
+  (symex-execute-traversal
+   (symex-traversal
+    (circuit (delete previous)
+             count))))
 
 (symex-define-command symex-delete-remaining ()
   "Delete remaining symexes at this level."
