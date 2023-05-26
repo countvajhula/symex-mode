@@ -67,6 +67,17 @@
        ,interactive-decl
        (let ((,result (progn ,@body)))
          (symex-user-select-nearest)
+         ;; Note that the built-in `fixup-whitespace` that's used in
+         ;; `symex-tidy` causes the buffer to reflect as modified even
+         ;; if it doesn't actually make any modifications.  In such
+         ;; cases, a null change is also pushed onto the undo stack,
+         ;; meaning that executing `undo` results in a no-op at first,
+         ;; and we need to hit `u` again to undo the real change we
+         ;; meant to undo.  We could fix this on the Symex side by
+         ;; only invoking tidy if we see that the buffer has been
+         ;; modified, but it would be better to fix `fixup-whitespace`
+         ;; so it doesn't mark the buffer as modified if no changes
+         ;; were made.
          (symex--tidy 1)
          ,result))))
 
