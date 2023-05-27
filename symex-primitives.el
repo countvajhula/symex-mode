@@ -205,6 +205,22 @@ WHAT could be `this`, `next`, or `previous`."
     (symex--tidy 1)
     result))
 
+(defun symex-prim-paste (where)
+  "Paste WHERE.
+
+WHERE could be either 'before or 'after"
+  ;; TODO: remove counts from primitives
+  ;; as they aren't used
+  (cond ((eq 'before where)
+         (if (symex-tree-sitter-p)
+             (symex-ts-paste-before 1)
+           (symex-lisp-paste-before 1)))
+        ((eq 'after where)
+         (if (symex-tree-sitter-p)
+             (symex-ts-paste-after 1)
+           (symex-lisp-paste-after 1)))
+        (t (error "Invalid argument for primitive paste!"))))
+
 ;;; Utilities
 
 (defmacro symex-save-excursion (&rest body)
