@@ -113,6 +113,7 @@ MARKER is some kind of delimiter for the undo block, TODO."
 ;; original position. We use this simple macro to restore point
 ;; to its exact original location.
 (defmacro symex--save-point-excursion (&rest forms)
+  (declare (indent 0))
   (let ((old-point (gensym "old-point")))
     `(let ((,old-point (point)))
        (prog1
