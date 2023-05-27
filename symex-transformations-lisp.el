@@ -131,17 +131,16 @@
 
 Paste text from the paste buffer, padding it with BEFORE and AFTER
 text, on the respective side."
-  (save-excursion
-    (let* ((text-to-paste
-            ;; add the padding to the yanked text
-            (concat before
-                    (current-kill 0 t)
-                    after))
-           ;; remember initial point location
-           (start (point)))
-      (insert text-to-paste)
-      (indent-region start (point))
-      (buffer-substring start (point)))))
+  (let* ((text-to-paste
+          ;; add the padding to the yanked text
+          (concat before
+                  (current-kill 0 t)
+                  after))
+         ;; remember initial point location
+         (start (point)))
+    (insert text-to-paste)
+    (indent-region start (point))
+    (buffer-substring start (point))))
 
 (defun symex-lisp--padding (&optional before)
   "Determine paste padding needed for current point position."
@@ -212,14 +211,10 @@ text, on the respective side."
   (symex-lisp--paste ""
                      (symex-lisp--padding t)))
 
-(defun symex-lisp-paste-before (count)
-  "Paste before symex, COUNT times."
+(defun symex-lisp-paste-before ()
+  "Paste before symex."
   (symex--with-undo-collapse
-    (let ((pasted-text ""))
-      (dotimes (_ count)
-        (setq pasted-text
-              (concat (symex-lisp--paste-before)
-                      pasted-text)))
+    (let ((pasted-text (symex-lisp--paste-before)))
       (save-excursion
         (let* ((end (+ (point) (length pasted-text)))
                (end-line (line-number-at-pos end)))
@@ -243,38 +238,24 @@ text, on the respective side."
 If a symex is currently selected, then paste after the end of the
 selected expression. Otherwise, paste in place."
   (interactive)
-  (let ((padding (symex-lisp--padding nil)))
-    (save-excursion (condition-case nil
-                        (forward-sexp)
-                      (error nil))
-                    (symex-lisp--paste padding
-                                       ""))))
+  (save-excursion
+    (condition-case nil
+        (forward-sexp)
+      (error nil))
+    (symex-lisp--paste (symex-lisp--padding nil)
+                       "")))
 
-(defun symex-lisp-paste-after (count)
-  "Paste after symex, COUNT times."
+(defun symex-lisp-paste-after ()
+  "Paste after symex."
   (symex--with-undo-collapse
-    (let ((pasted-text "")
+    (let ((pasted-text (symex-lisp--paste-after))
           (selected (symex-lisp--selected-p)))
-      (dotimes (_ count)
-        (setq pasted-text
-              (concat (symex-lisp--paste-after)
-                      pasted-text)))
       (save-excursion
         (when selected
           (forward-sexp)) ; go to beginning of pasted text
         (goto-char (+ (point)
                       (length pasted-text))) ; end of pasted text
         (symex--same-line-tidy-affected))
-      ;; move to indicate appropriate posterior selection
-      ;; TODO: this should probably be at the "user" level
-      ;; suggesting there should be 4 levels rather than 3:
-      ;; 0. primitives
-      ;; 1. tractable, deterministic symex commands
-      ;; 2. DSL over those primitives and commands
-      ;; 3. user commands that use the DSL and include UX specifics like which expression
-      ;;    should be selected after the fact, and configurable things
-      (forward-sexp)
-      (forward-char)
       (not (equal pasted-text "")))))
 
 (defun symex-lisp-yank (count)
