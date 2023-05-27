@@ -77,13 +77,6 @@
   (symex-lisp-clear)
   (forward-char (symex--form-offset)))
 
-(defun symex-lisp-delete-backwards (count)
-  "Delete COUNT symexes backwards."
-  (interactive "p")
-  (dotimes (_ count)
-    (when (symex--go-backward)
-      (symex-lisp-delete 1))))
-
 (defun symex-lisp-append-after ()
   "Append after symex (instead of vim's default of line)."
   (interactive)
