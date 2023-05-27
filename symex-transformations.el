@@ -294,17 +294,19 @@ by default, joins next symex to current one."
   "Paste before symex, COUNT times."
   (interactive "p")
   (setq this-command 'evil-paste-before)
-  (if (symex-tree-sitter-p)
-      (symex-ts-paste-before count)
-    (symex-lisp-paste-before count)))
+  (symex-execute-traversal
+   (symex-traversal
+    (circuit (paste before)
+             count))))
 
 (symex-define-command symex-paste-after (count)
   "Paste after symex, COUNT times."
   (interactive "p")
   (setq this-command 'evil-paste-after)
-  (if (symex-tree-sitter-p)
-      (symex-ts-paste-after count)
-    (symex-lisp-paste-after count)))
+  (symex-execute-traversal
+   (symex-traversal
+    (circuit (paste after)
+             count))))
 
 (symex-define-insertion-command symex-open-line-after ()
   "Open new line after symex."
