@@ -296,8 +296,17 @@ by default, joins next symex to current one."
   (setq this-command 'evil-paste-before)
   (symex-execute-traversal
    (symex-traversal
-    (circuit (paste before)
-             count))))
+    (maneuver (circuit (paste before)
+                       count)
+              ;; select the start of pasted text.
+              ;; TODO: introspect the paste buffer
+              ;; to determine how many symexes are
+              ;; being pasted, and move back by that
+              ;; many times the count
+              ;; TODO: make this post-paste selection
+              ;; a defcustom
+              (circuit (move backward)
+                       count)))))
 
 (symex-define-command symex-paste-after (count)
   "Paste after symex, COUNT times."
@@ -305,8 +314,10 @@ by default, joins next symex to current one."
   (setq this-command 'evil-paste-after)
   (symex-execute-traversal
    (symex-traversal
-    (circuit (paste after)
-             count))))
+    (maneuver (circuit (paste after)
+                       count)
+              ;; select the start of pasted text.
+              (move forward)))))
 
 (symex-define-insertion-command symex-open-line-after ()
   "Open new line after symex."
