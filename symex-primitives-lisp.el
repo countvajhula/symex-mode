@@ -144,6 +144,11 @@
   "Check if a succeeding symex exists at this level."
   (save-excursion (symex-lisp--forward)))
 
+(defun symex-lisp--selected-p ()
+  "Check if a symex is currently selected."
+  (and (not (looking-at-p "[[:space:]]"))
+       (not (symex-right-p))))
+
 ;; From Lispy
 (defvar symex--re-left "[([{]"
   "Opening delimiter.")
