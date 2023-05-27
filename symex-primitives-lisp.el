@@ -709,6 +709,14 @@ match."
 
 (defun symex-lisp-delete (count)
   "Delete COUNT symexes."
+  ;; TODO: instead of having the count at the primitive level, have
+  ;; each delete operation push onto a (yet to be implemented)
+  ;; traversal memory stack. If the traversal is within a larger
+  ;; traversal, the stacks should implicitly compose so that the
+  ;; nested traversal accumulates and pushes onto the containing
+  ;; traversal stack. Then, we can put the entire contents of the
+  ;; stack into the paste buffer in e.g. symex-delete (after popping
+  ;; the contents to get them in the right order)
   (let ((result (symex-lisp--delete count)))
     (when result
       (symex-lisp--reset-after-delete)
