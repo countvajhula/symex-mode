@@ -96,20 +96,6 @@ selected according to the ranges that have changed."
                       (comment-dwim nil))
       (symex-ts-set-current-node-from-point))))
 
-(defun symex-ts-delete-node-backward (&optional count)
-  "Delete COUNT nodes backward from the current node."
-  (interactive "p")
-  (let* ((count (or count 1))
-         (node (tsc-get-prev-named-sibling (symex-ts-get-current-node))))
-    (when node
-      (let ((end-pos (tsc-node-end-position node))
-            (start-pos (tsc-node-start-position
-                        (if (> count 1)
-                            (symex-ts--get-nth-sibling-from-node node #'tsc-get-prev-named-sibling count)
-                          node))))
-        (kill-region start-pos end-pos)
-        (symex-ts--delete-current-line-if-empty start-pos)))))
-
 (defun symex-ts-delete-node-forward (&optional count keep-empty-lines)
   "Delete COUNT nodes forward from the current node.
 
