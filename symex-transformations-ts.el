@@ -134,7 +134,8 @@ too."
      ;; Remove all empty lines following the deletion
      (when (not keep-empty-lines)
        (let ((cont t))
-         (while cont (setq cont (symex-ts--delete-current-line-if-empty start-pos))))))))
+         (while cont (setq cont (symex-ts--delete-current-line-if-empty start-pos)))))))
+  t)
 
 (defun symex-ts-insert-at-beginning ()
   "Insert at beginning of symex."

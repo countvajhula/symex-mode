@@ -193,7 +193,7 @@ WHAT could be `this`, `next`, or `previous`."
              ;; and manually preserve point where we need it, or
              ;; if necessary, preserve point structurally by using
              ;; a primitive version of `symex-index`.
-             (save-excursion
+             (symex-save-excursion
                (symex--go-backward)
                (setq result (symex--prim-delete)))))
           ((eq 'next what)
