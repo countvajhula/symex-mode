@@ -59,6 +59,15 @@ the following recipe instead."
   (goto-char (point-min))
   (forward-line (1- line-no)))
 
+(defun symex--go-to-next-non-whitespace-char ()
+  "Move point to the next non-whitespace character.
+
+If the current character is non-whitespace, point is not moved."
+  (unless (looking-at-p "[^[:space:]\n]")
+    (re-search-forward "[^[:space:]\n]")
+    ;; since the re search goes to the end of the match
+    (backward-char)))
+
 ;; `with-undo-collapse` macro, to treat a sequence of operations
 ;; as a single entry in the undo list.
 ;; From: https://emacs.stackexchange.com/questions/7558/collapsing-undo-history/7560#7560

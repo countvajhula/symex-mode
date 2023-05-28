@@ -45,7 +45,7 @@
   (fixup-whitespace)
   ;; fixup may move point into the whitespace - restore it
   (when (looking-at-p "[[:space:]]")
-    (symex-lisp--go-to-next-non-whitespace-char))
+    (symex--go-to-next-non-whitespace-char))
   ;; fix trailing whitespace (indent region doesn't)
   (condition-case nil
       (save-excursion

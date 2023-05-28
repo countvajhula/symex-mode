@@ -533,15 +533,6 @@ of symex mode (use the public `symex-go-backward` instead)."
   (re-search-forward symex--re-symex-line)
   (back-to-indentation))
 
-(defun symex-lisp--go-to-next-non-whitespace-char ()
-  "Move point to the next non-whitespace character.
-
-If the current character is non-whitespace, point is not moved."
-  (unless (looking-at-p "[^[:space:]\n]")
-    (re-search-forward "[^[:space:]\n]")
-    ;; since the re search goes to the end of the match
-    (backward-char)))
-
 (defun symex-lisp--go-up-by-one ()
   "Go up one level."
   (let ((result 1))
@@ -568,7 +559,7 @@ If the current character is non-whitespace, point is not moved."
            (forward-char 2))
           (t (setq result 0)))
     ;; find first non-whitespace character
-    (symex-lisp--go-to-next-non-whitespace-char)
+    (symex--go-to-next-non-whitespace-char)
     result))
 
 (defun symex-lisp--go-up (&optional count)

@@ -268,7 +268,7 @@ by default, joins next symex to current one."
       (when (symex--point-at-indentation-p)
         (join-line)
         (when (looking-at-p "[[:space:]]")
-          (symex-lisp--go-to-next-non-whitespace-char)))
+          (symex--go-to-next-non-whitespace-char)))
     (unless (symex--point-on-last-line-p)
       (save-excursion
         (forward-sexp)
