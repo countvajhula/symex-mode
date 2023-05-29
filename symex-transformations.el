@@ -693,6 +693,16 @@ layer of quoting."
   (interactive)
   (insert ","))
 
+(defun symex--indent (count)
+  "Indent COUNT expressions."
+  (let ((start (point))
+        (end (save-excursion
+               (condition-case nil
+                   (symex-select-end count)
+                 (error nil))
+               (point))))
+    (indent-region start end)))
+
 (defun symex--tidy (count)
   "Auto-indent symex and fix any whitespace."
   ;; Note that this does not fix leading whitespace
@@ -708,18 +718,8 @@ layer of quoting."
   ;; trailing whitespace.
 
   ;; fix trailing whitespace (indent region doesn't)
-  (condition-case nil
-      (save-excursion
-        (symex-select-end count)
-        (fixup-whitespace))
-    (error nil))
-  (let ((start (point))
-        (end (save-excursion
-               (condition-case nil
-                   (symex-select-end count)
-                 (error nil))
-               (point))))
-    (indent-region start end))
+  (symex--fix-trailing-whitespace count)
+  (symex--indent count)
   (symex-select-nearest))
 
 (symex-define-command symex-tidy (count)

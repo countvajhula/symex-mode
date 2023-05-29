@@ -164,6 +164,14 @@ ring."
   (when (looking-at-p "[[:space:]]")
     (symex--go-to-next-non-whitespace-char)))
 
+(defun symex--fix-trailing-whitespace (count)
+  "Fix trailing whitespace."
+  (condition-case nil
+      (save-excursion
+        (symex-select-end count)
+        (fixup-whitespace))
+    (error nil)))
+
 
 (provide 'symex-utils)
 ;;; symex-utils.el ends here
