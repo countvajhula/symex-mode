@@ -657,8 +657,7 @@ match."
                                  (symex--current-line-empty-p)))
              (symex--join-to-next)
            ;; don't leave an empty line where the symex was
-           (delete-region (line-beginning-position)
-                          (1+ (line-end-position)))))
+           (symex--kill-whole-line)))
         ((or (save-excursion (evil-last-non-blank) ; (<>$
                              (symex-left-p)))
          (symex--join-to-next))

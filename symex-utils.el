@@ -148,6 +148,14 @@ This should be done via DSL computation semantics at some point."
     (let ((result (symex-execute-traversal symex--traversal-goto-last)))
      (1+ (length result)))))
 
+(defun symex--kill-whole-line ()
+  "Delete entire current line.
+
+Similar to `kill-whole-line` but doesn't add an entry to the kill
+ring."
+  (delete-region (line-beginning-position)
+                 (1+ (line-end-position))))
+
 
 (provide 'symex-utils)
 ;;; symex-utils.el ends here

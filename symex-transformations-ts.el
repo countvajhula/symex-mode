@@ -27,6 +27,8 @@
 ;;; Code:
 
 (require 'tree-sitter)
+(require 'symex-ts)
+(require 'symex-utils)
 
 (defmacro symex-ts--handle-tree-modification (&rest body)
   "Handle modifications to the current Tree Sitter tree after executing BODY.
@@ -100,7 +102,8 @@ selected according to the ranges that have changed."
   "Tidy things up after deletion.
 
 If the deletion results in an empty line it will be removed."
-  (symex-ts--delete-current-line-if-empty))
+  (when (symex--current-line-empty-p)
+    (symex--kill-whole-line)))
 
 (defun symex-ts-delete-node-forward (&optional count)
   "Delete COUNT nodes forward from the current node."
