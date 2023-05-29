@@ -100,7 +100,7 @@ selected according to the ranges that have changed."
   "Tidy things up after deletion.
 
 If the deletion results in an empty line it will be removed."
-  (symex-ts--delete-current-line-if-empty start-pos))
+  (symex-ts--delete-current-line-if-empty))
 
 (defun symex-ts-delete-node-forward (&optional count)
   "Delete COUNT nodes forward from the current node."

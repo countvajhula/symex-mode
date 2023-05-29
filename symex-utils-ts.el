@@ -25,17 +25,17 @@
 
 ;;; Code:
 
-(defun symex-ts--delete-current-line-if-empty (point)
-  "Delete the line containing POINT if it is empty."
-  (save-excursion (goto-char point)
-                  (when (string-match "^[[:space:]]*$"
-                                      (buffer-substring-no-properties
-                                        (line-beginning-position)
-                                        (line-end-position)))
-                    (kill-whole-line)
-                    (pop kill-ring)
-                    (setq kill-ring-yank-pointer kill-ring)
-                    t)))
+(defun symex-ts--delete-current-line-if-empty ()
+  "Delete the current line if it is empty."
+  ;; TODO: merge with symex--current-line-empty-p
+  (when (string-match "^[[:space:]]*$"
+                      (buffer-substring-no-properties
+                       (line-beginning-position)
+                       (line-end-position)))
+    (kill-whole-line)
+    (pop kill-ring)
+    (setq kill-ring-yank-pointer kill-ring)
+    t))
 
 (provide 'symex-utils-ts)
 ;;; symex-utils-ts.el ends here
