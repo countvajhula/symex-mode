@@ -171,11 +171,39 @@ that are not primarily user-directed."
 
 ;;; Transformations
 
-(defun symex--prim-delete ()
-  "Delete current symex."
+(defun symex--remove (count)
+  "Delete COUNT symexes.
+
+This is a low-level utility that simply removes the indicated text
+from the buffer."
+  (let ((last-command nil)  ; see symex-yank re: last-command
+        (start (point))
+        (end (symex--get-end-point count)))
+    (when (> end start)
+      (kill-region start end)
+      t)))
+
+(defun symex--reset-after-delete ()
+  "Tidy after deletion and select the appropriate symex."
   (if (symex-tree-sitter-p)
-      (symex-ts-delete-node-forward 1)
-    (symex-lisp-delete 1)))
+      (symex-ts--reset-after-delete)
+    (symex-lisp--reset-after-delete)))
+
+(defun symex-remove (count)
+  "Delete COUNT symexes."
+  ;; TODO: instead of having the count at the primitive level, have
+  ;; each delete operation push onto a (yet to be implemented)
+  ;; traversal memory stack. If the traversal is within a larger
+  ;; traversal, the stacks should implicitly compose so that the
+  ;; nested traversal accumulates and pushes onto the containing
+  ;; traversal stack. Then, we can put the entire contents of the
+  ;; stack into the paste buffer in e.g. symex-delete (after popping
+  ;; the contents to get them in the right order)
+  (let ((result (symex--remove count)))
+    (when result
+      (symex--reset-after-delete)
+      ;; should we return the actual motion we took?
+      result)))
 
 (defun symex-prim-delete (what)
   "Delete WHAT symex.
@@ -183,7 +211,7 @@ that are not primarily user-directed."
 WHAT could be `this`, `next`, or `previous`."
   (let ((result))
     (cond ((eq 'this what)
-           (setq result (symex--prim-delete)))
+           (setq result (symex-remove 1)))
           ((eq 'previous what)
            (when (symex--previous-p)
              ;; not sure how reliable `save-excursion` is when
@@ -195,12 +223,12 @@ WHAT could be `this`, `next`, or `previous`."
              ;; a primitive version of `symex-index`.
              (symex-save-excursion
                (symex--go-backward)
-               (setq result (symex--prim-delete)))))
+               (setq result (symex-remove 1)))))
           ((eq 'next what)
            (when (symex--next-p)
              (save-excursion
                (symex--go-forward)
-               (setq result (symex--prim-delete)))))
+               (setq result (symex-remove 1)))))
           (t (error "Invalid argument for primitive delete!")))
     (symex--tidy 1)
     result))

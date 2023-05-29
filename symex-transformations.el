@@ -135,24 +135,18 @@
   "Delete remaining symexes at this level."
   (interactive)
   (let ((count (symex--remaining-length)))
-    (symex-delete count)))
-
-(defun symex--change (count)
-  "Change COUNT symexes."
-  (if (symex-tree-sitter-p)
-      (symex-ts-delete-node-forward count t) ; only delete - no tidy
-    (symex-lisp--delete count)))
+    (symex--delete count)))
 
 (symex-define-insertion-command symex-change (count)
   "Change COUNT symexes."
   (interactive "p")
-  (symex--change count))
+  (symex--remove count))
 
 (symex-define-insertion-command symex-change-remaining ()
   "Change remaining symexes at this level."
   (interactive)
   (let ((count (symex--remaining-length)))
-    (symex--change count)))
+    (symex--remove count)))
 
 (symex-define-insertion-command symex-replace ()
   "Replace contents of symex."

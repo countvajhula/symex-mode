@@ -77,7 +77,7 @@ selected according to the ranges that have changed."
               (last-child (tsc-get-nth-named-child symex-ts--current-node (1- child-count))))
           (when (and first-child last-child)
             (kill-region (tsc-node-start-position first-child) (tsc-node-end-position last-child))))
-        (symex-ts-delete-node-forward 1 t)))))
+        (symex-ts-delete-node-forward 1)))))
 
 (defun symex-ts-comment (&optional count)
   "Comment out COUNT expressions."
@@ -96,13 +96,16 @@ selected according to the ranges that have changed."
                       (comment-dwim nil))
       (symex-ts-set-current-node-from-point))))
 
-(defun symex-ts-delete-node-forward (&optional count keep-empty-lines)
-  "Delete COUNT nodes forward from the current node.
+(defun symex-ts--reset-after-delete ()
+  "Tidy things up after deletion.
 
-If KEEP-EMPTY-LINES is set then if the deletion results in an
-empty line it will be kept. By default empty lines are deleted
-too."
+If the deletion results in an empty line it will be removed."
+  (symex-ts--delete-current-line-if-empty start-pos))
+
+(defun symex-ts-delete-node-forward (&optional count)
+  "Delete COUNT nodes forward from the current node."
   (interactive "p")
+  ;; TODO: this is no longer used outside of this module
   (symex-ts--handle-tree-modification
    (let* ((count (or count 1))
           (node (symex-ts-get-current-node))
@@ -115,12 +118,7 @@ too."
                       node))))
 
      ;; Delete the node's region
-     (kill-region start-pos end-pos)
-
-     ;; Remove all empty lines following the deletion
-     (when (not keep-empty-lines)
-       (let ((cont t))
-         (while cont (setq cont (symex-ts--delete-current-line-if-empty start-pos)))))))
+     (kill-region start-pos end-pos)))
   t)
 
 (defun symex-ts-insert-at-beginning ()
