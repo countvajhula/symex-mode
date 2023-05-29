@@ -97,9 +97,8 @@
      ,@body
      (symex-enter-lowest)))
 
-(symex-define-command symex-delete (count)
+(defun symex--delete (count)
   "Delete COUNT symexes."
-  (interactive "p")
   ;; if we attempt to just (delete this) count times, if there happen
   ;; to be fewer than count expressions following, then we may delete
   ;; preceding expressions too. But we typically mean to delete only
@@ -118,6 +117,11 @@
   (symex-execute-traversal
    (symex-traversal
     (delete this))))
+
+(symex-define-command symex-delete (count)
+  "Delete COUNT symexes."
+  (interactive "p")
+  (symex--delete count))
 
 (symex-define-command symex-delete-backwards (count)
   "Delete COUNT symexes backwards."
@@ -456,7 +460,7 @@ then no action is taken."
   (when (or (symex-left-p) (symex-string-p))
     (if (or (symex-empty-list-p)
             (symex-empty-string-p))
-        (symex-delete 1)
+        (symex--delete 1)
       (save-excursion
         (evil-surround-delete (char-after))
         (symex--go-down)))))
