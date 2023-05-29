@@ -259,6 +259,7 @@ Like `save-excursion`, but in addition to preserving the point
 position, this also preserves the structural position in the tree, for
 languages where point position doesn't uniquely identify a tree
 location (e.g. non-symex-based languages like Python)."
+  (declare (indent 0))
   (let ((offset (gensym))
         (result (gensym)))
     `(let ((,offset (symex--point-height-offset)))
