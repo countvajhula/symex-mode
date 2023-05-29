@@ -695,9 +695,32 @@ layer of quoting."
 
 (defun symex--tidy (count)
   "Auto-indent symex and fix any whitespace."
-  (if tree-sitter-mode
-      (symex-ts-tidy) ; TODO: add count
-    (symex-lisp-tidy count)))
+  ;; Note that this does not fix leading whitespace
+  ;; (e.g. via `symex--fix-leading-whitespace`)
+  ;; as that apparently destroys the indentation clues
+  ;; the major mode needs to properly indent the code
+  ;; in tree-sitter.
+  ;; We could potentially have this part be delegated
+  ;; to a Lisp-specific indent utility, but it could
+  ;; be argued that indenting leading whitespace
+  ;; is a concern of the _preceding_ expression, which,
+  ;; this does get handled by this function via fixing
+  ;; trailing whitespace.
+
+  ;; fix trailing whitespace (indent region doesn't)
+  (condition-case nil
+      (save-excursion
+        (symex-select-end count)
+        (fixup-whitespace))
+    (error nil))
+  (let ((start (point))
+        (end (save-excursion
+               (condition-case nil
+                   (symex-select-end count)
+                 (error nil))
+               (point))))
+    (indent-region start end))
+  (symex-select-nearest))
 
 (symex-define-command symex-tidy (count)
   "Auto-indent symex and fix any whitespace."

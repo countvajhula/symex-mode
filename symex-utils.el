@@ -156,6 +156,14 @@ ring."
   (delete-region (line-beginning-position)
                  (1+ (line-end-position))))
 
+(defun symex--fix-leading-whitespace ()
+  "Fix leading whitespace."
+  ;; fix leading whitespace
+  (fixup-whitespace)
+  ;; fixup may move point into the whitespace - restore it
+  (when (looking-at-p "[[:space:]]")
+    (symex--go-to-next-non-whitespace-char)))
+
 
 (provide 'symex-utils)
 ;;; symex-utils.el ends here

@@ -297,6 +297,11 @@ symexes, returns the end point of the last one found."
       (symex-ts--get-end-point count)
     (symex-lisp--get-end-point count)))
 
+(defun symex-select-end (count)
+  "Select endpoint of symex nearest to point."
+  (goto-char (symex--get-end-point count))
+  (point))
+
 (defun symex-select-nearest ()
   "Select symex nearest to point."
   (if (symex-tree-sitter-p)
