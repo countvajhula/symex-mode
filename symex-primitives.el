@@ -97,7 +97,7 @@
 
 (defun symex--following-line-empty-p ()
   "Check if the line following the current expression is empty."
-  (symex-save-excursion
+  (save-excursion
     (symex-select-end 1)
     (forward-line)
     (symex--current-line-empty-p)))
