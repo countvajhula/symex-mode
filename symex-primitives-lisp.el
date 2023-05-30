@@ -641,10 +641,8 @@ line."
   (cond ((symex--current-line-empty-p) ; ^<>$
          ;; only join up to the next symex if the context suggests
          ;; that a line break is not desired
-         (if (or (save-excursion (forward-line)
-                                 (not (symex--current-line-empty-p)))
-                 (save-excursion (forward-line -1)
-                                 (symex--current-line-empty-p)))
+         (if (or (not (symex--next-line-empty-p))
+                 (symex--previous-line-empty-p))
              (symex--join-to-next)
            ;; don't leave an empty line where the symex was
            (symex--kill-whole-line)))
@@ -652,8 +650,7 @@ line."
                              (symex-left-p)))
          (symex--join-to-next))
         ((looking-at-p "\n")         ; (abc <>
-         (when (save-excursion (forward-line)
-                               (not (symex--current-line-empty-p)))
+         (unless (symex--next-line-empty-p)
            ;; only join up to the next symex if the context suggests
            ;; that a line break is not desired
            (symex--join-to-next)))

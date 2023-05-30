@@ -134,14 +134,9 @@ text, on the respective side."
                               (eobp))
             (error nil)))
          (previous-line-empty
-          (save-excursion (forward-line -1)
-                          (symex--current-line-empty-p)))
+          (symex--previous-line-empty-p))
          (next-line-empty
-          (condition-case nil
-              (save-excursion (forward-sexp)
-                              (forward-line)
-                              (symex--current-line-empty-p))
-            (error nil)))
+          (symex--following-line-empty-p))
          (surrounding-lines-empty (and previous-line-empty
                                        next-line-empty))
          (paste-text-contains-newlines
