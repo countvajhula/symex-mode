@@ -273,6 +273,7 @@ languages where point position doesn't uniquely identify a tree
 location (e.g. non-symex-based languages like Python).
 
 This is tree-sitter specific and meant for internal, primitive use."
+  (declare (indent 0))
   (let ((offset (gensym))
         (result (gensym)))
     `(let ((,offset (symex-ts--point-height-offset)))
@@ -293,8 +294,8 @@ This is tree-sitter specific and meant for internal, primitive use."
 If the containing expression terminates earlier than COUNT
 symexes, returns the end point of the last one found."
   (symex-ts-save-excursion
-   (symex-ts-move-next-sibling (1- count))
-   (tsc-node-end-position symex-ts--current-node)))
+    (symex-ts-move-next-sibling (1- count))
+    (tsc-node-end-position symex-ts--current-node)))
 
 (defun symex-ts--point-height-offset-helper (orig-pos)
   "A helper to compute the height offset of the current symex.
