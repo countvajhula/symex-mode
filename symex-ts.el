@@ -33,8 +33,6 @@
 
 (require 'tree-sitter)
 (require 'tsc)
-(require 'symex-transformations-ts)
-(require 'symex-utils-ts)
 
 
 (defvar-local symex-ts--current-node nil "The current Tree Sitter node.")

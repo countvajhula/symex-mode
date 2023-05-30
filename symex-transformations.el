@@ -293,32 +293,31 @@ by default, joins next symex to current one."
   "Paste before symex, COUNT times."
   (interactive "p")
   (setq this-command 'evil-paste-before)
-  (let ((text-to-paste (current-kill 0 t)))
-    (let ((paste-count
-           ;; typically (e.g. to follow the convention in evil), we
-           ;; want to select the start of the pasted text after
-           ;; pasting. When pasting before the current expression, we
-           ;; may be pasting any number of times, and the text we're
-           ;; pasting may also include any number of symexes. So, to
-           ;; select the right expression post-paste, we first
-           ;; introspect the paste buffer to see how many symexes
-           ;; we're pasting ...
-           (with-temp-buffer
-             (yank)
-             (symex-goto-last)
-             (1+ (symex-index)))))
-      (symex-execute-traversal
-       (symex-traversal
-        (maneuver (circuit (paste before)
-                           count)
-                  ;; ... now, after pasting, we move back by the
-                  ;; number of symexes being pasted that we determined
-                  ;; earlier, times the number of times we're pasting
-                  ;; (i.e. the `count`), in order to select the start
-                  ;; of pasted text.
-                  ;; TODO: make this post-paste selection a defcustom
-                  (circuit (move backward)
-                           (* paste-count count))))))))
+  (let ((paste-count
+         ;; typically (e.g. to follow the convention in evil), we
+         ;; want to select the start of the pasted text after
+         ;; pasting. When pasting before the current expression, we
+         ;; may be pasting any number of times, and the text we're
+         ;; pasting may also include any number of symexes. So, to
+         ;; select the right expression post-paste, we first
+         ;; introspect the paste buffer to see how many symexes
+         ;; we're pasting ...
+         (with-temp-buffer
+           (yank)
+           (symex-goto-last)
+           (1+ (symex-index)))))
+    (symex-execute-traversal
+     (symex-traversal
+      (maneuver (circuit (paste before)
+                         count)
+                ;; ... now, after pasting, we move back by the
+                ;; number of symexes being pasted that we determined
+                ;; earlier, times the number of times we're pasting
+                ;; (i.e. the `count`), in order to select the start
+                ;; of pasted text.
+                ;; TODO: make this post-paste selection a defcustom
+                (circuit (move backward)
+                         (* paste-count count)))))))
 
 (symex-define-command symex-paste-after (count)
   "Paste after symex, COUNT times."

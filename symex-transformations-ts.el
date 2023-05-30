@@ -155,14 +155,6 @@ alias for inserting at the end."
   (interactive)
   (symex-ts-insert-at-end))
 
-(defun symex-ts-append-after ()
-  "Append after symex (instead of vim's default of line)."
-  (interactive)
-  (when (symex-ts-get-current-node)
-    (goto-char (tsc-node-end-position (symex-ts-get-current-node)))
-    (insert " ")
-    (evil-insert-state)))
-
 (defun symex-ts-open-line-after ()
   "Open new line after symex."
   (interactive)
@@ -180,17 +172,14 @@ alias for inserting at the end."
     (indent-according-to-mode)
     (move-end-of-line 1)))
 
-(defun symex-ts-emit-forward (count)
-  "Emit forward"
-  nil)
-
 (defun symex-ts--paste (count direction)
   "Paste before or after symex, COUNT times, according to DIRECTION.
 
 DIRECTION should be either the symbol `before' or `after'."
   (interactive)
   (when (symex-ts-get-current-node)
-    (symex-ts--handle-tree-modification (let* ((node (symex-ts-get-current-node))
+    (symex-ts--handle-tree-modification
+     (let* ((node (symex-ts-get-current-node))
             (start (tsc-node-start-position node))
             (end (tsc-node-end-position node))
             (indent-start (save-excursion (back-to-indentation) (point)))
