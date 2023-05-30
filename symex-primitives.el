@@ -171,6 +171,35 @@ that are not primarily user-directed."
 
 ;;; Transformations
 
+(defun symex--indent (count)
+  "Indent COUNT expressions."
+  (let ((start (point))
+        (end (save-excursion
+               (condition-case nil
+                   (symex-select-end count)
+                 (error nil))
+               (point))))
+    (indent-region start end)))
+
+(defun symex--tidy (count)
+  "Auto-indent symex and fix any whitespace."
+  ;; Note that this does not fix leading whitespace
+  ;; (e.g. via `symex--fix-leading-whitespace`)
+  ;; as that apparently destroys the indentation clues
+  ;; the major mode needs to properly indent the code
+  ;; in tree-sitter.
+  ;; We could potentially have this part be delegated
+  ;; to a Lisp-specific indent utility, but it could
+  ;; be argued that indenting leading whitespace
+  ;; is a concern of the _preceding_ expression, which,
+  ;; this does get handled by this function via fixing
+  ;; trailing whitespace.
+
+  ;; fix trailing whitespace (indent region doesn't)
+  (symex--fix-trailing-whitespace count)
+  (symex--indent count)
+  (symex-select-nearest))
+
 (defun symex--remove (count)
   "Delete COUNT symexes.
 
