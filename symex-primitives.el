@@ -202,6 +202,10 @@ that are not primarily user-directed."
   ;; this does get handled by this function via fixing
   ;; trailing whitespace.
 
+  ;; fixing leading whitespace in lisp, for now
+  ;; probably find a better/uniform way later
+  (unless (symex-tree-sitter-p)
+    (symex--fix-leading-whitespace))
   ;; fix trailing whitespace (indent region doesn't)
   (symex--fix-trailing-whitespace count)
   (symex--indent count)
