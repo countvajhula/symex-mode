@@ -266,7 +266,6 @@ WHAT could be `this`, `next`, or `previous`."
                (symex--go-forward)
                (setq result (symex-remove 1)))))
           (t (error "Invalid argument for primitive delete!")))
-    (symex--tidy 1)
     result))
 
 (defun symex-prim-paste (where)

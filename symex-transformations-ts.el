@@ -103,7 +103,9 @@ selected according to the ranges that have changed."
 
 If the deletion results in an empty line it will be removed."
   (when (symex--current-line-empty-p)
-    (symex--kill-whole-line)))
+    (if (symex--previous-line-empty-p)
+        (symex--join-to-non-whitespace)
+      (symex--kill-whole-line))))
 
 (defun symex-ts-delete-node-forward (&optional count)
   "Delete COUNT nodes forward from the current node."
