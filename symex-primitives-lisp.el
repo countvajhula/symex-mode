@@ -32,6 +32,7 @@
 
 (require 'paredit)
 (require 'symex-data)
+(require 'symex-utils)
 
 ;;;;;;;;;;;;;;;;;;
 ;;; PRIMITIVES ;;;
@@ -634,17 +635,6 @@ line."
     (if comment-line-position
         (delete-region start comment-line-position)
       (delete-region start end))))
-
-(defun symex--join-to-match (pattern)
-  "Join current position to the next position matching PATTERN.
-
-This eliminates whitespace between the original position and the found
-match."
-  (condition-case nil
-      (let* ((start (point))
-             (end (save-excursion (re-search-forward pattern)
-                                  (match-beginning 0))))
-        (delete-region start end))))
 
 (defun symex-lisp--reset-after-delete ()
   "Tidy after deletion and select the appropriate symex."

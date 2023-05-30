@@ -36,6 +36,16 @@ From: https://emacs.stackexchange.com/a/16793"
     (beginning-of-line)
     (looking-at "[[:space:]]*$")))
 
+(defun symex--next-line-empty-p ()
+  "Check if the next line is empty."
+  (save-excursion (forward-line)
+                  (symex--current-line-empty-p)))
+
+(defun symex--previous-line-empty-p ()
+  "Check if the previous line is empty."
+  (save-excursion (forward-line -1)
+                  (symex--current-line-empty-p)))
+
 (defun symex--point-at-indentation-p ()
   "Check if point is at the point of indentation.
 
@@ -59,14 +69,35 @@ the following recipe instead."
   (goto-char (point-min))
   (forward-line (1- line-no)))
 
+(defvar symex--re-non-whitespace "[^[:space:]\n]"
+  "A non-whitespace character.")
+
 (defun symex--go-to-next-non-whitespace-char ()
   "Move point to the next non-whitespace character.
 
 If the current character is non-whitespace, point is not moved."
-  (unless (looking-at-p "[^[:space:]\n]")
-    (re-search-forward "[^[:space:]\n]")
+  (unless (looking-at-p symex--re-non-whitespace)
+    (re-search-forward symex--re-non-whitespace)
     ;; since the re search goes to the end of the match
     (backward-char)))
+
+(defun symex--join-to-match (pattern)
+  "Join current position to the next position matching PATTERN.
+
+This eliminates whitespace between the original position and the found
+match."
+  (condition-case nil
+      (let* ((start (point))
+             (end (save-excursion (re-search-forward pattern)
+                                  (match-beginning 0))))
+        (delete-region start end))))
+
+(defun symex--join-to-non-whitespace ()
+  "Join current position to the next non-whitespace character.
+
+This eliminates whitespace between the original position and the found
+match."
+  (symex--join-to-match symex--re-non-whitespace))
 
 ;; `with-undo-collapse` macro, to treat a sequence of operations
 ;; as a single entry in the undo list.
