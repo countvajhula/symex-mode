@@ -674,6 +674,7 @@ line."
                                                t)
                              (error nil))
                      (symex--join-to-match symex--re-right))))))))
+        ((symex-right-p) (fixup-whitespace)) ; abc <>)
         (t (symex--join-to-non-whitespace))))
 
 ;;; Utilities
