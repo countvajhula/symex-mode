@@ -210,12 +210,13 @@ text, on the respective side."
 If a symex is currently selected, then paste after the end of the
 selected expression. Otherwise, paste in place."
   (interactive)
-  (save-excursion
-    (condition-case nil
-        (forward-sexp)
-      (error nil))
-    (symex-lisp--paste (symex-lisp--padding nil)
-                       "")))
+  (let ((padding (symex-lisp--padding nil)))
+    (save-excursion
+      (condition-case nil
+          (forward-sexp)
+        (error nil))
+      (symex-lisp--paste padding
+                         ""))))
 
 (defun symex-lisp-paste-after ()
   "Paste after symex."
