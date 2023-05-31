@@ -291,6 +291,9 @@ Executes the motion COUNT times."
 
 (defun symex--do-while-traversing (operation traversal)
   "Traverse a symex using TRAVERSAL and do OPERATION at each step."
+  ;; do it once first since it will be executed as a side-effect
+  ;; _after_ each step in the traversal
+  (funcall operation)
   (symex-execute-traversal
    (symex-traversal
     (circuit

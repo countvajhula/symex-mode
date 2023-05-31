@@ -711,11 +711,6 @@ effect is not performed during the pre-traversal."
          (yank)
          (goto-char 0)
          (symex-execute-traversal pre-traversal)
-         ;; do it once first since it will be executed as a side-effect
-         ;; _after_ each step in the traversal
-         (condition-case nil
-             (funcall side-effect)
-           (error nil))
          (condition-case nil
              (symex--do-while-traversing
               side-effect
@@ -782,9 +777,6 @@ implementation."
   (interactive)
   (save-excursion
     (symex--go-forward)
-    ;; do it once first since it will be executed as a side-effect
-    ;; _after_ each step in the traversal
-    (symex-insert-newline 1)
     (symex--do-while-traversing (apply-partially #'symex-insert-newline 1)
                                 (symex-make-move 1 0))))
 
@@ -792,9 +784,6 @@ implementation."
   "Tidy the remaining symexes."
   (interactive)
   (symex--save-point-excursion
-    ;; do it once first since it will be executed as a side-effect
-    ;; _after_ each step in the traversal
-    (symex--tidy 1)
     (symex--do-while-traversing (apply-partially #'symex--tidy 1)
                                 (symex-make-move 1 0))))
 
