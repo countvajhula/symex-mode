@@ -198,13 +198,13 @@ WHAT - what to delete, either this, previous, next, remaining or until."
 SIDE - the side to paste on, either before or after."
   `'(paste ,side))
 
-(defmacro symex--compile-effect (traversal side-effect)
+(defmacro symex--compile-effect (traversal effect)
   "Compile an effect from Symex -> Lisp.
 
 TRAVERSAL - the traversal to perform. This could be any traversal.
-SIDE-EFFECT - the side effect to perform. This is any Lisp expression."
+EFFECT - the side effect to perform. This is any Lisp expression."
   `(symex-make-effect (symex-traversal ,traversal)
-                      (lambda () ,side-effect)))
+                      (lambda () ,effect)))
 
 ;; TODO: support args here like lambda / defun (i.e. as a list in the
 ;; binding form -- not passed in but syntactically inserted)
