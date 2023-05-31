@@ -278,7 +278,6 @@ WHAT could be `this`, `next`, or `previous`."
 WHERE could be either 'before or 'after"
   ;; TODO: remove counts from primitives
   ;; as they aren't used
-  ;; TODO: ensure point invariance at this primitive level
   (cond ((eq 'before where)
          (if (symex-tree-sitter-p)
              (symex-ts-paste-before 1)

@@ -197,12 +197,14 @@ DIRECTION should be either the symbol `before' or `after'."
 (defun symex-ts-paste-after (count)
   "Paste after symex, COUNT times."
   (interactive)
-  (symex-ts--paste count 'after))
+  (symex-ts-save-excursion
+    (symex-ts--paste count 'after)))
 
 (defun symex-ts-paste-before (count)
   "Paste before symex, COUNT times."
   (interactive)
-  (symex-ts--paste count 'before))
+  (symex-ts-save-excursion
+    (symex-ts--paste count 'before)))
 
 (defun symex-ts-replace ()
   "Replace contents of symex."
