@@ -192,7 +192,8 @@ DIRECTION should be either the symbol `before' or `after'."
                (indent-according-to-mode))
          (yank)
          (when (eq direction 'before) (insert (if block-node "\n" " "))
-               (indent-according-to-mode)))))))
+               (indent-according-to-mode)))))
+    t))
 
 (defun symex-ts-paste-after (count)
   "Paste after symex, COUNT times."
