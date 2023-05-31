@@ -363,16 +363,29 @@ This is the traversal that will be chosen if the condition is false."
   "Get the side component of a PASTE."
   (nth 1 paste))
 
-(defun symex-operation-p (obj)
-  "Check if OBJ specifies a generic operation."
+(defun symex-make-effect (traversal effect)
+  "A specification to perform a side-effect after executing a traversal.
+
+Execute TRAVERSAL and, if it succeeds, execute EFFECT disregarding its
+result (as long as it's successful)."
+  (list 'effect
+        traversal
+        effect))
+
+(defun symex-effect-p (obj)
+  "Check if OBJ specifies a traversal with a side effect."
   (condition-case nil
-      (equal 'operation
+      (equal 'effect
              (nth 0 obj))
     (error nil)))
 
-(defun symex--operation-operation (operation)
-  "Get the actual OPERATION to perform."
-  (nth 1 operation))
+(defun symex--effect-traversal (effect)
+  "Get the traversal to perform with an EFFECT."
+  (nth 1 effect))
+
+(defun symex--effect-effect (effect)
+  "Get the EFFECT to perform as part of traversal execution."
+  (nth 2 effect))
 
 (defun symex-traversal-p (obj)
   "Check if OBJ specifies a traversal."
@@ -386,7 +399,7 @@ This is the traversal that will be chosen if the condition is false."
       (symex-decision-p obj)
       (symex-delete-p obj)
       (symex-paste-p obj)
-      (symex-operation-p obj)))
+      (symex-effect-p obj)))
 
 
 (provide 'symex-data)

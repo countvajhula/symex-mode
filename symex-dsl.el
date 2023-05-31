@@ -198,6 +198,14 @@ WHAT - what to delete, either this, previous, next, remaining or until."
 SIDE - the side to paste on, either before or after."
   `'(paste ,side))
 
+(defmacro symex--compile-effect (traversal side-effect)
+  "Compile an effect from Symex -> Lisp.
+
+TRAVERSAL - the traversal to perform. This could be any traversal.
+SIDE-EFFECT - the side effect to perform. This is any Lisp expression."
+  `(symex-make-effect (symex-traversal ,traversal)
+                      (lambda () ,side-effect)))
+
 ;; TODO: support args here like lambda / defun (i.e. as a list in the
 ;; binding form -- not passed in but syntactically inserted)
 ;; try a lambda / defun with args to see what I mean
@@ -233,6 +241,8 @@ a detour, a move, etc., which is specified using the Symex DSL."
          `(symex--compile-delete ,@(cdr traversal)))
         ((equal 'paste (car traversal))
          `(symex--compile-paste ,@(cdr traversal)))
+        ((equal 'effect (car traversal))
+         `(symex--compile-effect ,@(cdr traversal)))
         ;; TODO: instead of an implicit escape, it may be better
         ;; to use an explicit one like (esc ...) or (lisp ...)
         (t traversal)))  ; function-valued symbols wind up here

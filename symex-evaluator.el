@@ -263,16 +263,20 @@ Evaluates to a COMPUTATION on the traversal actually executed."
                                 nil
                                 computation)))))
 
-(defun symex-execute-operation (operation computation)
-  "Attempt to execute a given OPERATION.
+(defun symex-execute-effect (effect computation)
+  "Attempt to execute a given EFFECT.
 
 Evaluates to a COMPUTATION on the traversal actually executed."
-  (let ((op (symex--operation-operation operation)))
-    (funcall op)
-    ;; TODO: compute based on an appropriate result here
-    (symex--compute-results symex--move-zero
-                            nil
-                            computation)))
+  (let ((traversal (symex--effect-traversal effect))
+        (effect (symex--effect-effect effect)))
+    (let ((executed-traversal (symex-execute-traversal traversal
+                                                       computation)))
+      (when executed-traversal
+        (let ((executed-effect (funcall effect)))
+          (when executed-effect
+            (symex--compute-results executed-traversal
+                                    nil
+                                    computation)))))))
 
 (defun symex--execute-traversal (traversal computation)
   "Helper to execute TRAVERSAL and perform COMPUTATION."
@@ -306,9 +310,9 @@ Evaluates to a COMPUTATION on the traversal actually executed."
         ((symex-paste-p traversal)
          (symex-execute-paste traversal
                               computation))
-        ((symex-operation-p traversal)
-         (symex-execute-operation traversal
-                                  computation))
+        ((symex-effect-p traversal)
+         (symex-execute-effect traversal
+                               computation))
         (t (funcall traversal))))
 
 (defun symex-execute-traversal (traversal &optional computation side-effect)
