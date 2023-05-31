@@ -367,7 +367,7 @@ This is the traversal that will be chosen if the condition is false."
   "A specification to perform a side-effect after executing a traversal.
 
 Execute TRAVERSAL and, if it succeeds, execute EFFECT disregarding its
-result (as long as it's successful)."
+result."
   (list 'effect
         traversal
         effect))

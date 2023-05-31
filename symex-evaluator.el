@@ -273,10 +273,9 @@ Evaluates to a COMPUTATION on the traversal actually executed."
                                                        computation)))
       (when executed-traversal
         (let ((executed-effect (funcall effect)))
-          (when executed-effect
-            (symex--compute-results executed-traversal
-                                    nil
-                                    computation)))))))
+          (symex--compute-results executed-traversal
+                                  nil
+                                  computation))))))
 
 (defun symex--execute-traversal (traversal computation)
   "Helper to execute TRAVERSAL and perform COMPUTATION."
