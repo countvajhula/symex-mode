@@ -314,23 +314,17 @@ Evaluates to a COMPUTATION on the traversal actually executed."
                                computation))
         (t (funcall traversal))))
 
-(defun symex-execute-traversal (traversal &optional computation side-effect)
+(defun symex-execute-traversal (traversal &optional computation)
   "Execute a tree TRAVERSAL.
 
 TRAVERSAL could be a move, a maneuver, or any other Symex traversal.
 If it is not a Symex expression, then it is assumed to be an ELisp
 function, and the rule for interpretation is to apply the function.
 
-SIDE-EFFECT is the operation to perform as part of the traversal
-\(none by default).
-
 Evaluates to a COMPUTATION on the traversal actually executed."
   (let ((computation (if computation
                          computation
-                       symex--computation-default))
-        (side-effect (if side-effect
-                         side-effect
-                       #'symex--side-effect-noop)))
+                       symex--computation-default)))
     ;; TODO: a macro similar to `symex-save-excursion`
     ;; where it conditionally returns to the original
     ;; point / node depending on whether BODY succeeds
@@ -343,8 +337,7 @@ Evaluates to a COMPUTATION on the traversal actually executed."
       (let ((result (funcall (symex--computation-perceive computation)
                              executed-traversal)))
         (if result
-            (progn (funcall side-effect)
-                   result)
+            result
           ;; TODO: simply returning to the original location
           ;; isn't enough when the traversal might include
           ;; transformations. It may be necessary to execute

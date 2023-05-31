@@ -291,13 +291,16 @@ Executes the motion COUNT times."
 
 (defun symex--do-while-traversing (operation traversal)
   "Traverse a symex using TRAVERSAL and do OPERATION at each step."
-  (let ((result (symex-execute-traversal traversal
-                                         nil
-                                         operation)))
-    (message "%s" result)
-    (when result
-      (symex--do-while-traversing operation
-                                  traversal))))
+  (symex-execute-traversal
+   (symex-traversal
+    (circuit
+     (effect traversal
+             ;; TODO: the semantics of effect is already to
+             ;; wrap the operation with a lambda and then
+             ;; invoke that during evaluation. It may make
+             ;; sense to avoid this double-wrapping.
+             (funcall operation))))
+   nil))
 
 
 (provide 'symex-traversals)
