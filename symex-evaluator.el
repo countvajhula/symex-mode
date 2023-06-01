@@ -78,8 +78,8 @@ The aggregate result is constructed according to the specified COMPUTATION."
   ;; in the computation
   ;; later, a and b could be generators instead of lists of results
   (funcall (symex--computation-act computation)
-           a
-           b))
+           (funcall (symex--computation-perceive computation) a)
+           (funcall (symex--computation-perceive computation) b)))
 
 (defun symex-execute-maneuver (maneuver computation)
   "Attempt to execute a given MANEUVER.
