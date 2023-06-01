@@ -220,6 +220,7 @@ a variable, or use the `symex-deftraversal` form (analogous to `defun`).
 
 TRAVERSAL could be any traversal specification, e.g. a maneuver,
 a detour, a move, etc., which is specified using the Symex DSL."
+  (declare (indent 0))
   (cond ((not (listp traversal)) traversal)  ; e.g. a variable containing a traversal
         ((equal 'protocol (car traversal))
          `(symex--compile-protocol ,@(cdr traversal)))
