@@ -187,6 +187,10 @@ ring."
   (delete-region (line-beginning-position)
                  (1+ (line-end-position))))
 
+(defun symex--current-kill ()
+  "Get current kill ring entry without rotating the kill ring."
+  (current-kill 0 t))
+
 (defun symex--fix-leading-whitespace ()
   "Fix leading whitespace."
   ;; fix leading whitespace

@@ -111,7 +111,7 @@ text, on the respective side."
   (let* ((text-to-paste
           ;; add the padding to the yanked text
           (concat before
-                  (current-kill 0 t)
+                  (symex--current-kill)
                   after))
          ;; remember initial point location
          (start (point)))
@@ -140,7 +140,7 @@ text, on the respective side."
          (surrounding-lines-empty (and previous-line-empty
                                        next-line-empty))
          (paste-text-contains-newlines
-          (seq-contains-p (current-kill 0 t) ?\n))
+          (seq-contains-p (symex--current-kill) ?\n))
          (at-eol (condition-case nil
                      (save-excursion (forward-sexp)
                                      (eolp))
