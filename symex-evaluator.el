@@ -89,7 +89,7 @@ succeeds only if all of the phases succeed, and otherwise fails.
 
 Evaluates to a COMPUTATION on the traversal actually executed."
   (if (symex--maneuver-null-p maneuver)
-      symex--move-zero
+      (list symex--move-zero)
     (let ((current-phase (symex--maneuver-first maneuver))
           (remaining-maneuver (symex--maneuver-rest maneuver)))
       (let ((executed-phase (symex-execute-traversal current-phase
@@ -152,7 +152,7 @@ Evaluates to a COMPUTATION on the traversal actually executed."
           (when (not times)
             ;; if looping indefinitely, then count 0
             ;; times executed as success
-            (symex--compute-results symex--move-zero
+            (symex--compute-results (list symex--move-zero)
                                     nil
                                     computation)))))))
 
@@ -247,7 +247,7 @@ Evaluates to a COMPUTATION on the traversal actually executed."
     (let ((result (symex-prim-delete what)))
       ;; TODO: compute based on an appropriate result here
       (when result
-        (symex--compute-results symex--move-zero
+        (symex--compute-results (list symex--move-zero)
                                 nil
                                 computation)))))
 
@@ -259,7 +259,7 @@ Evaluates to a COMPUTATION on the traversal actually executed."
     (let ((result (symex-prim-paste side)))
       ;; TODO: compute based on an appropriate result here
       (when result
-        (symex--compute-results symex--move-zero
+        (symex--compute-results (list symex--move-zero)
                                 nil
                                 computation)))))
 
@@ -334,8 +334,9 @@ Evaluates to a COMPUTATION on the traversal actually executed."
            (symex--point-height-offset))
           (executed-traversal (symex--execute-traversal traversal
                                                         computation)))
-      (let ((result (funcall (symex--computation-perceive computation)
-                             executed-traversal)))
+      (let ((result (symex--compute-results executed-traversal
+                                            nil
+                                            computation)))
         (if result
             result
           ;; TODO: simply returning to the original location
