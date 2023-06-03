@@ -34,24 +34,6 @@
 ;;; COMPUTATIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;
 
-(defun symex--type-integer (obj)
-  "Convert an object OBJ to the integer type."
-  (cond ((integerp obj)
-         obj)
-        ((stringp obj)
-         (string-to-number obj))
-        ((listp obj)
-         (length obj))
-        (t (error "Unexpected type %s in integer type conversion!" obj))))
-
-(defun symex--type-list (obj)
-  "Convert an object OBJ to the list type."
-  (cond ((symex-traversal-p obj)
-         (list obj))
-        ((listp obj)
-         obj)
-        (t (list obj))))
-
 (cl-defun symex-make-computation (&key
                                   components
                                   (perceive #'identity)
@@ -144,9 +126,9 @@ INPUT - the input."
                (symex--ruminate computation components perceived-input)))))
 
 (defconst symex--computation-default
-  ;; each result is wrapped in a list
-  ;; the results are concatenated using list concatenation
-  (symex-make-computation :perceive #'symex--type-list
+  ;; each move is wrapped in a list
+  ;; these are concatenated using list concatenation
+  (symex-make-computation :perceive #'list
                           :act #'append))
 
 (defun symex--traversal-account (obj)
