@@ -236,12 +236,11 @@ For the deterministic version used at the primitive level, see
     (symex-execute-traversal symex--traversal-goto-first
                              symex--computation-traversal-length)))
 
-(defun symex-height ()  ; TODO: may be better framed as a computation
+(defun symex-height ()
   "Get height (above root) of current symex."
-  (interactive)
   (symex-save-excursion
-   (let ((moves (symex-execute-traversal symex--traversal-goto-lowest)))
-     (length moves))))
+    (symex-execute-traversal symex--traversal-goto-lowest
+                             symex--computation-traversal-length)))
 
 (defun symex-next-visual-line (&optional count)
   "Coordinate navigation to move down.
