@@ -171,14 +171,6 @@ result."
       (cl-pushnew p result :key #'car :test #'equal))
     result))
 
-(defun symex--remaining-length ()
-  "Compute the remaining length of the current symex.
-
-This should be done via DSL computation semantics at some point."
-  (symex-save-excursion
-    (let ((result (symex-execute-traversal symex--traversal-goto-last)))
-     (1+ (length result)))))
-
 (defun symex--kill-whole-line ()
   "Delete entire current line.
 

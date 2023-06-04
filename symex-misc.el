@@ -29,6 +29,7 @@
 (require 'evil)
 (require 'symex-primitives)
 (require 'symex-evaluator)
+(require 'symex-computations)
 (require 'symex-traversals)
 (require 'symex-interface)
 (require 'symex-interface-builtins)
@@ -222,6 +223,12 @@ For the deterministic version used at the primitive level, see
       (unless (= (line-number-at-pos)
                  (line-number-at-pos original-pos))
         (goto-char original-pos)))))
+
+(defun symex--remaining-length ()
+  "Compute the remaining length of the current symex."
+  (symex-save-excursion
+    (symex-execute-traversal symex--traversal-goto-last
+                             symex--computation-traversal-length)))
 
 (defun symex-index ()  ; TODO: may be better framed as a computation
   "Get relative (from start of containing symex) index of current symex."
