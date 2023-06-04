@@ -127,7 +127,7 @@ Return a Symex move (list with x,y node offsets tagged with
     (dotimes (_ (or count 1))
       (let ((new-node (funcall fn cursor)))
         (when (and new-node (not (tsc-node-eq new-node cursor)))
-          (setq move (symex--add-moves (list move move-delta)))
+          (setq move (symex--move-+ move move-delta))
           (setq cursor new-node
                 target-node cursor))))
     (when target-node (symex-ts--set-current-node target-node))

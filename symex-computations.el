@@ -126,10 +126,40 @@ INPUT - the input."
                (symex--ruminate computation components perceived-input)))))
 
 (defconst symex--computation-default
-  ;; each move is wrapped in a list
-  ;; these are concatenated using list concatenation
   (symex-make-computation :perceive #'list
-                          :act #'append))
+                          :act #'append)
+  "Each move is wrapped in a list. These are concatenated using list
+concatenation.")
+
+(defun symex--const-1 (_x)
+  "A constant function return 1 regardless of the input."
+  1)
+
+(defconst symex--computation-count-moves
+  (symex-make-computation :perceive #'symex--const-1
+                          :act #'+)
+  "Each move is counted as 1, even zero moves.  The results are
+concatenated by addition.")
+
+(defconst symex--computation-traversal-length
+  (symex-make-computation :perceive #'symex--move-length
+                          :act #'+)
+  "Each move that actually moves is counted as 1.  The results are
+concatenated by addition.")
+
+(defconst symex--computation-net-traversal-dimensions
+  (symex-make-computation :perceive #'identity
+                          :act #'symex--move-+)
+  "X-axis (forward/backward) and y-axis (up/down) moves are added
+separately. The results are concatenated by vector addition.")
+
+(defconst symex--computation-traversal-dimensions
+  (symex-make-computation :perceive #'identity
+                          :act #'symex--move-abs-+)
+  "X-axis (forward/backward) and y-axis (up/down) moves are added
+separately as absolute (non-negative) values.  The results are
+concatenated by vector addition and represent how many total up/down
+steps and how many total forward/backward steps were taken.")
 
 (defun symex--traversal-account (obj)
   "Represents the result OBJ of a traversal as a traversal."

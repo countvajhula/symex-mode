@@ -65,31 +65,34 @@ forward-backward axis, and the Y or in-out axis."
   "Check if two moves M1 and M2 are identical."
   (equal m1 m2))
 
-(defun symex--add-moves (moves)
-  "Add MOVES together as vectors.
+(defun symex--move-+ (a b)
+  "Add moves A and B using vector addition.
 
 This sum indicates height and distance along the branches of the tree."
-  (if moves
-      (let ((current (car moves))
-            (remaining (cdr moves)))
-        (let ((result (symex--add-moves remaining)))
-          (symex-make-move (+ (symex--move-x current)
-                              (symex--move-x result))
-                           (+ (symex--move-y current)
-                              (symex--move-y result)))))
-    symex--move-zero))
+  (let ((x1 (symex--move-x a))
+        (y1 (symex--move-y a))
+        (x2 (symex--move-x b))
+        (y2 (symex--move-y b)))
+    (symex-make-move (+ x1 x2)
+                     (+ y1 y2))))
+
+(defun symex--move-abs-+ (a b)
+  "Add two moves using vector addition of their absolute projections."
+  (let ((x1 (symex--move-x a))
+        (y1 (symex--move-y a))
+        (x2 (symex--move-x b))
+        (y2 (symex--move-y b)))
+    (symex-make-move (+ (abs x1) (abs x2))
+                     (+ (abs y1) (abs y2)))))
 
 (defun symex--move-length (move)
   "Compute the length of the MOVE.
 
-This is most naturally meaningful when the move is entirely along one axis,
-but a result will be returned even if the move is across multiple axes,
-as standard linear vector magnitude computation is used."
+This assumes that the move is entirely along one axis, i.e.
+that either x or y is zero."
   (let ((x (symex--move-x move))
         (y (symex--move-y move)))
-    (if (not (= x 0))
-        x
-      y)))
+    (abs (+ x y))))
 
 (cl-defun symex-make-precaution (traversal &key pre-condition post-condition)
   "A specification to check conditions before/after execution of a TRAVERSAL.
