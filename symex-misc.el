@@ -224,7 +224,7 @@ For the deterministic version used at the primitive level, see
                  (line-number-at-pos original-pos))
         (goto-char original-pos)))))
 
-(defun symex--remaining-length ()
+(defun symex-remaining-length ()
   "Compute the remaining length of the current symex."
   (1+  ; length, so not zero-based like index
    (symex-save-excursion

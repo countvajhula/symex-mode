@@ -134,7 +134,7 @@
 (symex-define-command symex-delete-remaining ()
   "Delete remaining symexes at this level."
   (interactive)
-  (let ((count (symex--remaining-length)))
+  (let ((count (symex-remaining-length)))
     (symex--delete count)))
 
 (symex-define-insertion-command symex-change (count)
@@ -145,7 +145,7 @@
 (symex-define-insertion-command symex-change-remaining ()
   "Change remaining symexes at this level."
   (interactive)
-  (let ((count (symex--remaining-length)))
+  (let ((count (symex-remaining-length)))
     (symex--remove count)))
 
 (symex-define-insertion-command symex-replace ()
@@ -286,7 +286,7 @@ by default, joins next symex to current one."
 (defun symex-yank-remaining ()
   "Yank (copy) remaining symexes at this level."
   (interactive)
-  (let ((count (symex--remaining-length)))
+  (let ((count (symex-remaining-length)))
     (symex-yank count)))
 
 (symex-define-command symex-paste-before (count)
@@ -562,7 +562,7 @@ then no action is taken."
 (symex-define-command symex-comment-remaining ()
   "Comment out remaining symexes at this level."
   (interactive)
-  (let ((count (symex--remaining-length)))
+  (let ((count (symex-remaining-length)))
     (symex-comment count)))
 
 (defun symex--delete-prefix-helper (prefix-list)
