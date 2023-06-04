@@ -230,20 +230,11 @@ For the deterministic version used at the primitive level, see
     (symex-execute-traversal symex--traversal-goto-last
                              symex--computation-traversal-length)))
 
-(defun symex-index ()  ; TODO: may be better framed as a computation
+(defun symex-index ()
   "Get relative (from start of containing symex) index of current symex."
-  (interactive)
   (symex-save-excursion
-    (let ((original-location (point)))
-      (let ((current-location (symex-goto-first))
-            (move-made symex--move-zero)
-            (result 0))
-        (while (and move-made
-                    (< current-location original-location))
-          (setq move-made (symex--execute-tree-move (symex-make-move 1 0)))
-          (setq current-location (point))
-          (setq result (1+ result)))
-        result))))
+    (symex-execute-traversal symex--traversal-goto-first
+                             symex--computation-traversal-length)))
 
 (defun symex-height ()  ; TODO: may be better framed as a computation
   "Get height (above root) of current symex."
