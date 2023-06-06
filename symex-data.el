@@ -171,6 +171,33 @@ execution."
         (times (symex--circuit-times circuit)))
     (symex-make-circuit traversal (when times (1- times)))))
 
+(defun symex-make-loop (traversal &optional condition)
+  "A specification to repeat a TRAVERSAL until CONDITION is met.
+
+If CONDITION is nil, repeat indefinitely until the traversal fails."
+  (list 'loop
+        traversal
+        condition))
+
+(defun symex-loop-p (obj)
+  "Check if OBJ specifies a loop."
+  (condition-case nil
+      (equal 'loop
+             (nth 0 obj))
+    (error nil)))
+
+(defun symex--loop-traversal (loop)
+  "Get the traversal component of the LOOP.
+
+This is the traversal that is intended to be looped."
+  (nth 1 loop))
+
+(defun symex--loop-condition (loop)
+  "Get the condition component of the LOOP.
+
+This is the condition for termination of the traversal."
+  (nth 2 loop))
+
 (defun symex-make-maneuver (&rest phases)
   "Construct a maneuver from the given PHASES."
   (list 'maneuver
@@ -396,6 +423,7 @@ result."
       (symex-maneuver-p obj)
       (symex-venture-p obj)
       (symex-circuit-p obj)
+      (symex-loop-p obj)
       (symex-detour-p obj)
       (symex-precaution-p obj)
       (symex-protocol-p obj)

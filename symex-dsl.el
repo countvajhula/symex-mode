@@ -70,6 +70,14 @@ TIMES - see underlying Lisp implementation."
   `(symex-make-circuit (symex-traversal ,traversal)
                        ,times))
 
+(defmacro symex--compile-loop (traversal &optional condition)
+  "Compile a loop from Symex DSL -> Lisp.
+
+TRAVERSAL - see underlying Lisp implementation.
+CONDITION - see underlying Lisp implementation."
+  `(symex-make-loop (symex-traversal ,traversal)
+                    ,condition))
+
 (defun symex--rewrite-condition (condition)
   "Rewrite a condition expression into a lambda expression.
 
@@ -232,6 +240,8 @@ a detour, a move, etc., which is specified using the Symex DSL."
          `(symex--compile-detour ,@(cdr traversal)))
         ((equal 'circuit (car traversal))
          `(symex--compile-circuit ,@(cdr traversal)))
+        ((equal 'loop (car traversal))
+         `(symex--compile-loop ,@(cdr traversal)))
         ((equal 'precaution (car traversal))
          `(symex--compile-precaution ,@(cdr traversal)))
         ((equal 'decision (car traversal))

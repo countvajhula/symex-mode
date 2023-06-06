@@ -143,6 +143,36 @@ Evaluates to a COMPUTATION on the traversal actually executed."
               (symex-execute-move symex--move-zero
                                   computation)))))))
 
+;; TODO: we could probably avoid having a separate conditional
+;; recursion form by passing the computation result to all predicates
+;; used with Symex, e.g. in precautions, decisions, etc.  Then this
+;; could be implemented as a circuit repeating a precaution on an
+;; underlying traversal.
+(defun symex-execute-loop (loop computation &optional executed-loop)
+  "Execute a LOOP.
+
+This repeats some traversal according to a condition on the computation.
+
+Evaluates to a COMPUTATION on the traversal actually executed."
+  (let ((traversal (symex--loop-traversal loop))
+        (condition (symex--loop-condition loop))
+        (executed-loop
+         (or executed-loop
+             (symex-execute-move symex--move-zero
+                                 computation))))
+    (let ((result (symex-execute-traversal traversal
+                                           computation)))
+      (when result
+        (let ((accumulated-result
+               (symex-compute-results executed-loop
+                                      result
+                                      computation)))
+          (if (funcall condition accumulated-result)
+              accumulated-result
+            (symex-execute-loop loop
+                                computation
+                                accumulated-result)))))))
+
 (defun symex-execute-detour (detour computation)
   "Execute the DETOUR.
 
@@ -272,6 +302,9 @@ Evaluates to a COMPUTATION on the traversal actually executed."
         ((symex-circuit-p traversal)
          (symex-execute-circuit traversal
                                 computation))
+        ((symex-loop-p traversal)
+         (symex-execute-loop traversal
+                             computation))
         ((symex-protocol-p traversal)
          (symex-execute-protocol traversal
                                  computation))
