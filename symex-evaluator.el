@@ -68,17 +68,6 @@ Optional argument COMPUTATION currently unused."
       (funcall (symex--computation-perceive computation)
                executed-move))))
 
-(defun symex--compute-results (a b computation)
-  "Compose traversal results according to COMPUTATION.
-
-Combine the result of a traversal computation A with the accumulated
-computation B into an aggregate result."
-  ;; TODO: ruminate here
-  (when (and a b)
-    (funcall (symex--computation-act computation)
-             a
-             b)))
-
 (defun symex-execute-maneuver (maneuver computation)
   "Attempt to execute a given MANEUVER.
 
@@ -98,9 +87,9 @@ Evaluates to a COMPUTATION on the traversal actually executed."
                  (symex-execute-maneuver remaining-maneuver
                                          computation)))
             (when executed-remaining-phases
-              (symex--compute-results executed-phase
-                                      executed-remaining-phases
-                                      computation))))))))
+              (symex-compute-results executed-phase
+                                     executed-remaining-phases
+                                     computation))))))))
 
 (defun symex-execute-venture (venture computation)
   "Attempt to execute a given VENTURE.
@@ -123,9 +112,9 @@ Evaluates to a COMPUTATION on the traversal actually executed."
             (let ((executed-remaining-phases
                    (symex-execute-venture remaining-venture
                                           computation)))
-              (symex--compute-results executed-phase
-                                      executed-remaining-phases
-                                      computation)))))))
+              (symex-compute-results executed-phase
+                                     executed-remaining-phases
+                                     computation)))))))
 
 (defun symex-execute-circuit (circuit computation)
   "Execute a CIRCUIT.
@@ -145,9 +134,9 @@ Evaluates to a COMPUTATION on the traversal actually executed."
               (let ((executed-remaining-circuit
                      (symex-execute-circuit remaining-circuit
                                             computation)))
-                (symex--compute-results result
-                                        executed-remaining-circuit
-                                        computation))
+                (symex-compute-results result
+                                       executed-remaining-circuit
+                                       computation))
             (when (not times)
               ;; if looping indefinitely, then count 0
               ;; times executed as success
@@ -172,9 +161,9 @@ Evaluates to a COMPUTATION on the traversal actually executed."
           (let ((executed-path (symex-execute-traversal path
                                                         computation)))
             (when executed-path
-              (symex--compute-results executed-reorientation
-                                      executed-path
-                                      computation))))))))
+              (symex-compute-results executed-reorientation
+                                     executed-path
+                                     computation))))))))
 
 (defun symex-execute-precaution (precaution computation)
   "Attempt to execute a given PRECAUTION.

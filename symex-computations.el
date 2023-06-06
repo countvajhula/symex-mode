@@ -39,7 +39,7 @@
                                   (perceive #'identity)
                                   (select #'identity)
                                   (filter #'identity)
-                                  (decide #'identity)
+                                  (synthesize #'identity)
                                   (express #'identity)
                                   (act #'identity))
   "A computation to be performed as part of a traversal.
@@ -54,7 +54,7 @@ to select the subset of perceptions that will be operated on by nested
 computations.
 FILTER - a predicate function to be applied to results from nested computations
 to select those that will factor into the decision.
-DECIDE - a binary function to be applied in combining results from nested
+SYNTHESIZE - a binary function to be applied in combining results from nested
 computations (each of the \"perceived\" type) to yield the provisional result
 \(also of the perceived type).
 EXPRESS - a function to transform data of the perceived type (e.g. the
@@ -68,7 +68,7 @@ computation (each of the \"expressed\" type) to yield the final result
         perceive
         select
         filter
-        decide
+        synthesize
         express
         act))
 
@@ -88,8 +88,8 @@ computation (each of the \"expressed\" type) to yield the final result
   "The filtration/redaction procedure of the COMPUTATION."
   (nth 4 computation))
 
-(defun symex--computation-decide (computation)
-  "The decision procedure of the COMPUTATION."
+(defun symex--computation-synthesize (computation)
+  "The synthesize procedure of the COMPUTATION."
   (nth 5 computation))
 
 (defun symex--computation-express (computation)
@@ -99,6 +99,17 @@ computation (each of the \"expressed\" type) to yield the final result
 (defun symex--computation-act (computation)
   "The act procedure of the COMPUTATION."
   (nth 7 computation))
+
+(defun symex-compute-results (a b computation)
+  "Compose traversal results according to COMPUTATION.
+
+Combine the result of a traversal computation A with the accumulated
+computation B into an aggregate result."
+  ;; TODO: ruminate here
+  (when (and a b)
+    (funcall (symex--computation-synthesize computation)
+             a
+             b)))
 
 (defun symex--ruminate (computation components input)
   "Helper to process input in nested computations.
@@ -127,7 +138,7 @@ INPUT - the input."
 
 (defconst symex--computation-default
   (symex-make-computation :perceive #'list
-                          :act #'append)
+                          :synthesize #'append)
   "Each move is wrapped in a list. These are concatenated using list
 concatenation.")
 
@@ -137,25 +148,25 @@ concatenation.")
 
 (defconst symex--computation-count-moves
   (symex-make-computation :perceive #'symex--const-1
-                          :act #'+)
+                          :synthesize #'+)
   "Each move is counted as 1, even zero moves.  The results are
 concatenated by addition.")
 
 (defconst symex--computation-traversal-length
   (symex-make-computation :perceive #'symex--move-length
-                          :act #'+)
+                          :synthesize #'+)
   "Each move that actually moves is counted as 1.  The results are
 concatenated by addition.")
 
 (defconst symex--computation-net-traversal-dimensions
   (symex-make-computation :perceive #'identity
-                          :act #'symex--move-+)
+                          :synthesize #'symex--move-+)
   "X-axis (forward/backward) and y-axis (up/down) moves are added
 separately. The results are concatenated by vector addition.")
 
 (defconst symex--computation-traversal-dimensions
   (symex-make-computation :perceive #'identity
-                          :act #'symex--move-abs-+)
+                          :synthesize #'symex--move-abs-+)
   "X-axis (forward/backward) and y-axis (up/down) moves are added
 separately as absolute (non-negative) values.  The results are
 concatenated by vector addition and represent how many total up/down
