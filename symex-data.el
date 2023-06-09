@@ -398,14 +398,14 @@ This is the traversal that will be chosen if the condition is false."
   "Get the side component of a PASTE."
   (nth 1 paste))
 
-(defun symex-make-effect (traversal effect)
+(defun symex-make-effect (effect traversal)
   "A specification to perform a side-effect after executing a traversal.
 
 Execute TRAVERSAL and, if it succeeds, execute EFFECT disregarding its
 result."
   (list 'effect
-        traversal
-        effect))
+        effect
+        traversal))
 
 (defun symex-effect-p (obj)
   "Check if OBJ specifies a traversal with a side effect."
@@ -414,12 +414,12 @@ result."
              (nth 0 obj))
     (error nil)))
 
-(defun symex--effect-traversal (effect)
-  "Get the traversal to perform with an EFFECT."
-  (nth 1 effect))
-
 (defun symex--effect-effect (effect)
   "Get the EFFECT to perform as part of traversal execution."
+  (nth 1 effect))
+
+(defun symex--effect-traversal (effect)
+  "Get the traversal to perform with an EFFECT."
   (nth 2 effect))
 
 (defun symex-traversal-p (obj)

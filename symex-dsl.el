@@ -25,6 +25,8 @@
 
 ;;; Code:
 
+(require 'symex-data)
+
 
 (defun symex--compile-traversal-helper (traversal)
   "Helper function to compile a TRAVERSAL.
@@ -206,13 +208,17 @@ WHAT - what to delete, either this, previous, next, remaining or until."
 SIDE - the side to paste on, either before or after."
   `'(paste ,side))
 
-(defmacro symex--compile-effect (traversal effect)
+(defmacro symex--compile-effect (effect &optional traversal)
   "Compile an effect from Symex -> Lisp.
 
-TRAVERSAL - the traversal to perform. This could be any traversal.
-EFFECT - the side effect to perform. This is any Lisp expression."
-  `(symex-make-effect (symex-traversal ,traversal)
-                      (lambda () ,effect)))
+EFFECT - the side effect to perform. This is any Lisp expression.
+TRAVERSAL - the traversal to perform. This could be any traversal. If
+no traversal is specified, then the traversal is treated as the zero
+move, making this a pure side effect."
+  `(symex-make-effect (lambda () ,effect)
+                      (if ,traversal
+                          (symex-traversal ,traversal)
+                        symex--move-zero)))
 
 ;; TODO: support args here like lambda / defun (i.e. as a list in the
 ;; binding form -- not passed in but syntactically inserted)

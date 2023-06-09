@@ -320,12 +320,12 @@ Executes the motion COUNT times."
   (symex-execute-traversal
    (symex-traversal
     (circuit
-     (effect traversal
+     (effect (funcall operation)
              ;; TODO: the semantics of effect is already to
              ;; wrap the operation with a lambda and then
              ;; invoke that during evaluation. It may make
              ;; sense to avoid this double-wrapping.
-             (funcall operation))))
+             traversal)))
    nil))
 
 
