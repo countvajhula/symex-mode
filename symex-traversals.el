@@ -122,35 +122,58 @@
                                               (circuit (move forward))))))
   (point))
 
+;; TODO: consider compiling `(move down)` to this?
+(symex-deftraversal symex--traversal-go-down
+  (maneuver (circuit (move backward))
+            (move down))
+  "A traversal to go down the \"proper,\" squirrel-approved
+way. Generally, we could just (move down) in any traversal and that
+would be fine in a lot of cases. But if we did that, then the
+information about the distance we've traversed along the branch is
+lost for any computations that might want to leverage it. This
+traversal is careful to explicitly \"undo\" any movements in the
+x-direction, the same way we implicitly do when going up and down
+(i.e. in the y-direction). This is the way a squirrel would do it,
+after all -- in order to get down from a high branch, we first need to
+traverse all the way to the base of the branch, back the way we
+came.")
+
 (symex-deftraversal symex--traversal-preorder
-  (protocol (protocol (move up)
-                      (move forward))
-            (detour (precaution (move down)
-                                (afterwards (not (at final))))
-                    (move forward)))
+  (protocol (move up)
+            (move forward)
+            (detour
+             (precaution symex--traversal-go-down
+                         (afterwards (not (at final))))
+             (move forward)))
   "Pre-order tree traversal, continuing to other trees.")
 
 (symex-deftraversal symex--traversal-preorder-in-tree
-  (protocol (protocol (move up)
-                      (move forward))
-            (detour (precaution (move down)
-                                (afterwards (not (at root))))
-                    (move forward)))
+  (protocol (move up)
+            (move forward)
+            (detour
+             (precaution symex--traversal-go-down
+                         (afterwards (not (at root))))
+             (move forward)))
   "Pre-order tree traversal.")
 
 (symex-deftraversal symex--traversal-postorder
-  (protocol (venture (move backward)
-                     (circuit (venture (move up)
-                                       (circuit (move forward)))))
-            (move down))
+  (protocol
+   (venture (move backward)
+            (circuit
+             (venture (move up)
+                      (circuit (move forward)))))
+   symex--traversal-go-down)
   "Post-order tree traversal, continuing to other trees.")
 
 (symex-deftraversal symex--traversal-postorder-in-tree
-  (protocol (precaution (venture (move backward)
-                                 (circuit (venture (move up)
-                                                   (circuit (move forward)))))
-                        (beforehand (not (at root))))
-            (move down))
+  (protocol
+   (precaution
+    (venture (move backward)
+             (circuit
+              (venture (move up)
+                       (circuit (move forward)))))
+    (beforehand (not (at root))))
+   symex--traversal-go-down)
   "Post-order tree traversal.")
 
 (symex-deftraversal symex--traversal-skip-forward
