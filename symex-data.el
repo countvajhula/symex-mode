@@ -65,6 +65,11 @@ forward-backward axis, and the Y or in-out axis."
   "Check if two moves M1 and M2 are identical."
   (equal m1 m2))
 
+(defun symex--zero-move-p (move)
+  "Check if MOVE is the zero move."
+  (symex--are-moves-equal-p move
+                            symex--move-zero))
+
 (defun symex--move-+ (a b)
   "Add moves A and B using vector addition.
 

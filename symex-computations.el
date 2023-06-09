@@ -172,6 +172,35 @@ separately as absolute (non-negative) values.  The results are
 concatenated by vector addition and represent how many total up/down
 steps and how many total forward/backward steps were taken.")
 
+(defun symex--move-delta-+ (a b)
+  "Add moves A and B using vector addition accounting for height changes.
+
+The index only participates in the addition when we are at the same
+height as the original position."
+  (let ((x1 (symex--move-x a))
+        (y1 (symex--move-y a))
+        (x2 (symex--move-x b))
+        (y2 (symex--move-y b)))
+    (let ((x (+ x1 x2))
+          (y (+ y1 y2)))
+      (cond ((symex--zero-move-p a) b)
+            ((= 0 y)
+             ;; we're at the height we started the traversal at
+             ;; so it makes sense to add movement in the x-direction
+             (symex-make-move x y))
+            (t
+             ;; don't modify the accumulated value of x
+             ;; as we are at a different height
+             (symex-make-move x1 y))))))
+
+(defconst symex--computation-node-distance
+  (symex-make-computation :perceive #'identity
+                          :synthesize #'symex--move-delta-+)
+  "X-axis (forward/backward) and y-axis (up/down) moves are added
+separately. The results are concatenated by vector addition. Index
+deltas are only added together when at the same height as the original
+position.")
+
 (defun symex--traversal-account (obj)
   "Represents the result OBJ of a traversal as a traversal."
   (cond ((symex-traversal-p obj)
