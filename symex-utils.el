@@ -177,7 +177,9 @@ result."
 Similar to `kill-whole-line` but doesn't add an entry to the kill
 ring."
   (delete-region (line-beginning-position)
-                 (1+ (line-end-position))))
+                 (line-end-position))
+  (unless (eobp)
+    (delete-char 1)))
 
 (defun symex--current-kill ()
   "Get current kill ring entry without rotating the kill ring."
