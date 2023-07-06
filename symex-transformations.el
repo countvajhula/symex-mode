@@ -103,20 +103,12 @@
   ;; to be fewer than count expressions following, then we may delete
   ;; preceding expressions too. But we typically mean to delete only
   ;; the succeeding expressions here.
-  ;;
-  ;; In lieu of doing it in two traversals, we could potentially
-  ;; either introduce a new traversal type that always executes every
-  ;; subexpression even if any of them fail, or, we could first
-  ;; compute (either in symex or in Elisp) the number of succeeding
-  ;; expressions or count, whichever is lower, and then execute the
-  ;; deletion traversal on that modified count.
-  (symex-execute-traversal
-   (symex-traversal
-    (circuit (delete next)
-             (1- count))))
-  (symex-execute-traversal
-   (symex-traversal
-    (delete this))))
+  (let ((count (min (symex-remaining-length)
+                    count)))
+    (symex-execute-traversal
+     (symex-traversal
+       (circuit (delete this)
+                count)))))
 
 (symex-define-command symex-delete (count)
   "Delete COUNT symexes."
