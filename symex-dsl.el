@@ -216,9 +216,9 @@ TRAVERSAL - the traversal to perform. This could be any traversal. If
 no traversal is specified, then the traversal is treated as the zero
 move, making this a pure side effect."
   `(symex-make-effect (lambda () ,effect)
-                      (if ,traversal
-                          (symex-traversal ,traversal)
-                        symex--move-zero)))
+                      ,(if traversal
+                           `(symex-traversal ,traversal)
+                         symex--move-zero)))
 
 ;; TODO: support args here like lambda / defun (i.e. as a list in the
 ;; binding form -- not passed in but syntactically inserted)
