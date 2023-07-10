@@ -645,7 +645,7 @@ line."
                  (symex--previous-line-empty-p))
              (symex--join-to-next)
            ;; don't leave an empty line where the symex was
-           (symex--kill-whole-line)))
+           (symex--delete-whole-line)))
         ((or (save-excursion (evil-last-non-blank) ; (<>$
                              (symex-left-p)))
          (symex--join-to-next))

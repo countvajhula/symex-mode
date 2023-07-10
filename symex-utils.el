@@ -171,7 +171,7 @@ result."
       (cl-pushnew p result :key #'car :test #'equal))
     result))
 
-(defun symex--kill-whole-line ()
+(defun symex--delete-whole-line ()
   "Delete entire current line.
 
 Similar to `kill-whole-line` but doesn't add an entry to the kill
