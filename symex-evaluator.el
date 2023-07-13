@@ -68,10 +68,10 @@ Optional argument COMPUTATION currently unused."
                     (funcall (symex--computation-perceive computation)
                              symex--move-zero))))
     (when executed-move
-      (symex-compute-results result
-                             (funcall (symex--computation-perceive computation)
-                                      executed-move)
-                             computation))))
+      (symex-compose-computation result
+                                 (funcall (symex--computation-perceive computation)
+                                          executed-move)
+                                 computation))))
 
 (defun symex-execute-maneuver (maneuver computation result)
   "Attempt to execute a given MANEUVER.

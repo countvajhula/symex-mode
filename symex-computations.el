@@ -100,7 +100,7 @@ computation (each of the \"expressed\" type) to yield the final result
   "The act procedure of the COMPUTATION."
   (nth 7 computation))
 
-(defun symex-compute-results (a b computation)
+(defun symex-compose-computation (a b computation)
   "Compose traversal results according to COMPUTATION.
 
 Combine the result of a traversal computation A with the accumulated
