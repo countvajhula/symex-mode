@@ -40,6 +40,11 @@
   :type 'boolean
   :group 'symex)
 
+(defcustom symex-toggle-blink-cursor t
+  "Whether to disable cursor blinking while in Symex state."
+  :type 'boolean
+  :group 'symex)
+
 (defcustom symex-remember-branch-positions-p t
   "Whether movement in the vertical direction should remember branch positions."
   :type 'boolean

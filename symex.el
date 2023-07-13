@@ -48,6 +48,8 @@
 (require 'tree-sitter)
 (require 'symex-ts)
 
+(defvar symex--original-blink-cursor-state nil)
+
 ;;;###autoload
 (define-minor-mode symex-mode
   "An evil way to edit Lisp symbolic expressions as trees."
@@ -112,6 +114,9 @@
   (symex--adjust-point-on-entry)
   (when symex-remember-branch-positions-p
     (symex--clear-branch-memory))
+  (when symex-toggle-blink-cursor
+    (setq symex--original-blink-cursor-state blink-cursor-mode)
+    (blink-cursor-mode -1))
   (symex-user-select-nearest)
   (when symex-refocus-p
     ;; smooth scrolling currently not supported
