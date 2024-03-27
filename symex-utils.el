@@ -77,9 +77,11 @@ the following recipe instead."
 
 If the current character is non-whitespace, point is not moved."
   (unless (looking-at-p symex--re-non-whitespace)
-    (re-search-forward symex--re-non-whitespace)
-    ;; since the re search goes to the end of the match
-    (backward-char)))
+    (condition-case nil
+        (progn (re-search-forward symex--re-non-whitespace)
+               ;; since the re search goes to the end of the match
+               (backward-char))
+      (error nil))))
 
 (defun symex--join-to-match (pattern)
   "Join current position to the next position matching PATTERN.
