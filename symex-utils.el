@@ -185,6 +185,25 @@ ring."
   "Get current kill ring entry without rotating the kill ring."
   (current-kill 0 t))
 
+(defun symex--kill-ring-push (entry)
+  "Push an ENTRY onto the kill ring."
+  (push entry kill-ring)
+  (setq kill-ring-yank-pointer kill-ring))
+
+(defun symex--kill-ring-pop ()
+  "Pop the latest entry off the kill ring."
+  (let ((result (pop kill-ring)))
+    (setq kill-ring-yank-pointer kill-ring)
+    result))
+
+(defun symex--kill-ring-compose ()
+  "Compose kill ring entries.
+
+This concatenates the latest kill with the preceding one, treating the
+preceding one as the accumulator. "
+  (let ((latest (symex--kill-ring-pop)))
+    (kill-append latest t)))
+
 (defun symex--fix-leading-whitespace ()
   "Fix leading whitespace."
   ;; fix leading whitespace
