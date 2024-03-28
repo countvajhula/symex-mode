@@ -221,7 +221,6 @@ from the buffer."
         (end (symex--get-end-point count t)))
     (when (> end start)
       (kill-region start end)
-      (fixup-whitespace) ; TODO: verify this is needed
       t)))
 
 (defun symex--reset-after-delete ()
