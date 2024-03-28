@@ -102,13 +102,24 @@
   ;; if we attempt to just (delete this) count times, if there happen
   ;; to be fewer than count expressions following, then we may delete
   ;; preceding expressions too. But we typically mean to delete only
-  ;; the succeeding expressions here.
+  ;; the succeeding expressions here. That's why we count the number
+  ;; of remaining expressions first.
   (let ((count (min (symex-remaining-length)
                     count)))
-    (symex-execute-traversal
-     (symex-traversal
-       (circuit (delete this)
-                count)))))
+    (when (> count 0)
+      ;; when deleting multiple expressions, we typically want to
+      ;; treat them as a single deletion, so we compose the entries on
+      ;; the kill ring as a side effect of each deletion
+      (symex--kill-ring-push "")
+      (symex-execute-traversal
+       (symex-traversal
+         (circuit (effect (symex--kill-ring-compose)
+                          (delete this))
+                  count)))
+      ;; trim trailing whitespace at the end
+      ;; otherwise, paste will include that
+      (let ((result (symex--kill-ring-pop)))
+        (symex--kill-ring-push (string-trim-right result))))))
 
 (symex-define-command symex-delete (count)
   "Delete COUNT symexes."
