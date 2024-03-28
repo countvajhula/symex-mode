@@ -315,6 +315,12 @@ by default, joins next symex to current one."
   "Paste after symex, COUNT times."
   (interactive "p")
   (setq this-command 'evil-paste-after)
+  ;; TODO: user-level defcustom of whether to move
+  ;; to indicate pasted text (like evil), which should
+  ;; be checked here and appropriately applied. E.g.
+  ;; in Lisp, (|) currently would move when it shouldn't
+  ;; but it's a default that works in the majority of
+  ;; cases to provide evil-like behavior.
   (symex-execute-traversal
    (symex-traversal
     (maneuver (circuit (paste after)
