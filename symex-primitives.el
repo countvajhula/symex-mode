@@ -255,16 +255,14 @@ WHAT could be `this`, `next`, or `previous`."
            (setq result (symex-remove 1)))
           ((eq 'previous what)
            (when (symex--previous-p)
-             ;; not sure how reliable `save-excursion` is when
-             ;; the buffer is being mutated. If we encounter
-             ;; any issues we could try `symex--save-point-excursion`
-             ;; or otherwise, note the bounds of the mutated region
-             ;; and manually preserve point where we need it, or
-             ;; if necessary, preserve point structurally by using
-             ;; a primitive version of `symex-index`.
-             (symex-save-excursion
+             ;; note the bounds of the mutated region
+             ;; and manually preserve point where we need it
+             (let ((start (symex-save-excursion
+                            (symex--go-backward)
+                            (symex--get-starting-point))))
                (symex--go-backward)
-               (setq result (symex-remove 1)))))
+               (setq result (symex-remove 1))
+               (goto-char start))))
           ((eq 'next what)
            (when (symex--next-p)
              (save-excursion
