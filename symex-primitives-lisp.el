@@ -404,7 +404,7 @@ as special cases here."
         (error nil)))
     (point)))
 
-(defun symex-lisp--get-end-point-helper (count)
+(defun symex-lisp--get-end-point-helper (count include-whitespace)
   "Helper to get the point value after COUNT symexes.
 
 If the containing expression terminates earlier than COUNT
@@ -412,19 +412,31 @@ symexes, returns the end point of the last one found.
 
 Note that this mutates point - it should not be called directly."
   (if (= count 0)
-      (point)
+      (progn
+        (when include-whitespace
+          (symex--go-to-next-non-whitespace-char))
+        (point))
     (condition-case nil
         (forward-sexp)
-      (error (point)))
-    (symex-lisp--get-end-point-helper (1- count))))
+      (error
+       (progn
+         (when include-whitespace
+           (symex--go-to-next-non-whitespace-char))
+         (point))))
+    (symex-lisp--get-end-point-helper (1- count)
+                                      include-whitespace)))
 
-(defun symex-lisp--get-end-point (count)
+(defun symex-lisp--get-end-point (count &optional include-whitespace)
   "Get the point value after COUNT symexes.
 
 If the containing expression terminates earlier than COUNT
-symexes, returns the end point of the last one found."
+symexes, returns the end point of the last one found.
+
+If include-whitespace is non-nil, this returns the end point
+including trailing whitespace at the end of the last symex."
   (save-excursion
-    (symex-lisp--get-end-point-helper count)))
+    (symex-lisp--get-end-point-helper count
+                                      include-whitespace)))
 
 (defun symex-lisp--point-height-offset ()
   "Compute the height offset of the current symex.

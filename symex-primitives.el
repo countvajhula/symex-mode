@@ -218,9 +218,10 @@ This is a low-level utility that simply removes the indicated text
 from the buffer."
   (let ((last-command nil)  ; see symex-yank re: last-command
         (start (point))
-        (end (symex--get-end-point count)))
+        (end (symex--get-end-point count t)))
     (when (> end start)
       (kill-region start end)
+      (fixup-whitespace) ; TODO: verify this is needed
       t)))
 
 (defun symex--reset-after-delete ()
@@ -327,14 +328,21 @@ difference from the lowest such level."
       (symex-ts--get-starting-point)
     (symex-lisp--get-starting-point)))
 
-(defun symex--get-end-point (count)
+(defun symex--get-end-point (count &optional include-whitespace)
   "Get the point value after COUNT symexes.
 
 If the containing expression terminates earlier than COUNT
 symexes, returns the end point of the last one found."
   (if (symex-tree-sitter-p)
+      ;; TODO: implement include-whitespace for ts
       (symex-ts--get-end-point count)
-    (symex-lisp--get-end-point count)))
+    (symex-lisp--get-end-point count include-whitespace)))
+
+(defun symex--get-bounds (count &optional include-whitespace)
+  "Get the start and end points of COUNT symexes."
+  (let ((start (symex--get-starting-point))
+        (end (symex--get-end-point count include-whitespace)))
+    (cons start end)))
 
 (defun symex-select-end (count)
   "Select endpoint of symex nearest to point."
