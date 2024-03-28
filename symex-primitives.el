@@ -254,14 +254,8 @@ WHAT could be `this`, `next`, or `previous`."
            (setq result (symex-remove 1)))
           ((eq 'previous what)
            (when (symex--previous-p)
-             ;; note the bounds of the mutated region
-             ;; and manually preserve point where we need it
-             (let ((start (symex-save-excursion
-                            (symex--go-backward)
-                            (symex--get-starting-point))))
-               (symex--go-backward)
-               (setq result (symex-remove 1))
-               (goto-char start))))
+             (symex--go-backward)
+             (setq result (symex-remove 1))))
           ((eq 'next what)
            (when (symex--next-p)
              (save-excursion
