@@ -188,13 +188,14 @@ text, on the respective side."
   (symex--with-undo-collapse
     (let ((pasted-text (symex-lisp--paste-before)))
       (save-excursion
-        (let* ((end (+ (point) (length pasted-text)))
+        (let* ((end (point))
+               (start (- end (length pasted-text)))
                (end-line (line-number-at-pos end)))
           ;; we use end + 1 here since end is the point
           ;; right before the initial expression, which
           ;; won't be indented as it thus would fall
           ;; outside the region to be indented.
-          (indent-region (point) (1+ end))
+          (indent-region start (1+ end))
           ;; indenting may add characters (e.g. spaces)
           ;; to the buffer, so we rely on the line number
           ;; instead.
@@ -221,14 +222,18 @@ selected expression. Otherwise, paste in place."
 (defun symex-lisp-paste-after ()
   "Paste after symex."
   (symex--with-undo-collapse
-    (let ((pasted-text (symex-lisp--paste-after))
-          (selected (symex-lisp--selected-p)))
+    (let ((selected (symex-lisp--selected-p))
+          (pasted-text (symex-lisp--paste-after)))
       (save-excursion
         (when selected
+          ;; if it was (|), then we are already at the start
+          ;; of the pasted text
           (forward-sexp)) ; go to beginning of pasted text
-        (goto-char (+ (point)
-                      (length pasted-text))) ; end of pasted text
-        (symex--same-line-tidy-affected))
+        (let* ((start (point))
+               (end (+ start
+                       (length pasted-text))))
+          (goto-char end)
+          (symex--same-line-tidy-affected)))
       (not (equal pasted-text "")))))
 
 (defun symex-lisp-yank (count)
