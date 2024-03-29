@@ -121,61 +121,62 @@ text, on the respective side."
 
 (defun symex-lisp--padding (&optional before)
   "Determine paste padding needed for current point position."
-  (let* ((after (not before))
-         (island
-          (and (bolp)
-               (condition-case nil
-                   (save-excursion (forward-sexp)
-                                   (eolp))
-                 (error nil))))
-         (at-eob
-          (condition-case nil
-              (save-excursion (forward-sexp)
-                              (eobp))
-            (error nil)))
-         (previous-line-empty
-          (symex--previous-line-empty-p))
-         (next-line-empty
-          (symex--following-line-empty-p))
-         (surrounding-lines-empty (and previous-line-empty
-                                       next-line-empty))
-         (paste-text-contains-newlines
-          (seq-contains-p (symex--current-kill) ?\n))
-         (at-eol (condition-case nil
+  (if (symex-inside-empty-form-p)
+      ""
+    (let* ((after (not before))
+           (island
+            (and (bolp)
+                 (condition-case nil
                      (save-excursion (forward-sexp)
                                      (eolp))
-                   (error nil)))
-         (multiline (let ((original-line (line-number-at-pos)))
-                      (condition-case nil
-                          (save-excursion (forward-sexp)
-                                          (not (= original-line
-                                                  (line-number-at-pos))))
-                        (error nil)))))
-    (cond ((and island
-                ;; if we're at the toplevel, on an "island" symex
-                ;; (i.e. with no peers occupying the same lines),
-                (or (and after next-line-empty)
-                    ;; and if the side we want to paste on already
-                    ;; contains an empty line,
-                    (and before previous-line-empty)
-                    ;; or if we happen to be at the end of the buffer
-                    ;; for pasting after, then check the opposite side
-                    ;; instead for the clue on what's expected
-                    (and at-eob previous-line-empty))
-                ;; and if the text to be pasted contains newlines, or
-                ;; if both surrounding lines are empty _and_ we aren't
-                ;; at the first symex
-                (or paste-text-contains-newlines
-                    (and surrounding-lines-empty
-                         (not (symex--point-at-first-symex-p)))))
-                ;; then we typically want an extra newline separator
-           "\n\n")
-          ((or (symex--point-at-indentation-p)
-               at-eol
-               multiline)
-           "\n")
-          ((symex-inside-empty-form-p) "")
-          (t " "))))
+                   (error nil))))
+           (at-eob
+            (condition-case nil
+                (save-excursion (forward-sexp)
+                                (eobp))
+              (error nil)))
+           (previous-line-empty
+            (symex--previous-line-empty-p))
+           (next-line-empty
+            (symex--following-line-empty-p))
+           (surrounding-lines-empty (and previous-line-empty
+                                         next-line-empty))
+           (paste-text-contains-newlines
+            (seq-contains-p (symex--current-kill) ?\n))
+           (at-eol (condition-case nil
+                       (save-excursion (forward-sexp)
+                                       (eolp))
+                     (error nil)))
+           (multiline (let ((original-line (line-number-at-pos)))
+                        (condition-case nil
+                            (save-excursion (forward-sexp)
+                                            (not (= original-line
+                                                    (line-number-at-pos))))
+                          (error nil)))))
+      (cond ((and island
+                  ;; if we're at the toplevel, on an "island" symex
+                  ;; (i.e. with no peers occupying the same lines),
+                  (or (and after next-line-empty)
+                      ;; and if the side we want to paste on already
+                      ;; contains an empty line,
+                      (and before previous-line-empty)
+                      ;; or if we happen to be at the end of the buffer
+                      ;; for pasting after, then check the opposite side
+                      ;; instead for the clue on what's expected
+                      (and at-eob previous-line-empty))
+                  ;; and if the text to be pasted contains newlines, or
+                  ;; if both surrounding lines are empty _and_ we aren't
+                  ;; at the first symex
+                  (or paste-text-contains-newlines
+                      (and surrounding-lines-empty
+                           (not (symex--point-at-first-symex-p)))))
+             ;; then we typically want an extra newline separator
+             "\n\n")
+            ((or (symex--point-at-indentation-p)
+                 at-eol
+                 multiline)
+             "\n")
+            (t " ")))))
 
 (defun symex-lisp--paste-before ()
   "Paste before symex."

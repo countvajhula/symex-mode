@@ -44,9 +44,12 @@
   "Update the highlight overlay to match the start/end position of NODE."
   (when symex--current-overlay
     (delete-overlay symex--current-overlay))
-  (setq-local symex--current-overlay
-              (make-overlay (symex--get-starting-point)
-                            (symex--get-end-point 1)))
+  (let* ((start (symex--get-starting-point))
+         (end (condition-case nil
+                  (symex--get-end-point 1)
+                (error start))))
+    (setq-local symex--current-overlay
+                (make-overlay start end)))
   (overlay-put symex--current-overlay 'face 'symex--current-node-face))
 
 (defun symex--overlay-active-p ()

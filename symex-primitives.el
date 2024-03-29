@@ -250,18 +250,24 @@ from the buffer."
 
 WHAT could be `this`, `next`, or `previous`."
   (let ((result))
-    (cond ((eq 'this what)
-           (setq result (symex-remove 1)))
-          ((eq 'previous what)
-           (when (symex--previous-p)
-             (symex--go-backward)
-             (setq result (symex-remove 1))))
-          ((eq 'next what)
-           (when (symex--next-p)
-             (save-excursion
-               (symex--go-forward)
-               (setq result (symex-remove 1)))))
-          (t (error "Invalid argument for primitive delete!")))
+    (condition-case nil
+        (cond ((eq 'this what)
+               (setq result (symex-remove 1)))
+              ((eq 'previous what)
+               (when (symex--previous-p)
+                 (symex--go-backward)
+                 (setq result (symex-remove 1))))
+              ((eq 'next what)
+               (when (symex--next-p)
+                 (save-excursion
+                   (symex--go-forward)
+                   (setq result (symex-remove 1)))))
+              (t (error "Invalid argument for primitive delete!")))
+      ;; if unable to delete, return nil instead of
+      ;; raising an error. nil is used in the evaluator
+      ;; to mean failed, so the traversal would stop there
+      ;; as expected.
+      (error nil))
     result))
 
 (defun symex-prim-paste (where)
