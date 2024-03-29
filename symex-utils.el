@@ -80,7 +80,8 @@ If the current character is non-whitespace, point is not moved."
     (condition-case nil
         (progn (re-search-forward symex--re-non-whitespace)
                ;; since the re search goes to the end of the match
-               (backward-char))
+               (backward-char)
+               t)
       (error nil))))
 
 (defun symex--join-to-match (pattern)
