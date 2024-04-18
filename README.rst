@@ -43,7 +43,7 @@ As of Jan 2023, there is "alpha" support for non-Lisp languages via ``tree-sitte
     <img src="https://user-images.githubusercontent.com/401668/59328521-6db96280-8ca1-11e9-8b32-24574a0af676.png" alt="Screenshot" title="Screenshot" style="cursor:default;"/>
   </p>
 
-.. [1] As long as, from a theoretical perspective, the intended traversal can be accomplished using a `finite automaton <https://en.wikipedia.org/wiki/Deterministic_finite_automaton>`_. More complex traversals can be implemented (such as "leap branch"), but not as easily. Symex may be made Turing-complete at some point in the future, if there is interest in a feature that cannot be implemented in the DSL in its current form.
+.. [1] As long as, from a theoretical perspective, the intended traversal can be accomplished using a `pushdown automaton <https://en.wikipedia.org/wiki/Pushdown_automaton>`_. That is, Symex is more expressive than regular expressions but less expressive than Lisp itself.
 
 Installation
 ============
