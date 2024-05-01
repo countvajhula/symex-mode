@@ -167,7 +167,7 @@
 (defvar symex--re-blank-line "^[[:space:]]*$"
   "A blank line, either empty or containing only whitespace.")
 
-(defvar symex--re-whitespace "[[:space:]|\n]*"
+(defvar symex--re-whitespace "[[:space:]|\n]+"
   "Whitespace that may extend over many lines.")
 
 (defvar symex--re-symex-line "^[[:space:]]*[^;[:space:]\n]"
@@ -212,6 +212,10 @@
   "Move point to the other delimiter in a matching pair."
   (cond ((looking-at "\\s(") (forward-list 1) (backward-char 1))
         ((looking-at "\\s)") (forward-char 1) (backward-list 1))))
+
+(defun symex-whitespace-p ()
+  "Check if we're looking at whitespace."
+  (looking-at-p symex--re-whitespace))
 
 (defun symex-comment-line-p ()
   "Check if we're currently at the start of a comment line."
@@ -433,8 +437,9 @@ including trailing whitespace at the end of the last symex."
     (let ((endpoint (symex-lisp--get-end-point-helper count)))
       (if include-whitespace
           (progn (goto-char endpoint)
-                 (if (symex--go-to-next-non-whitespace-char)
-                     (1- (point))
+                 (if (and (not (eobp))
+                          (symex-whitespace-p))
+                     (1+ endpoint)
                    endpoint))
         endpoint))))
 
@@ -687,7 +692,7 @@ line."
                              (error nil))
                      (symex--join-to-match symex--re-right))))))))
         ((symex-right-p) (fixup-whitespace)) ; abc <>)
-        (t (symex--join-to-non-whitespace))))
+        (t nil)))
 
 ;;; Utilities
 

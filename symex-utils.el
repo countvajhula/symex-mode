@@ -72,6 +72,9 @@ the following recipe instead."
 (defvar symex--re-non-whitespace "[^[:space:]\n]"
   "A non-whitespace character.")
 
+(defvar symex--re-non-whitespace-or-newline "[^[:space:]]"
+  "A non-whitespace character.")
+
 (defun symex--go-to-next-non-whitespace-char ()
   "Move point to the next non-whitespace character.
 
@@ -101,6 +104,13 @@ match."
 This eliminates whitespace between the original position and the found
 match."
   (symex--join-to-match symex--re-non-whitespace))
+
+(defun symex--join-to-non-whitespace-or-newline ()
+  "Join current position to the next non-whitespace character.
+
+This eliminates whitespace between the original position and the found
+match."
+  (symex--join-to-match symex--re-non-whitespace-or-newline))
 
 ;; `with-undo-collapse` macro, to treat a sequence of operations
 ;; as a single entry in the undo list.
