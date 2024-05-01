@@ -176,6 +176,10 @@ text, on the respective side."
                  at-eol
                  multiline)
              "\n")
+            ((and before
+                  (string-match-p (concat symex--re-whitespace "$")
+                                  (symex--current-kill)))
+             "")
             (t " ")))))
 
 (defun symex-lisp--paste-before ()
@@ -213,6 +217,10 @@ If a symex is currently selected, then paste after the end of the
 selected expression. Otherwise, paste in place."
   (interactive)
   (let ((padding (symex-lisp--padding nil)))
+    (if (symex-lisp--point-at-last-symex-p)
+        (symex--kill-ring-push
+         (string-trim-right
+          (symex--kill-ring-pop))))
     (save-excursion
       (condition-case nil
           (forward-sexp)
