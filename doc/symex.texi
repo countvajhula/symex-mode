@@ -1,0 +1,129 @@
+\input texinfo
+@settitle Symex
+@setfilename symex.info
+@set symex-version 2.0
+
+@copying
+This is the documentation for the Symex package for Emacs.
+
+This work is not owned by anyone. Please see the @uref{https://github.com/drym-org/foundation/blob/main/DECLARATION-OF-NON-OWNERSHIP.md, Declaration of Non-Ownership}.
+@end copying
+
+@dircategory Emacs
+@direntry
+* Symex: (symex.info). An intuitive way to structurally edit code.
+@end direntry
+
+@titlepage
+@title Symex
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
+
+@contents
+
+@node Top
+@top Symex - An Intuitive Way to Structurally Edit Code
+
+This manual is for Symex
+(version @value{symex-version}).
+
+@menu
+* What is Symex?::
+* Installation and Use::
+* Customizing Symex::
+* Moving Around::
+* Transforming Code::
+* The ``Point Free'' Modal UI::
+* The Symex DSL::
+* Macros::
+* Inside the Mind of the Squirrel::
+* Squirrel on a Speedrun - Tips and Tricks::
+* Contributing to Symex::
+* Keybinding Cheat Sheet::
+* Resources::
+* Acknowledgements::
+* Index::
+@end menu
+
+@node What is Symex?
+@chapter What is Symex?
+
+@enumerate
+@item
+A new way of saying ``symbolic expression.''
+
+@item
+An intuitive modal interface.
+
+@item
+A subjective tree-oriented language.
+@end enumerate
+
+@menu
+* Symbolic expression? Symex!::
+* Symex the DSL::
+* The modal interface::
+@end menu
+
+@node Symbolic expression? Symex!,Symex the DSL,,What is Symex?
+@subsection Symbolic expression? Symex!
+
+Symex is a new and improved way of saying ``symbolic expression.''
+
+@node Symex the DSL,The modal interface,Symbolic expression? Symex!,What is Symex?
+@subsection Symex the DSL
+
+The Symex DSL is a cursor-oriented language for describing tree traversals.
+
+@node The modal interface,,Symex the DSL,What is Symex?
+@subsection The modal interface
+
+Symex provides a ``point-free'' modal interface.
+
+@node Installation and Use
+@chapter Installation and Use
+
+@node Customizing Symex
+@chapter Customizing Symex
+
+@node Moving Around
+@chapter Moving Around
+
+@node Transforming Code
+@chapter Transforming Code
+
+@node The ``Point Free'' Modal UI
+@chapter The ``Point Free'' Modal UI
+
+@node The Symex DSL
+@chapter The Symex DSL
+
+@node Macros
+@chapter Macros
+
+@node Inside the Mind of the Squirrel
+@chapter Inside the Mind of the Squirrel
+
+@node Squirrel on a Speedrun - Tips and Tricks
+@chapter Squirrel on a Speedrun: Tips and Tricks
+
+@node Contributing to Symex
+@chapter Contributing to Symex
+
+@node Keybinding Cheat Sheet
+@chapter Keybinding Cheat Sheet
+
+@node Resources
+@chapter Resources
+
+@node Acknowledgements
+@chapter Acknowledgements
+
+@node Index
+@unnumbered Index
+
+@printindex cp
+
+@bye
