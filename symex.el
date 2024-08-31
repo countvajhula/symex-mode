@@ -39,7 +39,7 @@
 
 ;;; Code:
 
-(require 'symex-evil)
+(require 'symex-lithium)
 (require 'symex-interop)
 (require 'symex-misc)
 (require 'symex-interface)
@@ -99,14 +99,9 @@
 
 (defun symex--enter-mode ()
   "Load the modal interface."
-  (unless (symex--rigpa-enabled-p)
-    ;; the minor mode needs to be enabled prior to entering the
-    ;; evil state or the keybindings won't take effect. So we
-    ;; can't do it in the state entry hook, which would
-    ;; otherwise be preferable
-    (symex-enable-editing-minor-mode))
-  (evil-symex-state))
+  (lithium-enter-mode 'symex-editing-mode))
 
+;; TODO: put a lot of this in entry hooks
 (defun symex-enter-mode ()
   "Take necessary action upon symex mode entry."
   (when (member major-mode (symex-get-lisp-modes))
@@ -131,7 +126,7 @@
 
 (defun symex-modal-provider-initialize ()
   "Initialize the modal interface provider."
-  (symex-evil-initialize))
+  (symex-lithium-initialize))
 
 ;;;###autoload
 (defun symex-initialize ()
