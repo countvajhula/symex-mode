@@ -38,7 +38,6 @@
   "Symex state."
   :tag " <λ> "
   :message "-- SYMEX --"
-  :exit-hook (symex-exit-mode)
   :enable (normal))
 
 (defun symex-evil-repeat-start-recording-advice (&rest _)

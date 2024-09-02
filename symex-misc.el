@@ -489,14 +489,13 @@ ORIG-FN applied to ARGS is the invocation being advised."
 
 (defun symex-exit-mode ()
   "Take necessary action upon symex mode exit."
-  (unless (member evil-next-state '(emacslike normallike))
-    ;; these are "internal" state transitions, used in e.g. symex-evaluate
-    (deactivate-mark)
-    (when symex--original-blink-cursor-state
-      (blink-cursor-mode 1))
-    (when symex-refocus-p
-      (symex--restore-scroll-margin))
-    (symex--primitive-exit)))
+  ;; these are "internal" state transitions, used in e.g. symex-evaluate
+  (deactivate-mark)
+  (when symex--original-blink-cursor-state
+    (blink-cursor-mode 1))
+  (when symex-refocus-p
+    (symex--restore-scroll-margin))
+  (symex--primitive-exit))
 
 (provide 'symex-misc)
 ;;; symex-misc.el ends here

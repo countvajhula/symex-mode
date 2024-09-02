@@ -126,7 +126,8 @@
 
 (defun symex-modal-provider-initialize ()
   "Initialize the modal interface provider."
-  (symex-lithium-initialize))
+  (symex-lithium-initialize)
+  (add-hook 'symex-editing-mode-pre-exit-hook #'symex-exit-mode))
 
 ;;;###autoload
 (defun symex-initialize ()
