@@ -99,7 +99,7 @@
 
 (defun symex--enter-mode ()
   "Load the modal interface."
-  (lithium-enter-mode 'symex-editing-mode))
+  (symex-editing-mode-enter))
 
 ;; TODO: put a lot of this in entry hooks
 (defun symex-enter-mode ()
