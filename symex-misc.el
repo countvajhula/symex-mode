@@ -489,7 +489,6 @@ ORIG-FN applied to ARGS is the invocation being advised."
 
 (defun symex-exit-mode ()
   "Take necessary action upon symex mode exit."
-  ;; these are "internal" state transitions, used in e.g. symex-evaluate
   (deactivate-mark)
   (when symex--original-blink-cursor-state
     (blink-cursor-mode 1))
