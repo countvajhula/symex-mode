@@ -262,5 +262,79 @@ selected expression. Otherwise, paste in place."
           (end (symex--get-end-point count)))
       (copy-region-as-kill start end))))
 
+(defun symex-lisp--emit-backward ()
+  "Emit backward."
+  (when (and (symex-left-p)
+             (not (symex-empty-list-p)))
+    (save-excursion
+      (symex--go-up)  ; need to be inside the symex to emit and capture
+      (paredit-backward-barf-sexp 1))
+    (symex--go-forward)
+    (when (symex-empty-list-p)
+      (fixup-whitespace)
+      (re-search-forward symex--re-left)
+      (symex--go-down))))
+
+(defun symex-lisp-emit-backward (count)
+  "Emit backward COUNT times."
+  (dotimes (_ count)
+    (symex-lisp--emit-backward)))
+
+(defun symex-lisp--emit-forward ()
+  "Emit forward."
+  (when (and (symex-left-p)
+             (not (symex-empty-list-p)))
+    (save-excursion
+      (symex--go-up)  ; need to be inside the symex to emit and capture
+      (paredit-forward-barf-sexp 1))
+    (when (symex-empty-list-p)
+      (symex--go-forward)
+      (fixup-whitespace)
+      (re-search-backward symex--re-left))))
+
+(defun symex-lisp-emit-forward (count)
+  "Emit forward COUNT times."
+  (dotimes (_ count)
+    (symex-lisp--emit-forward)))
+
+(defun symex-lisp--capture-backward ()
+  "Capture from behind."
+  (when (and (symex-left-p)
+             ;; paredit captures 1 ((|2 3)) -> (1 (2 3)) but we don't
+             ;; want to in this case since point indicates the inner
+             ;; symex, which cannot capture, rather than the outer
+             ;; one. We avoid this by employing a guard condition here.
+             (not (symex--point-at-first-symex-p)))
+    (if (symex-empty-list-p)
+        (forward-char)
+      (symex--go-up))  ; need to be inside the symex to emit and capture
+    (paredit-backward-slurp-sexp 1)
+    (fixup-whitespace)
+    (symex--go-down)))
+
+(defun symex-lisp-capture-backward (count)
+  "Capture from behind, COUNT times."
+  (dotimes (_ count)
+    (symex-lisp--capture-backward)))
+
+(defun symex-lisp--capture-forward ()
+  "Capture from the front."
+  (when (and (symex-left-p)
+             (not (save-excursion
+                    (symex-other)
+                    (forward-char)
+                    (symex-lisp--point-at-end-p))))
+    (save-excursion
+      (if (symex-empty-list-p)
+          (forward-char)
+        (symex--go-up))  ; need to be inside the symex to emit and capture
+      (paredit-forward-slurp-sexp 1))))
+
+(defun symex-lisp-capture-forward (count)
+  "Capture from the front, COUNT times."
+  (dotimes (_ count)
+    (symex-lisp--capture-forward)))
+
+
 (provide 'symex-transformations-lisp)
 ;;; symex-transformations-lisp.el ends here

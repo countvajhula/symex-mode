@@ -243,6 +243,22 @@ DIRECTION should be either the symbol `before' or `after'."
   ;; Update current node from point and reindent if necessary
   (indent-according-to-mode))
 
+(defun symex-ts-emit-backward (count)
+  "Emit backward."
+  nil)
+
+(defun symex-ts-emit-forward (count)
+  "Emit forward."
+  nil)
+
+(defun symex-ts-capture-backward (count)
+  "Capture from behind, COUNT times."
+  nil)
+
+(defun symex-ts-capture-forward (count)
+  "Capture forward."
+  nil)
+
 
 ;; TODO: TS: capture node
 ;; TODO: TS: delete remaining nodes

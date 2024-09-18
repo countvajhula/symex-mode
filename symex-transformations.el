@@ -165,45 +165,33 @@
       (symex-ts-clear)
     (symex-lisp-clear)))
 
-(defun symex--emit-backward (count)
-  "Emit backward."
-  (dotimes (_ count)
-    (symex-execute-traversal symex--traversal-emit-backward)))
-
 (symex-define-command symex-emit-backward (count)
   "Emit backward, COUNT times."
   (interactive "p")
-  (symex--emit-backward count))
-
-(defun symex--emit-forward (count)
-  "Emit forward."
-  (dotimes (_ count)
-    (symex-execute-traversal symex--traversal-emit-forward)))
+  (if tree-sitter-mode
+      (symex-ts-emit-backward count)
+    (symex-lisp-emit-backward count)))
 
 (symex-define-command symex-emit-forward (count)
   "Emit forward, COUNT times."
   (interactive "p")
-  (symex--emit-forward count))
-
-(defun symex--capture-backward (count)
-  "Capture from behind."
-  (dotimes (_ count)
-    (symex-execute-traversal symex--traversal-capture-backward)))
+  (if tree-sitter-mode
+      (symex-ts-emit-forward count)
+    (symex-lisp-emit-forward count)))
 
 (symex-define-command symex-capture-backward (count)
-  "Capture from behind, COUNT times."
+  "Capture backward, COUNT times."
   (interactive "p")
-  (symex--capture-backward count))
-
-(defun symex--capture-forward (count)
-  "Capture from the front."
-  (dotimes (_ count)
-    (symex-execute-traversal symex--traversal-capture-forward)))
+  (if tree-sitter-mode
+      (symex-ts-capture-backward count)
+    (symex-lisp-capture-backward count)))
 
 (symex-define-command symex-capture-forward (count)
-  "Capture from the front, COUNT times."
+  "Capture forward, COUNT times."
   (interactive "p")
-  (symex--capture-forward count))
+  (if tree-sitter-mode
+      (symex-ts-capture-forward count)
+    (symex-lisp-capture-forward count)))
 
 (symex-define-command symex-split ()
   "Split symex into two."
