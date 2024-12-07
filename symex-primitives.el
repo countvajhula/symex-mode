@@ -353,6 +353,22 @@ symexes, returns the end point of the last one found."
     (symex-lisp-select-nearest))
   (point))
 
+(defun symex--fix-leading-whitespace ()
+  "Fix leading whitespace."
+  ;; fix leading whitespace
+  (fixup-whitespace)
+  ;; fixup may move point into the whitespace - restore it
+  (when (looking-at-p "[[:space:]]")
+    (symex--go-to-next-non-whitespace-char)))
+
+(defun symex--fix-trailing-whitespace (count)
+  "Fix trailing whitespace."
+  (condition-case nil
+      (save-excursion
+        (symex-select-end count)
+        (fixup-whitespace))
+    (error nil)))
+
 (defun symex--primitive-exit ()
   "Take necessary actions as part of exiting Symex mode, at a primitive level."
   (symex--delete-overlay)

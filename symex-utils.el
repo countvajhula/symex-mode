@@ -26,7 +26,6 @@
 ;;; Code:
 
 (require 'cl-lib)
-(require 'symex-primitives)
 
 (defun symex--current-line-empty-p ()
   "Check if the current line is empty.
@@ -215,22 +214,6 @@ This concatenates the latest kill with the preceding one, treating the
 preceding one as the accumulator. "
   (let ((latest (symex--kill-ring-pop)))
     (kill-append latest nil)))
-
-(defun symex--fix-leading-whitespace ()
-  "Fix leading whitespace."
-  ;; fix leading whitespace
-  (fixup-whitespace)
-  ;; fixup may move point into the whitespace - restore it
-  (when (looking-at-p "[[:space:]]")
-    (symex--go-to-next-non-whitespace-char)))
-
-(defun symex--fix-trailing-whitespace (count)
-  "Fix trailing whitespace."
-  (condition-case nil
-      (save-excursion
-        (symex-select-end count)
-        (fixup-whitespace))
-    (error nil)))
 
 
 (provide 'symex-utils)
