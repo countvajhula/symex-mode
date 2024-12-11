@@ -1,4 +1,4 @@
-;;; symex-evil.el --- An evil way to edit Lisp symbolic expressions as trees -*- lexical-binding: t -*-
+;;; symex-lithium.el --- An evil way to edit Lisp symbolic expressions as trees -*- lexical-binding: t -*-
 
 ;; URL: https://github.com/drym-org/symex.el
 
@@ -21,33 +21,32 @@
 
 ;;; Commentary:
 
-;; Evil modal frontend to symex.
+;; Lithium modal frontend to symex.
 
 ;;; Code:
 
-(require 'evil)
+(require 'lithium)
 (require 'cl-lib)
 
-(require 'symex-evil-support)
 (require 'symex-ui)
 (require 'symex-misc)
 (require 'symex-transformations)
 (require 'symex-interop)
 (require 'symex-utils)
 
-(defvar symex-editing-mode-map (make-sparse-keymap))
-
-(define-minor-mode symex-editing-mode
-  "Minor mode to modulate keybindings in symex evil state."
-  :lighter " symex"
-  :keymap symex-editing-mode-map)
-
 (evil-define-state symex
   "Symex state."
   :tag " <λ> "
   :message "-- SYMEX --"
-  :enable (normal)
-  :exit-hook (symex-exit-mode))
+  ;; we currently rely on enabling normal here for support
+  ;; for "counts". It would be better to natively support
+  ;; counts (i.e. the usual prefix argument), and aim for
+  ;; evil to be purely superficial, just for the modeline
+  ;; feedback via existing plugins like telephone-line.
+  ;; Eventually we could have an analogous modeline extension
+  ;; for Lithium, or add Lithium support to existing evil-oriented
+  ;; UI extensions
+  :enable (normal))
 
 (defun symex-evil-repeat-start-recording-advice (&rest _)
   "Prepare the current command for recording the repetition.
@@ -127,119 +126,118 @@ executing this command to get the expected behavior."
 
 ;; TODO: others that could accept a count argument:
 ;; simple insert/append
-(defvar symex--evil-keyspec
-  '(("h" . symex-go-backward)
-    ("j" . symex-go-down)
-    ("k" . symex-go-up)
-    ("l" . symex-go-forward)
-    ("gh" . backward-char)
-    ("gj" . symex-next-visual-line)
-    ("gk" . symex-previous-visual-line)
-    ("gl" . forward-char)
-    ("(" . symex-create-round)
-    ("[" . symex-create-square)
-    (")" . symex-wrap-round)
-    ("]" . symex-wrap-square)
-    ("C-'" . symex-cycle-quote)
-    ("C-," . symex-cycle-unquote)
-    ("`" . symex-add-quoting-level)
-    ("C-`" . symex-remove-quoting-level)
-    ("f" . symex-traverse-forward)
-    ("b" . symex-traverse-backward)
-    ("C-f" . symex-traverse-forward-more)
-    ("C-b" . symex-traverse-backward-more)
-    ("F" . symex-traverse-forward-skip)
-    ("B" . symex-traverse-backward-skip)
-    ("{" . symex-leap-backward)
-    ("}" . symex-leap-forward)
-    ("M-{" . symex-soar-backward)
-    ("M-}" . symex-soar-forward)
-    ("C-k" . symex-climb-branch)
-    ("C-j" . symex-descend-branch)
-    ("y" . symex-yank)
-    ("Y" . symex-yank-remaining)
-    ("p" . symex-paste-after)
-    ("P" . symex-paste-before)
-    ("x" . symex-delete)
-    ("X" . symex-delete-backwards)
-    ("D" . symex-delete-remaining)
-    ("c" . symex-change)
-    ("C" . symex-change-remaining)
-    ("C--" . symex-clear)
-    ("s" . symex-replace)
-    ("S" . symex-change-delimiter)
-    ("H" . symex-shift-backward)
-    ("L" . symex-shift-forward)
-    ("M-H" . symex-shift-backward-most)
-    ("M-L" . symex-shift-forward-most)
-    ("K" . paredit-raise-sexp) ; revisit kb
-    ("C-S-j" . symex-emit-backward)
-    ("C-(" . symex-capture-backward)
-    ("C-S-h" . symex-capture-backward)
-    ("C-{" . symex-emit-backward)
-    ("C-S-l" . symex-capture-forward)
-    ("C-}" . symex-emit-forward)
-    ("C-S-k" . symex-emit-forward)
-    ("C-)" . symex-capture-forward)
-    ("z" . symex-swallow)
-    ("Z" . symex-swallow-tail)
-    ("e" . symex-evaluate)
-    ("E" . symex-evaluate-remaining)
-    ("C-M-e" . symex-evaluate-pretty)
-    ("d" . symex-evaluate-definition)
-    ("M-e" . symex-eval-recursive)
-    ("T" . symex-evaluate-thunk)
-    ("t" . symex-switch-to-scratch-buffer)
-    ("M" . symex-switch-to-messages-buffer)
-    ("r" . symex-repl)
-    ("R" . symex-run)
-    ("|" . symex-split)
-    ("&" . symex-join)
-    ("-" . symex-splice)
-    ("o" . symex-open-line-after)
-    ("O" . symex-open-line-before)
-    (">" . symex-insert-newline)
-    ("<" . symex-join-lines-backwards)
-    ("C->" . symex-append-newline)
-    ("C-<" . symex-join-lines)
-    ("C-S-o" . symex-append-newline)
-    ("J" . symex-join-lines)
-    ("M-J" . symex-collapse)
-    ("M-<" . symex-collapse)
-    ("M->" . symex-unfurl)
-    ("C-M-<" . symex-collapse-remaining)
-    ("C-M->" . symex-unfurl-remaining)
-    ("0" . symex-goto-first)
-    ("M-h" . symex-goto-first)
-    ("$" . symex-goto-last)
-    ("M-l" . symex-goto-last)
-    ("M-j" . symex-goto-lowest)
-    ("M-k" . symex-goto-highest)
-    ("=" . symex-tidy)
-    ("<tab>" . symex-tidy)
-    ("C-=" . symex-tidy-remaining)
-    ("C-<tab>" . symex-tidy-remaining)
-    ("M-=" . symex-tidy-proper)
-    ("M-<tab>" . symex-tidy-proper)
-    ("A" . symex-append-after)
-    ("a" . symex-insert-at-end)
-    ("i" . symex-insert-at-beginning)
-    ("I" . symex-insert-before)
-    ("w" . symex-wrap)
-    ("W" . symex-wrap-and-append)
-    ("C-d" . symex--evil-scroll-down)
-    (";" . symex-comment)
-    ("M-;" . symex-comment-remaining)
-    ("C-;" . symex-eval-print) ; weird pre-offset (in both)
-    ("s-;" . symex-evaluate)
-    ("H-h" . symex--toggle-highlight) ; treats visual as distinct mode
-    ("C-?" . symex-describe)
-    ("<return>" . symex-enter-lower)
-    ("<escape>" . symex-escape-higher))
-  "Key specification for symex evil state.")
-
-(defvar symex--user-evil-keyspec nil
-  "User key specification overrides for symex evil state.")
+(lithium-define-local-mode symex-editing-mode
+  "Symex mode."
+  (("h" symex-go-backward)
+    ("j" symex-go-down)
+    ("k" symex-go-up)
+    ("l" symex-go-forward)
+    ("gh" backward-char)
+    ("gj" symex-next-visual-line)
+    ("gk" symex-previous-visual-line)
+    ("gl" forward-char)
+    ("(" symex-create-round)
+    ("[" symex-create-square)
+    (")" symex-wrap-round)
+    ("]" symex-wrap-square)
+    ("C-'" symex-cycle-quote)
+    ("C-," symex-cycle-unquote)
+    ("`" symex-add-quoting-level)
+    ("C-`" symex-remove-quoting-level)
+    ("f" symex-traverse-forward)
+    ("b" symex-traverse-backward)
+    ("C-f" symex-traverse-forward-more)
+    ("C-b" symex-traverse-backward-more)
+    ("F" symex-traverse-forward-skip)
+    ("B" symex-traverse-backward-skip)
+    ("{" symex-leap-backward)
+    ("}" symex-leap-forward)
+    ("M-{" symex-soar-backward)
+    ("M-}" symex-soar-forward)
+    ("C-k" symex-climb-branch)
+    ("C-j" symex-descend-branch)
+    ("y" symex-yank)
+    ("Y" symex-yank-remaining)
+    ("p" symex-paste-after)
+    ("P" symex-paste-before)
+    ("x" symex-delete)
+    ("X" symex-delete-backwards)
+    ("D" symex-delete-remaining)
+    ("c" symex-change)
+    ("C" symex-change-remaining)
+    ("C--" symex-clear)
+    ("s" symex-replace)
+    ("S" symex-change-delimiter)
+    ("H" symex-shift-backward)
+    ("L" symex-shift-forward)
+    ("M-H" symex-shift-backward-most)
+    ("M-L" symex-shift-forward-most)
+    ("K" paredit-raise-sexp) ; revisit kb
+    ("C-S-j" symex-emit-backward)
+    ("C-(" symex-capture-backward)
+    ("C-S-h" symex-capture-backward)
+    ("C-{" symex-emit-backward)
+    ("C-S-l" symex-capture-forward)
+    ("C-}" symex-emit-forward)
+    ("C-S-k" symex-emit-forward)
+    ("C-)" symex-capture-forward)
+    ("z" symex-swallow)
+    ("Z" symex-swallow-tail)
+    ("e" symex-evaluate)
+    ("E" symex-evaluate-remaining)
+    ("C-M-e" symex-evaluate-pretty)
+    ("d" symex-evaluate-definition)
+    ("M-e" symex-eval-recursive)
+    ("T" symex-evaluate-thunk)
+    ("t" symex-switch-to-scratch-buffer)
+    ("M" symex-switch-to-messages-buffer)
+    ("r" symex-repl)
+    ("R" symex-run)
+    ("|" symex-split)
+    ("&" symex-join)
+    ("-" symex-splice)
+    ("o" symex-open-line-after)
+    ("O" symex-open-line-before)
+    (">" symex-insert-newline)
+    ("<" symex-join-lines-backwards)
+    ("C->" symex-append-newline)
+    ("C-<" symex-join-lines)
+    ("C-S-o" symex-append-newline)
+    ("J" symex-join-lines)
+    ("M-J" symex-collapse)
+    ("M-<" symex-collapse)
+    ("M->" symex-unfurl)
+    ("C-M-<" symex-collapse-remaining)
+    ("C-M->" symex-unfurl-remaining)
+    ("0" symex-goto-first)
+    ("M-h" symex-goto-first)
+    ("$" symex-goto-last)
+    ("M-l" symex-goto-last)
+    ("M-j" symex-goto-lowest)
+    ("M-k" symex-goto-highest)
+    ("=" symex-tidy)
+    ("<tab>" symex-tidy)
+    ("C-=" symex-tidy-remaining)
+    ("C-<tab>" symex-tidy-remaining)
+    ("M-=" symex-tidy-proper)
+    ("M-<tab>" symex-tidy-proper)
+    ("A" symex-append-after)
+    ("a" symex-insert-at-end)
+    ("i" symex-insert-at-beginning)
+    ("I" symex-insert-before)
+    ("w" symex-wrap)
+    ("W" symex-wrap-and-append)
+    ("C-d" symex--evil-scroll-down)
+    (";" symex-comment)
+    ("M-;" symex-comment-remaining)
+    ("C-;" symex-eval-print) ; weird pre-offset (in both)
+    ("s-;" symex-evaluate)
+    ("H-h" symex--toggle-highlight) ; treats visual as distinct mode
+    ("C-?" symex-describe)
+    ("<return>" symex-enter-lower)
+    ("<escape>" symex-escape-higher))
+  :lighter " symex"
+  :group 'symex)
 
 (defvar symex--evil-repeatable-commands
   '(paredit-raise-sexp
@@ -298,17 +296,8 @@ executing this command to get the expected behavior."
     symex-wrap-and-append)
   "Commands which should have their `:repeat' property set to t.")
 
-(defun symex-evil-initialize ()
-  "Initialize evil modal interface."
-  (let ((keyspec (symex--combine-alists symex--user-evil-keyspec
-                                        symex--evil-keyspec)))
-    (symex--define-evil-keys-from-spec keyspec
-                                       symex-editing-mode-map))
-  (unless (symex--rigpa-enabled-p)
-    ;; without rigpa (which would handle this for us), we need to
-    ;; manage the editing minor mode and ensure that it is active
-    ;; while in symex evil state and inactive when in other states
-    (add-hook 'evil-symex-state-exit-hook #'symex-disable-editing-minor-mode))
+(defun symex-lithium-initialize ()
+  "Initialize lithium modal interface."
   (advice-add 'evil-repeat-pre-hook
               :after #'symex-evil-repeat-start-recording-advice)
   (advice-add 'evil-repeat-post-hook
@@ -321,17 +310,6 @@ executing this command to get the expected behavior."
   (dolist (fn symex--evil-repeatable-commands)
     (evil-add-command-properties fn :repeat t)))
 
-(defun symex-enable-editing-minor-mode ()
-  "Enable symex minor mode."
-  (symex-editing-mode 1))
 
-(defun symex-disable-editing-minor-mode ()
-  "Disable symex minor mode."
-  (unless (member evil-next-state '(emacslike normallike))
-    ;; these are "internal" state transitions, used in e.g. symex-evaluate
-    (symex-editing-mode -1)))
-
-
-
-(provide 'symex-evil)
-;;; symex-evil.el ends here
+(provide 'symex-lithium)
+;;; symex-lithium.el ends here
