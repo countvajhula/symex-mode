@@ -1,6 +1,6 @@
 ;;; symex-dsl.el --- An evil way to edit Lisp symbolic expressions as trees -*- lexical-binding: t -*-
 
-;; URL: https://github.com/countvajhula/symex.el
+;; URL: https://github.com/drym-org/symex.el
 
 ;; This program is "part of the world," in the sense described at
 ;; https://drym.org.  From your perspective, this is no different than
@@ -24,6 +24,8 @@
 ;; Syntax specification for the Symex DSL
 
 ;;; Code:
+
+(require 'symex-data)
 
 
 (defun symex--compile-traversal-helper (traversal)
@@ -69,6 +71,14 @@ TRAVERSAL - see underlying Lisp implementation.
 TIMES - see underlying Lisp implementation."
   `(symex-make-circuit (symex-traversal ,traversal)
                        ,times))
+
+(defmacro symex--compile-loop (traversal &optional condition)
+  "Compile a loop from Symex DSL -> Lisp.
+
+TRAVERSAL - see underlying Lisp implementation.
+CONDITION - see underlying Lisp implementation."
+  `(symex-make-loop (symex-traversal ,traversal)
+                    ,condition))
 
 (defun symex--rewrite-condition (condition)
   "Rewrite a condition expression into a lambda expression.
@@ -185,6 +195,31 @@ forward, backward, up, or down."
         ((equal 'down direction)
          '(symex-make-move 0 -1))))
 
+(defmacro symex--compile-delete (&optional what)
+  "Compile a deletion from Symex -> Lisp.
+
+WHAT - what to delete, either this, previous, next, remaining or until."
+  (let ((what (or what 'this)))
+    `'(delete ,what)))
+
+(defmacro symex--compile-paste (side)
+  "Compile a paste from Symex -> Lisp.
+
+SIDE - the side to paste on, either before or after."
+  `'(paste ,side))
+
+(defmacro symex--compile-effect (effect &optional traversal)
+  "Compile an effect from Symex -> Lisp.
+
+EFFECT - the side effect to perform. This is any Lisp expression.
+TRAVERSAL - the traversal to perform. This could be any traversal. If
+no traversal is specified, then the traversal is treated as the zero
+move, making this a pure side effect."
+  `(symex-make-effect (lambda () ,effect)
+                      ,(if traversal
+                           `(symex-traversal ,traversal)
+                         symex--move-zero)))
+
 ;; TODO: support args here like lambda / defun (i.e. as a list in the
 ;; binding form -- not passed in but syntactically inserted)
 ;; try a lambda / defun with args to see what I mean
@@ -199,6 +234,7 @@ a variable, or use the `symex-deftraversal` form (analogous to `defun`).
 
 TRAVERSAL could be any traversal specification, e.g. a maneuver,
 a detour, a move, etc., which is specified using the Symex DSL."
+  (declare (indent 0))
   (cond ((not (listp traversal)) traversal)  ; e.g. a variable containing a traversal
         ((equal 'protocol (car traversal))
          `(symex--compile-protocol ,@(cdr traversal)))
@@ -210,12 +246,22 @@ a detour, a move, etc., which is specified using the Symex DSL."
          `(symex--compile-detour ,@(cdr traversal)))
         ((equal 'circuit (car traversal))
          `(symex--compile-circuit ,@(cdr traversal)))
+        ((equal 'loop (car traversal))
+         `(symex--compile-loop ,@(cdr traversal)))
         ((equal 'precaution (car traversal))
          `(symex--compile-precaution ,@(cdr traversal)))
         ((equal 'decision (car traversal))
          `(symex--compile-decision ,@(cdr traversal)))
         ((equal 'move (car traversal))
          `(symex--compile-move ,@(cdr traversal)))
+        ((equal 'delete (car traversal))
+         `(symex--compile-delete ,@(cdr traversal)))
+        ((equal 'paste (car traversal))
+         `(symex--compile-paste ,@(cdr traversal)))
+        ((equal 'effect (car traversal))
+         `(symex--compile-effect ,@(cdr traversal)))
+        ;; TODO: instead of an implicit escape, it may be better
+        ;; to use an explicit one like (esc ...) or (lisp ...)
         (t traversal)))  ; function-valued symbols wind up here
 
 (defmacro symex-deftraversal (name traversal &optional docstring)

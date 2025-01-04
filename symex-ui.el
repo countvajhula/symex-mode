@@ -1,6 +1,6 @@
 ;;; symex-ui.el --- An evil way to edit Lisp symbolic expressions as trees -*- lexical-binding: t -*-
 
-;; URL: https://github.com/countvajhula/symex.el
+;; URL: https://github.com/drym-org/symex.el
 
 ;; This program is "part of the world," in the sense described at
 ;; https://drym.org.  From your perspective, this is no different than
@@ -44,9 +44,12 @@
   "Update the highlight overlay to match the start/end position of NODE."
   (when symex--current-overlay
     (delete-overlay symex--current-overlay))
-  (setq-local symex--current-overlay
-              (make-overlay (symex--get-starting-point)
-                            (symex--get-end-point 1)))
+  (let* ((start (symex--get-starting-point))
+         (end (condition-case nil
+                  (symex--get-end-point 1)
+                (error start))))
+    (setq-local symex--current-overlay
+                (make-overlay start end)))
   (overlay-put symex--current-overlay 'face 'symex--current-node-face))
 
 (defun symex--overlay-active-p ()

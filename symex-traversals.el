@@ -1,6 +1,6 @@
 ;;; symex-traversals.el --- An evil way to edit Lisp symbolic expressions as trees -*- lexical-binding: t -*-
 
-;; URL: https://github.com/countvajhula/symex.el
+;; URL: https://github.com/drym-org/symex.el
 
 ;; This program is "part of the world," in the sense described at
 ;; https://drym.org.  From your perspective, this is no different than
@@ -34,6 +34,38 @@
 ;;;;;;;;;;;;;;;;;;
 ;;; TRAVERSALS ;;;
 ;;;;;;;;;;;;;;;;;;
+
+(defun symex-go-forward (count)
+  "Move forward COUNT symexes."
+  (interactive "p")
+  ;; TODO: these should be compiled
+  ;; so that the actual executed traversal
+  ;; is (move N 0) rather than
+  ;; (move 1 0) executed N times
+  (symex-execute-traversal
+   (symex-traversal (circuit (move forward)
+                             count))))
+
+(defun symex-go-backward (count)
+  "Move backward COUNT symexes."
+  (interactive "p")
+  (symex-execute-traversal
+   (symex-traversal (circuit (move backward)
+                             count))))
+
+(defun symex-go-up (count)
+  "Move up COUNT symexes."
+  (interactive "p")
+  (symex-execute-traversal
+   (symex-traversal (circuit (move up)
+                             count))))
+
+(defun symex-go-down (count)
+  "Move down COUNT symexes."
+  (interactive "p")
+  (symex-execute-traversal
+   (symex-traversal (circuit (move down)
+                             count))))
 
 (symex-deftraversal symex--traversal-goto-first
   (circuit (move backward))
@@ -90,35 +122,58 @@
                                               (circuit (move forward))))))
   (point))
 
+;; TODO: consider compiling `(move down)` to this?
+(symex-deftraversal symex--traversal-go-down
+  (maneuver (circuit (move backward))
+            (move down))
+  "A traversal to go down the \"proper,\" squirrel-approved
+way. Generally, we could just (move down) in any traversal and that
+would be fine in a lot of cases. But if we did that, then the
+information about the distance we've traversed along the branch is
+lost for any computations that might want to leverage it. This
+traversal is careful to explicitly \"undo\" any movements in the
+x-direction, the same way we implicitly do when going up and down
+(i.e. in the y-direction). This is the way a squirrel would do it,
+after all -- in order to get down from a high branch, we first need to
+traverse all the way to the base of the branch, back the way we
+came.")
+
 (symex-deftraversal symex--traversal-preorder
-  (protocol (protocol (move up)
-                      (move forward))
-            (detour (precaution (move down)
-                                (afterwards (not (at final))))
-                    (move forward)))
+  (protocol (move up)
+            (move forward)
+            (detour
+             (precaution symex--traversal-go-down
+                         (afterwards (not (at final))))
+             (move forward)))
   "Pre-order tree traversal, continuing to other trees.")
 
 (symex-deftraversal symex--traversal-preorder-in-tree
-  (protocol (protocol (move up)
-                      (move forward))
-            (detour (precaution (move down)
-                                (afterwards (not (at root))))
-                    (move forward)))
+  (protocol (move up)
+            (move forward)
+            (detour
+             (precaution symex--traversal-go-down
+                         (afterwards (not (at root))))
+             (move forward)))
   "Pre-order tree traversal.")
 
 (symex-deftraversal symex--traversal-postorder
-  (protocol (venture (move backward)
-                     (circuit (venture (move up)
-                                       (circuit (move forward)))))
-            (move down))
+  (protocol
+   (venture (move backward)
+            (circuit
+             (venture (move up)
+                      (circuit (move forward)))))
+   symex--traversal-go-down)
   "Post-order tree traversal, continuing to other trees.")
 
 (symex-deftraversal symex--traversal-postorder-in-tree
-  (protocol (precaution (venture (move backward)
-                                 (circuit (venture (move up)
-                                                   (circuit (move forward)))))
-                        (beforehand (not (at root))))
-            (move down))
+  (protocol
+   (precaution
+    (venture (move backward)
+             (circuit
+              (venture (move up)
+                       (circuit (move forward)))))
+    (beforehand (not (at root))))
+   symex--traversal-go-down)
   "Post-order tree traversal.")
 
 (symex-deftraversal symex--traversal-skip-forward
@@ -229,13 +284,19 @@ Executes the motion COUNT times."
 
 (defun symex--do-while-traversing (operation traversal)
   "Traverse a symex using TRAVERSAL and do OPERATION at each step."
-  (let ((result (symex-execute-traversal traversal
-                                         nil
-                                         operation)))
-    (message "%s" result)
-    (when result
-      (symex--do-while-traversing operation
-                                  traversal))))
+  ;; do it once first since it will be executed as a side-effect
+  ;; _after_ each step in the traversal
+  (funcall operation)
+  (symex-execute-traversal
+   (symex-traversal
+    (circuit
+     (effect (funcall operation)
+             ;; TODO: the semantics of effect is already to
+             ;; wrap the operation with a lambda and then
+             ;; invoke that during evaluation. It may make
+             ;; sense to avoid this double-wrapping.
+             traversal)))
+   nil))
 
 
 (provide 'symex-traversals)

@@ -1,9 +1,9 @@
 ;;; symex.el --- An evil way to edit Lisp symbolic expressions as trees -*- lexical-binding: t -*-
 
 ;; Author: Siddhartha Kasivajhula <sid@countvajhula.com>
-;; URL: https://github.com/countvajhula/symex.el
+;; URL: https://github.com/drym-org/symex.el
 ;; Version: 1.0
-;; Package-Requires: ((emacs "25.1") (tsc "0.15.2") (tree-sitter "0.15.2") (lispy "0.26.0") (paredit "24") (evil-cleverparens "20170718.413") (evil "1.2.14") (evil-surround "1.0.4") (hydra "0.15.0") (seq "2.22"))
+;; Package-Requires: ((emacs "25.1") (tsc "0.15.2") (tree-sitter "0.15.2") (paredit "24") (evil "1.2.14") (evil-surround "1.0.4") (seq "2.22"))
 ;; Keywords: lisp, convenience, languages
 
 ;; This program is "part of the world," in the sense described at
@@ -32,18 +32,13 @@
 ;; packages the tree representation is implicit, symex mode models
 ;; the tree structure explicitly so that tree navigations and operations
 ;; can be described using an expressive DSL, and invoked in a vim-
-;; style modal interface implemented with a Hydra.
+;; style modal interface.
 ;;
-;; At the moment, symex mode uses paredit, lispy, and evil-cleverparens
-;; to provide much of its low level functionality.
-;; In the future, this layer of primitives may be replaced with a layer
-;; that explicitly uses the abstract syntax tree, for greater precision.
+;; Under the hood, Symex mode uses paredit and Tree-Sitter for parsing
+;; the code syntax tree.
 
 ;;; Code:
 
-(require 'lispy)
-
-(require 'symex-hydra)
 (require 'symex-evil)
 (require 'symex-interop)
 (require 'symex-misc)
@@ -52,6 +47,8 @@
 (require 'symex-custom)
 (require 'tree-sitter)
 (require 'symex-ts)
+
+(defvar symex--original-blink-cursor-state nil)
 
 ;;;###autoload
 (define-minor-mode symex-mode
@@ -102,15 +99,13 @@
 
 (defun symex--enter-mode ()
   "Load the modal interface."
-  (cond ((eq symex-modal-backend 'hydra) (hydra-symex/body))
-        ((eq symex-modal-backend 'evil)
-         (unless (symex--rigpa-enabled-p)
-           ;; the minor mode needs to be enabled prior to entering the
-           ;; evil state or the keybindings won't take effect. So we
-           ;; can't do it in the state entry hook, which would
-           ;; otherwise be preferable
-           (symex-enable-editing-minor-mode))
-         (evil-symex-state))))
+  (unless (symex--rigpa-enabled-p)
+    ;; the minor mode needs to be enabled prior to entering the
+    ;; evil state or the keybindings won't take effect. So we
+    ;; can't do it in the state entry hook, which would
+    ;; otherwise be preferable
+    (symex-enable-editing-minor-mode))
+  (evil-symex-state))
 
 (defun symex-enter-mode ()
   "Take necessary action upon symex mode entry."
@@ -119,7 +114,10 @@
   (symex--adjust-point-on-entry)
   (when symex-remember-branch-positions-p
     (symex--clear-branch-memory))
-  (symex-select-nearest)
+  (when symex-toggle-blink-cursor
+    (setq symex--original-blink-cursor-state blink-cursor-mode)
+    (blink-cursor-mode -1))
+  (symex-user-select-nearest)
   (when symex-refocus-p
     ;; smooth scrolling currently not supported
     ;; may add it back in the future
@@ -130,6 +128,10 @@
 (defun symex-get-lisp-modes ()
   "List modes that implement the symex interface."
   (mapcar #'car symex-interfaces))
+
+(defun symex-modal-provider-initialize ()
+  "Initialize the modal interface provider."
+  (symex-evil-initialize))
 
 ;;;###autoload
 (defun symex-initialize ()
@@ -156,10 +158,7 @@ advises functions to enable or disable features based on user configuration."
     (advice-add #'undo-tree-redo :after #'symex-select-nearest-advice))
   (symex--add-selection-advice)
   ;; initialize modal interface frontend
-  (cond ((eq symex-modal-backend 'hydra)
-         (symex-hydra-initialize))
-        ((eq symex-modal-backend 'evil)
-         (symex-evil-initialize))))
+  (symex-modal-provider-initialize))
 
 (defun symex-disable ()
   "Disable symex.
@@ -190,8 +189,7 @@ configuration to be disabled and the new one adopted."
 (defun symex-mode-interface ()
   "The main entry point for editing symbolic expressions using symex mode.
 
-Enter the symex evil state and show a hydra menu for accessing various
-features."
+Enter the symex evil state, activating symex keybindings."
   (interactive)
   (symex-enter-mode))
 

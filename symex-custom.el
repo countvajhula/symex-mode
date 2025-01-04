@@ -1,6 +1,6 @@
 ;;; symex-custom.el --- An evil way to edit Lisp symbolic expressions as trees -*- lexical-binding: t -*-
 
-;; URL: https://github.com/countvajhula/symex.el
+;; URL: https://github.com/drym-org/symex.el
 
 ;; This program is "part of the world," in the sense described at
 ;; https://drym.org.  From your perspective, this is no different than
@@ -40,14 +40,14 @@
   :type 'boolean
   :group 'symex)
 
-(defcustom symex-remember-branch-positions-p t
-  "Whether movement in the vertical direction should remember branch positions."
+(defcustom symex-toggle-blink-cursor t
+  "Whether to disable cursor blinking while in Symex state."
   :type 'boolean
   :group 'symex)
 
-(defcustom symex-modal-backend 'evil
-  "Whether to use hydra or evil as the backend for the modal interface."
-  :type 'symbol
+(defcustom symex-remember-branch-positions-p t
+  "Whether movement in the vertical direction should remember branch positions."
+  :type 'boolean
   :group 'symex)
 
 (defcustom symex-quote-prefix-list (list "'" "`")

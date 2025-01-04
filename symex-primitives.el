@@ -1,6 +1,6 @@
 ;;; symex-primitives.el --- An evil way to edit Lisp symbolic expressions as trees -*- lexical-binding: t -*-
 
-;; URL: https://github.com/countvajhula/symex.el
+;; URL: https://github.com/drym-org/symex.el
 
 ;; This program is "part of the world," in the sense described at
 ;; https://drym.org.  From your perspective, this is no different than
@@ -95,6 +95,25 @@
       (symex-ts--point-at-start-p)
     (symex-lisp--point-at-start-p)))
 
+(defun symex--following-line-empty-p ()
+  "Check if the line following the current expression is empty."
+  (save-excursion
+    (symex-select-end 1)
+    (forward-line)
+    (symex--current-line-empty-p)))
+
+(defun symex--previous-p ()
+  "Check if a preceding symex exists at this level."
+  (if (symex-tree-sitter-p)
+      (symex-ts--previous-p)
+    (symex-lisp--previous-p)))
+
+(defun symex--next-p ()
+  "Check if a succeeding symex exists at this level."
+  (if (symex-tree-sitter-p)
+      (symex-ts--next-p)
+    (symex-lisp--next-p)))
+
 ;;; Navigation
 
 (defun symex--go-forward (&optional count)
@@ -102,9 +121,11 @@
 
 Go forward COUNT times, defaulting to one.
 
-This is an internal utility that avoids any user-level concerns
-such as symex selection via advice.  This should be used in all
-internal operations that are not primarily user-directed."
+This is a Lisp motion primitive. It is an internal utility that avoids
+any user-level concerns such as symex selection via advice.  This
+should be used in all internal operations _above_ the primitive layer
+(e.g. favoring it over Emacs internal utilities like `forward-sexp`)
+that are not primarily user-directed."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-move-next-sibling count)
@@ -115,9 +136,11 @@ internal operations that are not primarily user-directed."
 
 Go backward COUNT times, defaulting to one.
 
-This is an internal utility that avoids any user-level concerns
-such as symex selection via advice.  This should be used in all
-internal operations that are not primarily user-directed."
+This is a Lisp motion primitive. It is an internal utility that avoids
+any user-level concerns such as symex selection via advice.  This
+should be used in all internal operations _above_ the primitive layer
+(e.g. favoring it over Emacs internal utilities like `forward-sexp`)
+that are not primarily user-directed."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-move-prev-sibling count)
@@ -128,9 +151,11 @@ internal operations that are not primarily user-directed."
 
 Enter COUNT times, defaulting to one.
 
-This is an internal utility that avoids any user-level concerns
-such as symex selection via advice.  This should be used in all
-internal operations that are not primarily user-directed."
+This is a Lisp motion primitive. It is an internal utility that avoids
+any user-level concerns such as symex selection via advice.  This
+should be used in all internal operations _above_ the primitive layer
+(e.g. favoring it over Emacs internal utilities like `forward-sexp`)
+that are not primarily user-directed."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-move-child count)
@@ -141,13 +166,125 @@ internal operations that are not primarily user-directed."
 
 Exit COUNT times, defaulting to one.
 
-This is an internal utility that avoids any user-level concerns
-such as symex selection via advice.  This should be used in all
-internal operations that are not primarily user-directed."
+This is a Lisp motion primitive. It is an internal utility that avoids
+any user-level concerns such as symex selection via advice.  This
+should be used in all internal operations _above_ the primitive layer
+(e.g. favoring it over Emacs internal utilities like `forward-sexp`)
+that are not primarily user-directed."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-move-parent count)
     (symex-lisp--go-down count)))
+
+;;; Transformations
+
+(defun symex--indent (count)
+  "Indent COUNT expressions."
+  (let ((start (point))
+        (end (save-excursion
+               (condition-case nil
+                   (symex-select-end count)
+                 (error nil))
+               (point))))
+    (indent-region start end)))
+
+(defun symex--tidy (count)
+  "Auto-indent symex and fix any whitespace."
+  ;; Note that this does not fix leading whitespace
+  ;; (e.g. via `symex--fix-leading-whitespace`)
+  ;; as that apparently destroys the indentation clues
+  ;; the major mode needs to properly indent the code
+  ;; in tree-sitter.
+  ;; We could potentially have this part be delegated
+  ;; to a Lisp-specific indent utility, but it could
+  ;; be argued that indenting leading whitespace
+  ;; is a concern of the _preceding_ expression, which,
+  ;; this does get handled by this function via fixing
+  ;; trailing whitespace.
+
+  ;; fixing leading whitespace in lisp, for now
+  ;; probably find a better/uniform way later
+  (unless (symex-tree-sitter-p)
+    (symex--fix-leading-whitespace))
+  ;; fix trailing whitespace (indent region doesn't)
+  (symex--fix-trailing-whitespace count)
+  (symex--indent count)
+  (symex-select-nearest))
+
+(defun symex--remove (count)
+  "Delete COUNT symexes.
+
+This is a low-level utility that simply removes the indicated text
+from the buffer."
+  (let ((last-command nil)  ; see symex-yank re: last-command
+        (start (point))
+        (end (symex--get-end-point count t)))
+    (when (> end start)
+      (kill-region start end)
+      t)))
+
+(defun symex--reset-after-delete ()
+  "Tidy after deletion and select the appropriate symex."
+  (if (symex-tree-sitter-p)
+      (symex-ts--reset-after-delete)
+    (symex-lisp--reset-after-delete)))
+
+(defun symex-remove (count)
+  "Delete COUNT symexes."
+  ;; TODO: instead of having the count at the primitive level, have
+  ;; each delete operation push onto a (yet to be implemented)
+  ;; traversal memory stack. If the traversal is within a larger
+  ;; traversal, the stacks should implicitly compose so that the
+  ;; nested traversal accumulates and pushes onto the containing
+  ;; traversal stack. Then, we can put the entire contents of the
+  ;; stack into the paste buffer in e.g. symex-delete (after popping
+  ;; the contents to get them in the right order)
+  (let ((result (symex--remove count)))
+    (when result
+      (symex--reset-after-delete)
+      ;; should we return the actual motion we took?
+      result)))
+
+(defun symex-prim-delete (what)
+  "Delete WHAT symex.
+
+WHAT could be `this`, `next`, or `previous`."
+  (let ((result))
+    (condition-case nil
+        (cond ((eq 'this what)
+               (setq result (symex-remove 1)))
+              ((eq 'previous what)
+               (when (symex--previous-p)
+                 (symex--go-backward)
+                 (setq result (symex-remove 1))))
+              ((eq 'next what)
+               (when (symex--next-p)
+                 (save-excursion
+                   (symex--go-forward)
+                   (setq result (symex-remove 1)))))
+              (t (error "Invalid argument for primitive delete!")))
+      ;; if unable to delete, return nil instead of
+      ;; raising an error. nil is used in the evaluator
+      ;; to mean failed, so the traversal would stop there
+      ;; as expected.
+      (error nil))
+    result))
+
+(defun symex-prim-paste (where)
+  "Paste WHERE.
+
+WHERE could be either 'before or 'after"
+  ;; TODO: remove counts from primitives
+  ;; as they aren't used
+  (cond ((eq 'before where)
+         (if (symex-tree-sitter-p)
+             (symex-ts-paste-before 1)
+           (symex-lisp-paste-before)))
+        ((eq 'after where)
+         (if (symex-tree-sitter-p)
+             (symex-ts-paste-after 1)
+           (symex-lisp-paste-after)))
+        (t (error "Invalid argument for primitive paste!"))))
 
 ;;; Utilities
 
@@ -158,6 +295,7 @@ Like `save-excursion`, but in addition to preserving the point
 position, this also preserves the structural position in the tree, for
 languages where point position doesn't uniquely identify a tree
 location (e.g. non-symex-based languages like Python)."
+  (declare (indent 0))
   (let ((offset (gensym))
         (result (gensym)))
     `(let ((,offset (symex--point-height-offset)))
@@ -187,29 +325,56 @@ difference from the lowest such level."
       (symex-ts--get-starting-point)
     (symex-lisp--get-starting-point)))
 
-(defun symex--get-end-point (count)
+(defun symex--get-end-point (count &optional include-whitespace)
   "Get the point value after COUNT symexes.
 
 If the containing expression terminates earlier than COUNT
 symexes, returns the end point of the last one found."
   (if (symex-tree-sitter-p)
+      ;; TODO: implement include-whitespace for ts
       (symex-ts--get-end-point count)
-    (symex-lisp--get-end-point count)))
+    (symex-lisp--get-end-point count include-whitespace)))
+
+(defun symex--get-bounds (count &optional include-whitespace)
+  "Get the start and end points of COUNT symexes."
+  (let ((start (symex--get-starting-point))
+        (end (symex--get-end-point count include-whitespace)))
+    (cons start end)))
+
+(defun symex-select-end (count)
+  "Select endpoint of symex nearest to point."
+  (goto-char (symex--get-end-point count))
+  (point))
 
 (defun symex-select-nearest ()
   "Select symex nearest to point."
-  (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-set-current-node-from-point)
-    (symex-lisp--select-nearest))
+    (symex-lisp-select-nearest))
   (point))
+
+(defun symex--fix-leading-whitespace ()
+  "Fix leading whitespace."
+  ;; fix leading whitespace
+  (fixup-whitespace)
+  ;; fixup may move point into the whitespace - restore it
+  (when (looking-at-p "[[:space:]]")
+    (symex--go-to-next-non-whitespace-char)))
+
+(defun symex--fix-trailing-whitespace (count)
+  "Fix trailing whitespace."
+  (condition-case nil
+      (save-excursion
+        (symex-select-end count)
+        (fixup-whitespace))
+    (error nil)))
 
 (defun symex--primitive-exit ()
   "Take necessary actions as part of exiting Symex mode, at a primitive level."
   (symex--delete-overlay)
   (if (symex-tree-sitter-p)
-      (symex-ts--exit)
-    (symex-lisp--exit)))
+      (symex-ts-exit)
+    (symex-lisp-exit)))
 
 
 (provide 'symex-primitives)

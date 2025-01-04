@@ -1,6 +1,6 @@
 ;;; symex-computations.el --- An evil way to edit Lisp symbolic expressions as trees -*- lexical-binding: t -*-
 
-;; URL: https://github.com/countvajhula/symex.el
+;; URL: https://github.com/drym-org/symex.el
 
 ;; This program is "part of the world," in the sense described at
 ;; https://drym.org.  From your perspective, this is no different than
@@ -34,30 +34,12 @@
 ;;; COMPUTATIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;
 
-(defun symex--type-integer (obj)
-  "Convert an object OBJ to the integer type."
-  (cond ((integerp obj)
-         obj)
-        ((stringp obj)
-         (string-to-number obj))
-        ((listp obj)
-         (length obj))
-        (t (error "Unexpected type %s in integer type conversion!" obj))))
-
-(defun symex--type-list (obj)
-  "Convert an object OBJ to the list type."
-  (cond ((symex-traversal-p obj)
-         (list obj))
-        ((listp obj)
-         obj)
-        (t (list obj))))
-
 (cl-defun symex-make-computation (&key
                                   components
                                   (perceive #'identity)
                                   (select #'identity)
                                   (filter #'identity)
-                                  (decide #'identity)
+                                  (synthesize #'identity)
                                   (express #'identity)
                                   (act #'identity))
   "A computation to be performed as part of a traversal.
@@ -72,7 +54,7 @@ to select the subset of perceptions that will be operated on by nested
 computations.
 FILTER - a predicate function to be applied to results from nested computations
 to select those that will factor into the decision.
-DECIDE - a binary function to be applied in combining results from nested
+SYNTHESIZE - a binary function to be applied in combining results from nested
 computations (each of the \"perceived\" type) to yield the provisional result
 \(also of the perceived type).
 EXPRESS - a function to transform data of the perceived type (e.g. the
@@ -86,7 +68,7 @@ computation (each of the \"expressed\" type) to yield the final result
         perceive
         select
         filter
-        decide
+        synthesize
         express
         act))
 
@@ -106,8 +88,8 @@ computation (each of the \"expressed\" type) to yield the final result
   "The filtration/redaction procedure of the COMPUTATION."
   (nth 4 computation))
 
-(defun symex--computation-decide (computation)
-  "The decision procedure of the COMPUTATION."
+(defun symex--computation-synthesize (computation)
+  "The synthesize procedure of the COMPUTATION."
   (nth 5 computation))
 
 (defun symex--computation-express (computation)
@@ -117,6 +99,17 @@ computation (each of the \"expressed\" type) to yield the final result
 (defun symex--computation-act (computation)
   "The act procedure of the COMPUTATION."
   (nth 7 computation))
+
+(defun symex-compose-computation (a b computation)
+  "Compose traversal results according to COMPUTATION.
+
+Combine the result of a traversal computation A with the accumulated
+computation B into an aggregate result."
+  ;; TODO: ruminate here
+  (when (and a b)
+    (funcall (symex--computation-synthesize computation)
+             a
+             b)))
 
 (defun symex--ruminate (computation components input)
   "Helper to process input in nested computations.
@@ -144,17 +137,69 @@ INPUT - the input."
                (symex--ruminate computation components perceived-input)))))
 
 (defconst symex--computation-default
-  ;; each result is wrapped in a list
-  ;; the results are concatenated using list concatenation
-  (symex-make-computation :perceive #'symex--type-list
-                          :act #'append))
+  (symex-make-computation :perceive #'list
+                          :synthesize #'append)
+  "Each move is wrapped in a list. These are concatenated using list
+concatenation.")
 
-(defun symex--side-effect-noop (&rest args)
-  "A null side-effect, i.e. which does nothing.
+(defun symex--const-1 (_x)
+  "A constant function return 1 regardless of the input."
+  1)
 
-Any arguments ARGS passed in are ignored."
-  (interactive)
-  (ignore args))
+(defconst symex--computation-count-moves
+  (symex-make-computation :perceive #'symex--const-1
+                          :synthesize #'+)
+  "Each move is counted as 1, even zero moves.  The results are
+concatenated by addition.")
+
+(defconst symex--computation-traversal-length
+  (symex-make-computation :perceive #'symex--move-length
+                          :synthesize #'+)
+  "Each move that actually moves is counted as 1.  The results are
+concatenated by addition.")
+
+(defconst symex--computation-net-traversal-dimensions
+  (symex-make-computation :perceive #'identity
+                          :synthesize #'symex--move-+)
+  "X-axis (forward/backward) and y-axis (up/down) moves are added
+separately. The results are concatenated by vector addition.")
+
+(defconst symex--computation-traversal-dimensions
+  (symex-make-computation :perceive #'identity
+                          :synthesize #'symex--move-abs-+)
+  "X-axis (forward/backward) and y-axis (up/down) moves are added
+separately as absolute (non-negative) values.  The results are
+concatenated by vector addition and represent how many total up/down
+steps and how many total forward/backward steps were taken.")
+
+(defun symex--move-delta-+ (a b)
+  "Add moves A and B using vector addition accounting for height changes.
+
+The index only participates in the addition when we are at the same
+height as the original position."
+  (let ((x1 (symex--move-x a))
+        (y1 (symex--move-y a))
+        (x2 (symex--move-x b))
+        (y2 (symex--move-y b)))
+    (let ((x (+ x1 x2))
+          (y (+ y1 y2)))
+      (cond ((symex--zero-move-p a) b)
+            ((= 0 y)
+             ;; we're at the height we started the traversal at
+             ;; so it makes sense to add movement in the x-direction
+             (symex-make-move x y))
+            (t
+             ;; don't modify the accumulated value of x
+             ;; as we are at a different height
+             (symex-make-move x1 y))))))
+
+(defconst symex--computation-node-distance
+  (symex-make-computation :perceive #'identity
+                          :synthesize #'symex--move-delta-+)
+  "X-axis (forward/backward) and y-axis (up/down) moves are added
+separately. The results are concatenated by vector addition. Index
+deltas are only added together when at the same height as the original
+position.")
 
 (defun symex--traversal-account (obj)
   "Represents the result OBJ of a traversal as a traversal."

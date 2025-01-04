@@ -1,6 +1,6 @@
 ;;; symex-evil.el --- An evil way to edit Lisp symbolic expressions as trees -*- lexical-binding: t -*-
 
-;; URL: https://github.com/countvajhula/symex.el
+;; URL: https://github.com/drym-org/symex.el
 
 ;; This program is "part of the world," in the sense described at
 ;; https://drym.org.  From your perspective, this is no different than
@@ -132,8 +132,10 @@ executing this command to get the expected behavior."
     ("j" . symex-go-down)
     ("k" . symex-go-up)
     ("l" . symex-go-forward)
+    ("gh" . backward-char)
     ("gj" . symex-next-visual-line)
     ("gk" . symex-previous-visual-line)
+    ("gl" . forward-char)
     ("(" . symex-create-round)
     ("[" . symex-create-square)
     (")" . symex-wrap-round)
@@ -313,6 +315,9 @@ executing this command to get the expected behavior."
               :after #'symex-evil-repeat-stop-recording-advice)
   (advice-add 'evil-repeat
               :around #'symex-evil-repeat-preserve-state-advice)
+  ;; TODO: once all the commands are defined using the macro,
+  ;; add this declaration to the macro definition and remove
+  ;; the "registration" here.
   (dolist (fn symex--evil-repeatable-commands)
     (evil-add-command-properties fn :repeat t)))
 

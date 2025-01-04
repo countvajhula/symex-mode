@@ -1,6 +1,6 @@
 ;;; symex-transformations-lisp.el --- An evil way to edit Lisp symbolic expressions as trees -*- lexical-binding: t -*-
 
-;; URL: https://github.com/countvajhula/symex.el
+;; URL: https://github.com/drym-org/symex.el
 
 ;; This program is "part of the world," in the sense described at
 ;; https://drym.org.  From your perspective, this is no different than
@@ -27,10 +27,8 @@
 
 (require 'cl-lib)
 
-(require 'lispy)
 (require 'evil)
 (require 'evil-surround)
-(require 'evil-cleverparens)  ;; really only need cp-textobjects here
 (require 'symex-primitives)
 (require 'symex-primitives-lisp)
 (require 'symex-utils)
@@ -41,151 +39,219 @@
 ;;; TRANSFORMATIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun symex-lisp--delete (count)
-  "Delete COUNT symexes."
-  (interactive "p")
-  (let ((last-command nil)  ; see symex-yank re: last-command
-        (start (point))
-        (end (symex--get-end-point count)))
-    (kill-region start end))
-  (cond ((or (symex--current-line-empty-p)         ; ^<>$
-             (save-excursion (evil-last-non-blank) ; (<>$
-                             (lispy-left-p))
-             (looking-at-p "\n")) ; (abc <>
-         (symex--join-to-next))
-        ((save-excursion (back-to-indentation) ; ^<>)
-                         (forward-char)
-                         (lispy-right-p))
-         ;; Cases 2 and 3 in issue #18
-         ;; if the deleted symex is preceded by a comment line
-         ;; or if the preceding symex is followed by a comment
-         ;; on the same line, then don't attempt to join lines
-         (let ((original-position (point)))
-           (when (symex--go-backward)
-             (let ((previous-symex-end-pos (symex--get-end-point 1)))
-               (unless (symex--intervening-comment-line-p previous-symex-end-pos
-                                                          original-position)
-                 (goto-char previous-symex-end-pos)
-                 ;; ensure that there isn't a comment on the
-                 ;; preceding line before joining lines
-                 (unless (condition-case nil
-                             (save-excursion (evil-find-char 1 ?\;)
-                                             t)
-                           (error nil))
-                   (symex--join-to-match lispy-right)
-                   (symex--adjust-point)))))))
-        ((save-excursion (forward-char) ; ... <>)
-                         (lispy-right-p))
-         (symex--go-backward))
-        (t (symex--go-forward)))
-  (symex-select-nearest)
-  (symex-tidy))
+(defun symex-lisp-clear ()
+  "Helper to clear contents of symex."
+  (cond ((symex--go-up) (symex-delete-remaining))
+        ((symex-string-p) (save-excursion (kill-sexp)
+                                          (insert "\"\"")))
+        ((or (symex-empty-list-p)
+             (symex--special-empty-list-p))
+         ;; nothing needs to be done
+         nil)
+        (t (kill-sexp))))
 
-(defun symex-lisp--delete-backwards (count)
-  "Delete COUNT symexes backwards."
-  (interactive "p")
-  (dotimes (_ count)
-    (when (symex--go-backward)
-      (symex-delete 1))))
+(defun symex-lisp-replace ()
+  (symex-lisp-clear)
+  (forward-char (symex--form-offset)))
 
-(defun symex-lisp--change (count)
-  "Change COUNT symexes."
-  (interactive "p")
-  (let ((start (point))
-        (end (symex--get-end-point count)))
-    (kill-region start end))
-  (symex-enter-lowest))
-
-(defun symex-lisp--append-after ()
+(defun symex-lisp-append-after ()
   "Append after symex (instead of vim's default of line)."
   (interactive)
   (forward-sexp)  ; selected symexes will have the cursor on the starting paren
-  (insert " ")
-  (symex-enter-lowest))
+  (insert " "))
 
-(defun symex-lisp--open-line-after ()
+(defun symex-lisp-open-line-after ()
   "Open new line after symex."
   (interactive)
   (forward-sexp)
-  (newline-and-indent)
-  (symex-enter-lowest))
+  (if (symex-inline-comment-p)
+      (progn (end-of-line)
+             (newline-and-indent))
+    (newline-and-indent)))
 
-(defun symex-lisp--open-line-before ()
+(defun symex-lisp-open-line-before ()
   "Open new line before symex."
   (interactive)
   (newline-and-indent)
-  (evil-previous-line)
+  (forward-line -1)
   (indent-according-to-mode)
   (evil-move-end-of-line)
   (unless (or (symex--current-line-empty-p)
               (save-excursion (backward-char)
-                              (lispy-left-p)))
-    (insert " "))
-  (symex-enter-lowest))
+                              (symex-left-p)))
+    (insert " ")))
 
-(defun symex-lisp--insert-before ()
+(defun symex-lisp-insert-before ()
   "Insert before symex (instead of vim's default at the start of line)."
   (interactive)
   (insert " ")
-  (backward-char)
-  (symex-enter-lowest))
+  (backward-char))
 
-(defun symex-lisp--insert-at-beginning ()
+(defun symex-lisp-insert-at-beginning ()
   "Insert at beginning of symex."
   (interactive)
-  (when (or (lispy-left-p)
+  (when (or (symex-left-p)
             (symex-string-p))
-    (forward-char))
-  (symex-enter-lowest))
+    (forward-char)))
 
-(defun symex-lisp--insert-at-end ()
+(defun symex-lisp-insert-at-end ()
   "Insert at end of symex."
   (interactive)
-  (if (or (lispy-left-p)
+  (if (or (symex-left-p)
           (symex-string-p))
       (progn (forward-sexp)
              (backward-char))
-    (forward-sexp))
-  (symex-enter-lowest))
+    (forward-sexp)))
 
-(defun symex-lisp--paste-after ()
-  "Paste after symex."
-  (interactive)
-  (let ((extra-to-prepend
-         (cond ((or (and (symex--point-at-indentation-p)
-                         (not (bolp)))
-                    (save-excursion (forward-sexp)
-                                    (eolp)))
-                "\n")
-               (t " "))))
-    (save-excursion
-      (forward-sexp)
-      (insert extra-to-prepend)
-      (evil-paste-before nil nil))
-    (symex--go-forward)
-    (symex-tidy)))
+(defun symex-lisp--paste (before after)
+  "Paste before, padding on either side.
+
+Paste text from the paste buffer, padding it with BEFORE and AFTER
+text, on the respective side."
+  (let* ((text-to-paste
+          ;; add the padding to the yanked text
+          (concat before
+                  (symex--current-kill)
+                  after))
+         ;; remember initial point location
+         (start (point)))
+    (insert text-to-paste)
+    (indent-region start (point))
+    (buffer-substring start (point))))
+
+(defun symex-lisp--padding (&optional before)
+  "Determine paste padding needed for current point position."
+  (if (symex-inside-empty-form-p)
+      ""
+    (let* ((after (not before))
+           (island
+            (and (bolp)
+                 (condition-case nil
+                     (save-excursion (forward-sexp)
+                                     (eolp))
+                   (error nil))))
+           (at-eob
+            (condition-case nil
+                (save-excursion (forward-sexp)
+                                (eobp))
+              (error nil)))
+           (previous-line-empty
+            (symex--previous-line-empty-p))
+           (next-line-empty
+            (symex--following-line-empty-p))
+           (surrounding-lines-empty (and previous-line-empty
+                                         next-line-empty))
+           (paste-text-contains-newlines
+            (seq-contains-p (symex--current-kill) ?\n))
+           (at-eol (condition-case nil
+                       (save-excursion (forward-sexp)
+                                       (eolp))
+                     (error nil)))
+           (multiline (let ((original-line (line-number-at-pos)))
+                        (condition-case nil
+                            (save-excursion (forward-sexp)
+                                            (not (= original-line
+                                                    (line-number-at-pos))))
+                          (error nil)))))
+      (cond ((and island
+                  ;; if we're at the toplevel, on an "island" symex
+                  ;; (i.e. with no peers occupying the same lines),
+                  (or (and after next-line-empty)
+                      ;; and if the side we want to paste on already
+                      ;; contains an empty line,
+                      (and before previous-line-empty)
+                      ;; or if we happen to be at the end of the buffer
+                      ;; for pasting after, then check the opposite side
+                      ;; instead for the clue on what's expected
+                      (and at-eob previous-line-empty))
+                  ;; and if the text to be pasted contains newlines, or
+                  ;; if both surrounding lines are empty _and_ we aren't
+                  ;; at the first symex
+                  (or paste-text-contains-newlines
+                      (and surrounding-lines-empty
+                           (not (symex--point-at-first-symex-p)))))
+             ;; then we typically want an extra newline separator
+             "\n\n")
+            ((or (symex--point-at-indentation-p)
+                 at-eol
+                 multiline)
+             "\n")
+            ((and before
+                  (string-match-p (concat symex--re-whitespace "$")
+                                  (symex--current-kill)))
+             ;; if the text to be pasted before includes whitespace already,
+             ;; then don't add more
+             "")
+            (t " ")))))
 
 (defun symex-lisp--paste-before ()
   "Paste before symex."
   (interactive)
-  (let ((extra-to-append
-         (cond ((or (and (symex--point-at-indentation-p)
-                         (not (bolp)))
-                    (save-excursion (forward-sexp)
-                                    (eolp)))
-                "\n")
-               (t " "))))
-    (save-excursion
-      (save-excursion
-        (evil-paste-before nil nil)
-        (when evil-move-cursor-back
-          (forward-char))
-        (insert extra-to-append))
-      (symex--go-forward)
-      (symex-tidy))
-    (symex-tidy)))
+  (when (symex-inside-empty-form-p)
+    (symex--kill-ring-push
+     (string-trim-right
+      (symex--kill-ring-pop))))
+  (symex-lisp--paste ""
+                     (symex-lisp--padding t)))
 
-(defun symex-lisp--yank (count)
+(defun symex-lisp-paste-before ()
+  "Paste before symex."
+  (symex--with-undo-collapse
+    (let ((pasted-text (symex-lisp--paste-before)))
+      (save-excursion
+        (let* ((end (point))
+               (start (- end (length pasted-text)))
+               (end-line (line-number-at-pos end)))
+          ;; we use end + 1 here since end is the point
+          ;; right before the initial expression, which
+          ;; won't be indented as it thus would fall
+          ;; outside the region to be indented.
+          (indent-region start (1+ end))
+          ;; indenting may add characters (e.g. spaces)
+          ;; to the buffer, so we rely on the line number
+          ;; instead.
+          (symex--goto-line end-line)
+          ;; if the last line has any trailing forms,
+          ;; indent them.
+          (symex--same-line-tidy-affected)
+          (not (equal pasted-text "")))))))
+
+(defun symex-lisp--paste-after ()
+  "Paste after symex.
+
+If a symex is currently selected, then paste after the end of the
+selected expression. Otherwise, paste in place."
+  (interactive)
+  (let ((padding (symex-lisp--padding nil)))
+    (when (symex-lisp--point-at-last-symex-p)
+      (symex--kill-ring-push
+       (string-trim-right
+        (symex--kill-ring-pop))))
+    (save-excursion
+      (condition-case nil
+          (forward-sexp)
+        (error nil))
+      (symex-lisp--paste padding
+                         ""))))
+
+(defun symex-lisp-paste-after ()
+  "Paste after symex."
+  (symex--with-undo-collapse
+    (let ((selected (symex-lisp--selected-p))
+          (pasted-text (symex-lisp--paste-after)))
+      (save-excursion
+        (when selected
+          ;; if it was (|), then we are already at the start
+          ;; of the pasted text
+          (forward-sexp)) ; go to beginning of pasted text
+        (let* ((start (point))
+               (end (+ start
+                       (length pasted-text))))
+          (goto-char end)
+          (symex--same-line-tidy-affected)))
+      (not (equal pasted-text "")))))
+
+(defun symex-lisp-yank (count)
   "Yank (copy) COUNT symexes."
   (interactive "p")
   ;; we set `last-command` here to avoid appending to the kill ring
@@ -195,6 +261,80 @@
     (let ((start (point))
           (end (symex--get-end-point count)))
       (copy-region-as-kill start end))))
+
+(defun symex-lisp--emit-backward ()
+  "Emit backward."
+  (when (and (symex-left-p)
+             (not (symex-empty-list-p)))
+    (save-excursion
+      (symex--go-up)  ; need to be inside the symex to emit and capture
+      (paredit-backward-barf-sexp 1))
+    (symex--go-forward)
+    (when (symex-empty-list-p)
+      (fixup-whitespace)
+      (re-search-forward symex--re-left)
+      (symex--go-down))))
+
+(defun symex-lisp-emit-backward (count)
+  "Emit backward COUNT times."
+  (dotimes (_ count)
+    (symex-lisp--emit-backward)))
+
+(defun symex-lisp--emit-forward ()
+  "Emit forward."
+  (when (and (symex-left-p)
+             (not (symex-empty-list-p)))
+    (save-excursion
+      (symex--go-up)  ; need to be inside the symex to emit and capture
+      (paredit-forward-barf-sexp 1))
+    (when (symex-empty-list-p)
+      (symex--go-forward)
+      (fixup-whitespace)
+      (re-search-backward symex--re-left))))
+
+(defun symex-lisp-emit-forward (count)
+  "Emit forward COUNT times."
+  (dotimes (_ count)
+    (symex-lisp--emit-forward)))
+
+(defun symex-lisp--capture-backward ()
+  "Capture from behind."
+  (when (and (symex-left-p)
+             ;; paredit captures 1 ((|2 3)) -> (1 (2 3)) but we don't
+             ;; want to in this case since point indicates the inner
+             ;; symex, which cannot capture, rather than the outer
+             ;; one. We avoid this by employing a guard condition here.
+             (not (symex--point-at-first-symex-p)))
+    (if (symex-empty-list-p)
+        (forward-char)
+      (symex--go-up))  ; need to be inside the symex to emit and capture
+    (paredit-backward-slurp-sexp 1)
+    (fixup-whitespace)
+    (symex--go-down)))
+
+(defun symex-lisp-capture-backward (count)
+  "Capture from behind, COUNT times."
+  (dotimes (_ count)
+    (symex-lisp--capture-backward)))
+
+(defun symex-lisp--capture-forward ()
+  "Capture from the front."
+  (when (and (symex-left-p)
+             (not (save-excursion
+                    (symex-other)
+                    (forward-char)
+                    (symex-lisp--point-at-end-p))))
+    (save-excursion
+      (if (symex-empty-list-p)
+          (forward-char)
+        (symex--go-up))  ; need to be inside the symex to emit and capture
+      (paredit-forward-slurp-sexp 1))))
+
+(defun symex-lisp-capture-forward (count)
+  "Capture from the front, COUNT times."
+  (dotimes (_ count)
+    (symex-lisp--capture-forward)))
+
 
 (provide 'symex-transformations-lisp)
 ;;; symex-transformations-lisp.el ends here

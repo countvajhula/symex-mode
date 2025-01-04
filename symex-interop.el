@@ -1,6 +1,6 @@
 ;;; symex-interop.el --- An evil way to edit Lisp symbolic expressions as trees -*- lexical-binding: t -*-
 
-;; URL: https://github.com/countvajhula/symex.el
+;; URL: https://github.com/drym-org/symex.el
 
 ;; This program is "part of the world," in the sense described at
 ;; https://drym.org.  From your perspective, this is no different than
@@ -39,9 +39,6 @@
 (declare-function rigpa-enter-higher-level "ext:ignore")
 (declare-function rigpa-enter-lower-level "ext:ignore")
 (declare-function rigpa-enter-lowest-level "ext:ignore")
-(declare-function chimera-hydra-portend-exit "ext:ignore")
-(declare-function chimera-hydra-signal-exit "ext:ignore")
-(declare-function chimera-handle-hydra-exit "ext:ignore")
 
 (defvar-local symex--original-scroll-margin nil)
 (defvar-local symex--original-max-scroll-margin nil)
@@ -102,13 +99,7 @@ right symex when we enter Symex mode."
   "Enter the lowest (manual) editing level."
   (interactive)
   (cond ((symex--rigpa-enabled-p)
-         (rigpa-enter-lowest-level)
-         ;; TODO: generalize so that commands specifically entering
-         ;; another level (esp the lowest) clear any recall flags;
-         ;; on the other hand, it may be desirable to retain it but
-         ;; override it temporarily, so that exiting the lowest level
-         ;; via normal exits (e.g. Esc) returns to the prior state
-         (chimera-hydra-portend-exit chimera-symex-mode))
+         (rigpa-enter-lowest-level))
         ((symex--evil-enabled-p)
          (evil-insert-state))
         (t (evil-emacs-state))))
@@ -127,25 +118,6 @@ right symex when we enter Symex mode."
   "Restore original `scroll-margin` (e.g. upon symex exit)."
   (setq-local scroll-margin symex--original-scroll-margin)
   (setq-local maximum-scroll-margin symex--original-max-scroll-margin))
-
-(defun symex--signal-exit ()
-  "Witness symex exit and take appropriate action."
-  (when (symex--rigpa-enabled-p)
-    (chimera-hydra-signal-exit chimera-symex-mode
-                               #'chimera-handle-hydra-exit)))
-
-;; TODO: these are only here because there's no good "pass through" option
-;; to use whatever scrolling (or other) command is mapped to e.g. C-e and C-y
-;; outside of the hydra
-(defun symex--scroll-down ()
-  "Scroll view down."
-  (interactive)
-  (evil-scroll-line-down 3))
-
-(defun symex--scroll-up ()
-  "Scroll view up."
-  (interactive)
-  (evil-scroll-line-up 3))
 
 
 (provide 'symex-interop)

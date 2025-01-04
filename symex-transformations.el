@@ -1,6 +1,6 @@
 ;;; symex-transformations.el --- An evil way to edit Lisp symbolic expressions as trees -*- lexical-binding: t -*-
 
-;; URL: https://github.com/countvajhula/symex.el
+;; URL: https://github.com/drym-org/symex.el
 
 ;; This program is "part of the world," in the sense described at
 ;; https://drym.org.  From your perspective, this is no different than
@@ -32,190 +32,221 @@
 
 ;; TODO: Remove dependencies after moving to symex-transformations-lisp.el
 (require 'paredit)
-(require 'lispy)
 (require 'evil)
 (require 'evil-surround)
-(require 'evil-cleverparens)  ;; really only need cp-textobjects here
+(require 'symex-misc)
 (require 'symex-primitives)
 (require 'symex-primitives-lisp)
 (require 'symex-utils)
 (require 'symex-traversals)
+(require 'symex-evaluator)
 (require 'symex-interop)
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; TRANSFORMATIONS ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun symex-delete (count)
+;; TODO: `symex-define-command` macro
+;; - write the wrapping code before and after without needing advice
+;; - select-nearest etc. after, and remove the ad hoc cases
+;; - this would also allow more fine-grained handling, e.g. different types of commands
+;; - this would also avoid the need for `symex--evil-repeatable-commands`, so that we could `(evil-add-command-properties fn :repeat t)` directly -- this would also support users defining new symex commands and having them be repeatable without a manual registration process
+;; TODO: dot operator disrupts scroll margins
+;; TODO: maybe identify "non-disorienting" commands and define a new macro for them. E.g. symex-tidy is itself a command. it that bad?
+
+(defmacro symex-define-command (name
+                                args
+                                docstring
+                                interactive-decl
+                                &rest
+                                body)
+  "Define a symex command."
+  (declare (indent defun))
+  (let ((result (gensym)))
+    `(defun ,name ,args
+       ,docstring
+       ,interactive-decl
+       (let ((,result (progn ,@body)))
+         (symex-user-select-nearest)
+         ;; Note that the built-in `fixup-whitespace` that's used in
+         ;; `symex-tidy` causes the buffer to reflect as modified even
+         ;; if it doesn't actually make any modifications.  In such
+         ;; cases, a null change is also pushed onto the undo stack,
+         ;; meaning that executing `undo` results in a no-op at first,
+         ;; and we need to hit `u` again to undo the real change we
+         ;; meant to undo.  We could fix this on the Symex side by
+         ;; only invoking tidy if we see that the buffer has been
+         ;; modified, but it would be better to fix `fixup-whitespace`
+         ;; so it doesn't mark the buffer as modified if no changes
+         ;; were made.
+         (symex--tidy 1)
+         ,result))))
+
+(defmacro symex-define-insertion-command (name
+                                          args
+                                          docstring
+                                          interactive-decl
+                                          &rest
+                                          body)
+  "Define a symex command that enters an insertion state."
+  (declare (indent defun))
+  `(defun ,name ,args
+     ,docstring
+     ,interactive-decl
+     (evil-start-undo-step)
+     ,@body
+     (symex-enter-lowest)))
+
+(defun symex--delete (count)
+  "Delete COUNT symexes."
+  ;; if we attempt to just (delete this) count times, if there happen
+  ;; to be fewer than count expressions following, then we may delete
+  ;; preceding expressions too. But we typically mean to delete only
+  ;; the succeeding expressions here. That's why we count the number
+  ;; of remaining expressions first.
+  (let ((count (min (symex-remaining-length)
+                    count)))
+    (when (> count 0)
+      ;; when deleting multiple expressions, we typically want to
+      ;; treat them as a single deletion, so we compose the entries on
+      ;; the kill ring as a side effect of each deletion
+      (symex--kill-ring-push "")
+      (symex-execute-traversal
+       (symex-traversal
+         (circuit (effect (symex--kill-ring-compose)
+                          (delete this))
+                  count)))
+      ;; trim trailing whitespace at the end
+      ;; otherwise, paste will include that
+      (let ((result (symex--kill-ring-pop)))
+        (symex--kill-ring-push (string-trim-right result))))))
+
+(symex-define-command symex-delete (count)
   "Delete COUNT symexes."
   (interactive "p")
-  (if (symex-tree-sitter-p)
-      (symex-ts-delete-node-forward count)
-    (symex-lisp--delete count)))
+  (symex--delete count))
 
-(defun symex-delete-backwards (count)
+(symex-define-command symex-delete-backwards (count)
   "Delete COUNT symexes backwards."
   (interactive "p")
-  (if (symex-tree-sitter-p)
-      (symex-ts-delete-node-backward count)
-    (symex-lisp--delete-backwards count)))
+  (symex-execute-traversal
+   (symex-traversal
+    (circuit (delete previous)
+             count))))
 
-;; TODO: symex-delete-remaining: fix symex--remaining-length for TS
-(defun symex-delete-remaining ()
+(symex-define-command symex-delete-remaining ()
   "Delete remaining symexes at this level."
   (interactive)
-  (let ((count (symex--remaining-length)))
-    (symex-delete count)))
+  (let ((count (symex-remaining-length)))
+    (symex--delete count)))
 
-(defun symex-change (count)
+(symex-define-insertion-command symex-change (count)
   "Change COUNT symexes."
   (interactive "p")
-  (if (symex-tree-sitter-p)
-      (symex-ts-change-node-forward count)
-    (symex-lisp--change count)))
+  (symex--remove count))
 
-(defun symex-change-remaining ()
+(symex-define-insertion-command symex-change-remaining ()
   "Change remaining symexes at this level."
   (interactive)
-  (let ((count (symex--remaining-length)))
-    (symex-change count)))
+  (let ((count (symex-remaining-length)))
+    (symex--remove count)))
 
-(defun symex--clear ()
-  "Helper to clear contents of symex."
-  (cond ((symex-opening-round-p)
-         (apply #'evil-delete (evil-inner-paren)))
-        ((symex-opening-square-p)
-         (apply #'evil-delete (evil-inner-bracket)))
-        ((symex-opening-curly-p)
-         (apply #'evil-delete (evil-inner-curly)))
-        ((symex-string-p)
-         (apply #'evil-delete (evil-inner-double-quote)))
-        (t (kill-sexp))))
-
-(defun symex-replace ()
+(symex-define-insertion-command symex-replace ()
   "Replace contents of symex."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-replace)
-    (progn (symex--clear)
-           (when (or (symex-form-p) (symex-string-p))
-             (forward-char))
-           (symex-enter-lowest))))
+    (symex-lisp-replace)))
 
-(defun symex-clear ()
+(symex-define-command symex-clear ()
   "Clear contents of symex."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-clear)
-    (progn
-      (symex--clear)
-      (symex-select-nearest)
-      (symex-tidy))))
+    (symex-lisp-clear)))
 
-(defun symex--emit-backward ()
-  "Emit backward."
-  (when (and (lispy-left-p)
-             (not (symex-empty-list-p)))
-    (save-excursion
-      (symex--go-up)  ; need to be inside the symex to emit and capture
-      (paredit-backward-barf-sexp 1))
-    (symex--go-forward)
-    (when (symex-empty-list-p)
-      (fixup-whitespace)
-      (re-search-forward lispy-left)
-      (symex--go-down))))
-
-(defun symex-emit-backward (count)
+(symex-define-command symex-emit-backward (count)
   "Emit backward, COUNT times."
   (interactive "p")
-  (dotimes (_ count)
-    (symex--emit-backward)))
+  (if tree-sitter-mode
+      (symex-ts-emit-backward count)
+    (symex-lisp-emit-backward count)))
 
-(defun symex--emit-forward ()
-  "Emit forward."
-  (when (and (lispy-left-p)
-             (not (symex-empty-list-p)))
-    (save-excursion
-      (symex--go-up)  ; need to be inside the symex to emit and capture
-      (paredit-forward-barf-sexp 1))
-    (when (symex-empty-list-p)
-      (symex--go-forward)
-      (fixup-whitespace)
-      (re-search-backward lispy-left))))
-
-(defun symex-emit-forward (count)
+(symex-define-command symex-emit-forward (count)
   "Emit forward, COUNT times."
   (interactive "p")
-  (dotimes (_ count)
-    (symex--emit-forward)))
+  (if tree-sitter-mode
+      (symex-ts-emit-forward count)
+    (symex-lisp-emit-forward count)))
 
-(defun symex--capture-backward ()
-  "Capture from behind."
-  (when (lispy-left-p)
-    (if (symex-empty-list-p)
-        (forward-char)
-      (symex--go-up))  ; need to be inside the symex to emit and capture
-    ;; paredit captures 1 ((|2 3)) -> (1 (2 3))
-    ;; but we don't want to in this case since point indicates the
-    ;; inner symex, which cannot capture, rather than the outer
-    ;; one. Just a note for the future.
-    (paredit-backward-slurp-sexp 1)
-    (fixup-whitespace)
-    (symex--go-down)))
-
-(defun symex-capture-backward (count)
-  "Capture from behind, COUNT times."
+(symex-define-command symex-capture-backward (count)
+  "Capture backward, COUNT times."
   (interactive "p")
-  (dotimes (_ count)
-    (symex--capture-backward))
-  (symex-tidy))
+  (if tree-sitter-mode
+      (symex-ts-capture-backward count)
+    (symex-lisp-capture-backward count)))
 
-(defun symex--capture-forward ()
-  "Capture from the front."
-  (when (lispy-left-p)
-    (save-excursion
-      (if (symex-empty-list-p)
-          (forward-char)
-        (symex--go-up))  ; need to be inside the symex to emit and capture
-      (lispy-forward-slurp-sexp 1))))
-
-(defun symex-capture-forward (count)
-  "Capture from the front, COUNT times."
+(symex-define-command symex-capture-forward (count)
+  "Capture forward, COUNT times."
   (interactive "p")
-  (dotimes (_ count)
-    (symex--capture-forward)))
+  (if tree-sitter-mode
+      (symex-ts-capture-forward count)
+    (symex-lisp-capture-forward count)))
 
-(defun symex-split ()
+(symex-define-command symex-split ()
   "Split symex into two."
   (interactive)
   (paredit-split-sexp)
-  (forward-char)
-  (symex-select-nearest)
-  (symex-tidy))
+  (forward-char))
 
 (defun symex--join ()
   "Merge symexes at the same level."
   (save-excursion
-    (symex--go-forward)
-    (paredit-join-sexps)))
+    (when (symex--go-forward)
+      (paredit-join-sexps))))
 
-(defun symex-join (count)
+(symex-define-command symex-join (count)
   "Merge COUNT symexes at the same level."
   (interactive "p")
   (dotimes (_ count)
     (symex--join)))
 
-(defun symex-join-lines (count)
+(symex-define-command symex-join-lines (count)
   "Join COUNT lines inside symex."
   (interactive "p")
   (dotimes (_ count)
     (symex--join-lines)))
 
-(defun symex-join-lines-backwards (count)
+(symex-define-command symex-join-lines-backwards (count)
   "Join COUNT lines backwards inside symex."
   (interactive "p")
   (dotimes (_ count)
     (symex--join-lines t)))
+
+(defun symex--same-line-tidy-affected ()
+  "Tidy symexes affected by line-oriented operations.
+
+This assumes that point is at the end of whatever change has been
+made, and tidies the next symex if it is on the same line. Then, it
+continues tidying symexes as long as the next one begins on the same
+line that the preceding one ends on."
+  (symex--save-point-excursion
+    ;; assume point is at the end of the triggering change
+    (let ((affected (or (symex-lisp--point-at-start-p)
+                        (= (line-number-at-pos)
+                           ;; does the next symex start on the same line?
+                           (if (symex--go-forward)
+                               (line-number-at-pos)
+                             -1)))))
+      (while affected
+        (symex--tidy 1)
+        (setq affected
+              (= (save-excursion  ; does the symex end on the same line
+                   (forward-sexp) ; that the next one begins on?
+                   (line-number-at-pos))
+                 (if (symex--go-forward)
+                     (line-number-at-pos)
+                   -1)))))))
 
 (defun symex--join-lines (&optional backwards)
   "Join lines inside symex.
@@ -224,94 +255,110 @@ If BACKWARDS is true, then joins current symex to previous one, otherwise,
 by default, joins next symex to current one."
   (if backwards
       (when (symex--point-at-indentation-p)
-        (progn (evil-previous-line)
-               (if (symex--current-line-empty-p)
-                   (evil-join (line-beginning-position)
-                              (1+ (line-beginning-position)))
-                 (evil-join (line-beginning-position)
-                            (line-end-position)))))
-    (save-excursion (forward-sexp)
-                    (evil-join (line-beginning-position)
-                               (line-end-position))))
-  (symex-tidy))
+        (join-line)
+        (when (looking-at-p "[[:space:]]")
+          (symex--go-to-next-non-whitespace-char)))
+    (unless (symex--point-on-last-line-p)
+      (save-excursion
+        (forward-sexp)
+        (join-line t))
+      ;; every subsequent symex that begins on
+      ;; the same line that the preceding one ends on
+      ;; should be indented
+      (symex--same-line-tidy-affected))))
 
 (defun symex-yank (count)
   "Yank (copy) COUNT symexes."
   (interactive "p")
   (if (symex-tree-sitter-p)
     (symex-ts-yank count)
-    (symex-lisp--yank count)))
+    (symex-lisp-yank count)))
 
-;; TODO: symex-yank-remaining: fix symex--remaining-length for TS
 (defun symex-yank-remaining ()
   "Yank (copy) remaining symexes at this level."
   (interactive)
-  (let ((count (symex--remaining-length)))
+  (let ((count (symex-remaining-length)))
     (symex-yank count)))
 
-(defun symex-paste-before (count)
+(symex-define-command symex-paste-before (count)
   "Paste before symex, COUNT times."
   (interactive "p")
   (setq this-command 'evil-paste-before)
-  (if (symex-tree-sitter-p)
-      (symex-ts-paste-before count)
-    (symex--with-undo-collapse
-      (dotimes (_ count)
-        (symex-lisp--paste-before)))))
+  ;; typically (e.g. to follow the convention in evil), we
+  ;; want to select the start of the pasted text after
+  ;; pasting.
+  ;; TODO: make this post-paste selection a defcustom
+  (symex-execute-traversal
+   (symex-traversal
+    (decision (at first)
+              (maneuver (circuit (paste before)
+                                 count)
+                        (circuit (move backward)))
+              (maneuver (move backward)
+                        (circuit (paste after)
+                                 count)
+                        (move forward))))))
 
-(defun symex-paste-after (count)
+(symex-define-command symex-paste-after (count)
   "Paste after symex, COUNT times."
   (interactive "p")
   (setq this-command 'evil-paste-after)
-  (if (symex-tree-sitter-p)
-      (symex-ts-paste-after count)
-    (symex--with-undo-collapse
-      (dotimes (_ count)
-        (symex-lisp--paste-after)))))
+  ;; TODO: user-level defcustom of whether to move
+  ;; to indicate pasted text (like evil), which should
+  ;; be checked here and appropriately applied. E.g.
+  ;; in Lisp, (|) currently would move when it shouldn't
+  ;; but it's a default that works in the majority of
+  ;; cases to provide evil-like behavior.
+  (symex-execute-traversal
+   (symex-traversal
+    (maneuver (circuit (paste after)
+                       count)
+              ;; select the start of pasted text.
+              (move forward)))))
 
-(defun symex-open-line-after ()
+(symex-define-insertion-command symex-open-line-after ()
   "Open new line after symex."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-open-line-after)
-    (symex-lisp--open-line-after)))
+    (symex-lisp-open-line-after)))
 
-(defun symex-open-line-before ()
+(symex-define-insertion-command symex-open-line-before ()
   "Open new line before symex."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-open-line-before)
-    (symex-lisp--open-line-before)))
+    (symex-lisp-open-line-before)))
 
-(defun symex-append-after ()
+(symex-define-insertion-command symex-append-after ()
   "Append after symex (instead of vim's default of line)."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-append-after)
-    (symex-lisp--append-after)))
+    (symex-lisp-append-after)))
 
-(defun symex-insert-before ()
+(symex-define-insertion-command symex-insert-before ()
   "Insert before symex (instead of vim's default at the start of line)."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-insert-before)
-    (symex-lisp--insert-before)))
+    (symex-lisp-insert-before)))
 
-(defun symex-insert-at-beginning ()
+(symex-define-insertion-command symex-insert-at-beginning ()
   "Insert at beginning of symex."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-insert-at-beginning)
-    (symex-lisp--insert-at-beginning)))
+    (symex-lisp-insert-at-beginning)))
 
-(defun symex-insert-at-end ()
+(symex-define-insertion-command symex-insert-at-end ()
   "Insert at end of symex."
   (interactive)
   (if (symex-tree-sitter-p)
       (symex-ts-insert-at-end)
-    (symex-lisp--insert-at-end)))
+    (symex-lisp-insert-at-end)))
 
-(defun symex-create (type)
+(defun symex--create (type)
   "Create new symex (list).
 
 New list delimiters are determined by the TYPE."
@@ -323,44 +370,43 @@ New list delimiters are determined by the TYPE."
           ((equal type 'curly)
            (insert "{}"))
           ((equal type 'angled)
-           (insert "<>"))))
-  (symex-tidy))
+           (insert "<>")))))
 
-(defun symex-create-round ()
+(symex-define-command symex-create-round ()
   "Create new symex with round delimiters."
   (interactive)
-  (symex-create 'round))
+  (symex--create 'round))
 
-(defun symex-create-square ()
+(symex-define-command symex-create-square ()
   "Create new symex with square delimiters."
   (interactive)
-  (symex-create 'square))
+  (symex--create 'square))
 
-(defun symex-create-curly ()
+(symex-define-command symex-create-curly ()
   "Create new symex with curly delimiters."
   (interactive)
-  (symex-create 'curly))
+  (symex--create 'curly))
 
-(defun symex-create-angled ()
+(symex-define-command symex-create-angled ()
   "Create new symex with angled delimiters."
   (interactive)
-  (symex-create 'angled))
+  (symex--create 'angled))
 
-(defun symex-insert-newline (count)
+(symex-define-command symex-insert-newline (count)
   "Insert COUNT newlines before symex."
   (interactive "p")
-  (newline-and-indent count)
-  (symex-tidy))
+  (newline-and-indent count))
 
-(defun symex-append-newline (count)
+(symex-define-command symex-append-newline (count)
   "Append COUNT newlines after symex."
   (interactive "p")
   (save-excursion
     (forward-sexp)
     (newline-and-indent count)
-    (symex-tidy)))
+    (fixup-whitespace))
+  (symex--same-line-tidy-affected))
 
-(defun symex-swallow ()
+(symex-define-command symex-swallow ()
   "Swallow the head of the symex.
 
 This consumes the head of the symex, putting the rest of its contents
@@ -369,10 +415,9 @@ in the parent symex."
   (save-excursion
     (symex--go-up)
     (symex--go-forward)
-    (paredit-splice-sexp-killing-backward))
-  (symex-tidy))
+    (paredit-splice-sexp-killing-backward)))
 
-(defun symex-swallow-tail ()
+(symex-define-command symex-swallow-tail ()
   "Swallow the tail of the symex.
 
 This consumes the tail of the symex, putting the head
@@ -382,78 +427,78 @@ in the parent symex."
     (symex--go-up)
     (symex--go-forward)
     (paredit-splice-sexp-killing-forward)
-    (symex--go-backward))
-  (symex-tidy))
+    (symex--go-backward)))
 
-(defun symex-splice ()
+(symex-define-command symex-splice ()
   "Splice or \"clip\" symex.
 
 If the symex is a nested list, this operation eliminates the symex,
 putting its contents in the parent symex.  If the symex is an atom,
 then no action is taken."
   (interactive)
-  (when (or (lispy-left-p) (symex-string-p))
+  (when (or (symex-left-p) (symex-string-p))
     (if (or (symex-empty-list-p)
             (symex-empty-string-p))
-        (symex-delete 1)
+        (symex--delete 1)
       (save-excursion
         (evil-surround-delete (char-after))
-        (symex--go-down)
-        (symex-tidy)))))
+        (symex--go-down)))))
 
-(defun symex-wrap-round ()
+(symex-define-command symex-wrap-round ()
   "Wrap with ()."
   (interactive)
   (paredit-wrap-round)
   (symex--go-down))
 
-(defun symex-wrap-square ()
+(symex-define-command symex-wrap-square ()
   "Wrap with []."
   (interactive)
   (paredit-wrap-square)
   (symex--go-down))
 
-(defun symex-wrap-curly ()
+(symex-define-command symex-wrap-curly ()
   "Wrap with {}."
   (interactive)
   (paredit-wrap-curly)
   (evil-find-char-backward nil 123))
 
-(defun symex-wrap-angled ()
+(symex-define-command symex-wrap-angled ()
   "Wrap with <>."
   (interactive)
   (paredit-wrap-angled)
   (evil-find-char-backward nil 60))
 
-(defun symex-wrap ()
+(symex-define-insertion-command symex-wrap ()
   "Wrap with containing symex."
   (interactive)
   (symex-wrap-round)
-  (symex-insert-at-beginning))
+  (symex--go-up))
 
-(defun symex-wrap-and-append ()
+(symex-define-insertion-command symex-wrap-and-append ()
   "Wrap with containing symex and append."
   (interactive)
   (symex-wrap-round)
-  (symex-insert-at-end))
+  (symex--go-up)
+  (forward-sexp))
 
 (defun symex--shift-forward ()
   "Move symex forward in current tree level."
-  (forward-sexp)
-  (condition-case nil
-      (progn (transpose-sexps 1)
-             (backward-sexp)
-             t)
-    (error (backward-sexp)
-           nil)))
+  (unless (symex--point-at-last-symex-p)
+    (forward-sexp)
+    (condition-case nil
+        (progn (transpose-sexps 1)
+               (backward-sexp)
+               t)
+      (error (backward-sexp)
+             nil))))
 
-(defun symex-shift-forward (count)
+(symex-define-command symex-shift-forward (count)
   "Move symex forward COUNT times in current tree level."
   (interactive "p")
   (dotimes (_ count)
     (symex--shift-forward)))
 
-(defun symex-shift-forward-most ()
+(symex-define-command symex-shift-forward-most ()
   "Move symex backward COUNT times in current tree level."
   (interactive)
   (let ((col (current-column))
@@ -475,12 +520,12 @@ then no action is taken."
       (symex--go-backward)
       t)))
 
-(defun symex-shift-backward (count)
+(symex-define-command symex-shift-backward (count)
   "Move symex backward COUNT times in current tree level."
   (interactive "p")
   (dotimes (_ count) (symex--shift-backward)))
 
-(defun symex-shift-backward-most ()
+(symex-define-command symex-shift-backward-most ()
   "Move symex backward COUNT times in current tree level."
   (interactive)
   (let ((col (current-column))
@@ -494,15 +539,15 @@ then no action is taken."
                 (= row (line-number-at-pos)))
       (symex--shift-forward))))
 
-(defun symex-change-delimiter ()
+(symex-define-command symex-change-delimiter ()
   "Change delimiter enclosing current symex, e.g. round -> square brackets."
   (interactive)
-  (if (or (lispy-left-p) (symex-string-p))
+  (if (or (symex-left-p) (symex-string-p))
       (evil-surround-change (following-char))
     (let ((bounds (bounds-of-thing-at-point 'sexp)))
       (evil-surround-region (car bounds) (cdr bounds) 'inclusive 40))))
 
-(defun symex-comment (count)
+(symex-define-command symex-comment (count)
   "Comment out COUNT symexes."
   (interactive "p")
   (if (symex-tree-sitter-p)
@@ -511,10 +556,10 @@ then no action is taken."
       (mark-sexp count)
       (comment-dwim nil))))
 
-(defun symex-comment-remaining ()
+(symex-define-command symex-comment-remaining ()
   "Comment out remaining symexes at this level."
   (interactive)
-  (let ((count (symex--remaining-length)))
+  (let ((count (symex-remaining-length)))
     (symex-comment count)))
 
 (defun symex--delete-prefix-helper (prefix-list)
@@ -573,7 +618,7 @@ If INDEX is provided, insert the prefix at INDEX instead of cycling."
           (symex--insert-prefix prefix-list index)
         (symex--insert-prefix prefix-list (1+ deleted-index))))))
 
-(defun symex-cycle-quote (index)
+(symex-define-command symex-cycle-quote (index)
   "Cycle through configured quoting prefixes in `symex-quote-prefix-list`.
 
 If an INDEX is provided, then this replaces the existing prefix (if
@@ -589,10 +634,9 @@ because 0 has a different meaning in symex mode, and is an unusual
 prefix argument to use in Emacs functions.  1-indexed behavior is also
 the more natural choice here in any case."
   (interactive "P")
-  (symex--cycle-prefix symex-quote-prefix-list (and index (1- index)))
-  (symex-tidy))
+  (symex--cycle-prefix symex-quote-prefix-list (and index (1- index))))
 
-(defun symex-cycle-unquote (index)
+(symex-define-command symex-cycle-unquote (index)
   "Cycle through configured quoting prefixes in `symex-unquote-prefix-list`.
 
 If an INDEX is provided, then this replaces the existing prefix (if
@@ -608,61 +652,36 @@ because 0 has a different meaning in symex mode, and is an unusual
 prefix argument to use in Emacs functions.  1-indexed behavior is also
 the more natural choice here in any case."
   (interactive "P")
-  (symex--cycle-prefix symex-unquote-prefix-list (and index (1- index)))
-  (symex-tidy))
+  (symex--cycle-prefix symex-unquote-prefix-list (and index (1- index))))
 
-(defun symex-remove-quoting-level ()
+(symex-define-command symex-remove-quoting-level ()
   "Remove any quoting prefix at point, if present.
 
 This removes either quoting or unquoting prefixes, and removes up to one
 layer of quoting."
   (interactive)
   (symex--delete-prefix (append symex-quote-prefix-list
-                                symex-unquote-prefix-list))
-  (symex-tidy))
+                                symex-unquote-prefix-list)))
 
-(defun symex-add-quoting-level ()
+(symex-define-command symex-add-quoting-level ()
   "Add a quoting level."
   (interactive)
-  (insert "'")
-  (symex-tidy))
+  (insert "'"))
 
-(defun symex-quasiquote ()
+(symex-define-command symex-quasiquote ()
   "Quasiquote symex."
   (interactive)
-  (insert "`")
-  (symex-tidy))
+  (insert "`"))
 
-(defun symex-escape-quote ()
+(symex-define-command symex-escape-quote ()
   "Escape quote in quoted symex."
   (interactive)
-  (insert ",")
-  (symex-tidy))
+  (insert ","))
 
-(defun symex-tidy ()
+(symex-define-command symex-tidy (count)
   "Auto-indent symex and fix any whitespace."
-  (interactive)
-  (fixup-whitespace)
-  (when (save-excursion (looking-at-p "[[:space:]]"))
-    (forward-char))
-  (condition-case nil
-      (save-excursion
-        (forward-sexp)
-        (fixup-whitespace))
-    (error nil))
-  (condition-case err
-      (save-excursion
-        (apply #'evil-indent
-               (seq-take (evil-cp-a-form 1)
-                         2)))
-    (error (message "[Symex] symex-tidy: suppressed error %S" err)
-           (let ((start (point))
-                 (end (save-excursion (forward-sexp) (point))))
-             ;; maybe we should just always use this instead
-             (save-excursion
-               (apply #'evil-indent
-                      (list start end))))))
-  (symex-select-nearest))
+  (interactive "p")
+  (symex--tidy count))
 
 (cl-defun symex--transform-in-isolation (traversal side-effect &key pre-traversal)
   "Transform a symex in a temporary buffer and replace the original with it.
@@ -689,11 +708,6 @@ effect is not performed during the pre-traversal."
          (yank)
          (goto-char 0)
          (symex-execute-traversal pre-traversal)
-         ;; do it once first since it will be executed as a side-effect
-         ;; _after_ each step in the traversal
-         (condition-case nil
-             (funcall side-effect)
-           (error nil))
          (condition-case nil
              (symex--do-while-traversing
               side-effect
@@ -701,9 +715,9 @@ effect is not performed during the pre-traversal."
            (error nil))
          (buffer-string)))))
   (save-excursion (yank))
-  (symex-tidy))
+  (symex--tidy 1))
 
-(defun symex-tidy-proper ()
+(symex-define-command symex-tidy-proper ()
   "Properly tidy things up.
 
 This operates on the subtree indicated by the selection, rather than
@@ -720,10 +734,10 @@ implementation."
   (interactive)
   (symex--transform-in-isolation
    symex--traversal-postorder-in-tree
-   #'symex-tidy
+   (apply-partially #'symex--tidy 1)
    :pre-traversal (symex-traversal (circuit symex--traversal-preorder-in-tree))))
 
-(defun symex-collapse ()
+(symex-define-command symex-collapse ()
   "Collapse a symex to a single line.
 
 This operates on the subtree indicated by the selection, rather than
@@ -745,7 +759,7 @@ implementation."
    (apply-partially #'symex--join-lines t)
    :pre-traversal (symex-traversal (circuit symex--traversal-preorder-in-tree))))
 
-(defun symex-collapse-remaining ()
+(symex-define-command symex-collapse-remaining ()
   "Collapse the remaining symexes to the current line."
   (interactive)
   (save-excursion
@@ -755,36 +769,27 @@ implementation."
                                       (symex--join-lines t)))
                                   (symex-make-move 1 0)))))
 
-(defun symex-unfurl-remaining ()
+(symex-define-command symex-unfurl-remaining ()
   "Unfurl the remaining symexes so they each occupy separate lines."
   (interactive)
   (save-excursion
     (symex--go-forward)
-    ;; do it once first since it will be executed as a side-effect
-    ;; _after_ each step in the traversal
-    (symex-insert-newline 1)
     (symex--do-while-traversing (apply-partially #'symex-insert-newline 1)
                                 (symex-make-move 1 0))))
 
-(defun symex-tidy-remaining ()
+(symex-define-command symex-tidy-remaining ()
   "Tidy the remaining symexes."
   (interactive)
-  (save-excursion
-    ;; do it once first since it will be executed as a side-effect
-    ;; _after_ each step in the traversal
-    (symex-tidy)
-    (symex--do-while-traversing #'symex-tidy
-                                (symex-make-move 1 0)))
-  ;; not sure why this nearest selection is needed, but eventually we may
-  ;; just want to wrap every command with this at the end anyway, so,
-  ;; in retrospect from that point, this wouldn't hurt
-  (symex-select-nearest))
+  (symex--save-point-excursion
+    (symex--do-while-traversing (apply-partially #'symex--tidy 1)
+                                (symex-make-move 1 0))))
 
-(defun symex-unfurl ()
+(symex-define-command symex-unfurl ()
   "Unfurl the constituent symexes so they each occupy separate lines."
   (interactive)
   (save-excursion
     (symex--go-up)
+    ;; TODO: should this be a private version instead?
     (symex-unfurl-remaining)))
 
 (provide 'symex-transformations)

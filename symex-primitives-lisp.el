@@ -1,6 +1,6 @@
 ;;; symex-primitives-lisp.el --- An evil way to edit Lisp symbolic expressions as trees -*- lexical-binding: t -*-
 
-;; URL: https://github.com/countvajhula/symex.el
+;; URL: https://github.com/drym-org/symex.el
 
 ;; This program is "part of the world," in the sense described at
 ;; https://drym.org.  From your perspective, this is no different than
@@ -30,9 +30,9 @@
 ;;; Code:
 
 
-(require 'lispy)
 (require 'paredit)
 (require 'symex-data)
+(require 'symex-utils)
 
 ;;;;;;;;;;;;;;;;;;
 ;;; PRIMITIVES ;;;
@@ -43,12 +43,28 @@
 (defun symex-lisp--adjust-point ()
   "Helper to adjust point to indicate the correct symex."
   (unless (or (bobp)
+              (bolp)
               (symex-lisp--point-at-start-p)
               (looking-back "[,'`]" (line-beginning-position))
               (save-excursion (backward-char)  ; just inside symex
-                              (or (lispy-left-p)
+                              (or (symex-left-p)
+                                  ;; this is to exclude the case where
+                                  ;; we're inside a string, "|abc"
+                                  ;; which "inverts" the code structure
+                                  ;; and causes unexpected behavior when
+                                  ;; navigating using Emacs's built-in
+                                  ;; primitive symex motions. Unlike normal
+                                  ;; forms, opening and closing delimiters
+                                  ;; are not distinguished for strings and
+                                  ;; so we can't specifically check for
+                                  ;; "open quote," with the result that
+                                  ;; in the case "abc"|, we don't always
+                                  ;; select the right symex the way we
+                                  ;; would with (abc)|.
                                   (symex-string-p))))
-    (backward-sexp)))
+    (condition-case nil
+        (backward-sexp)
+      (error nil))))
 
 ;;; Predicates
 
@@ -102,8 +118,8 @@
 (defun symex-lisp--point-at-start-p ()
   "Check if point is at the start of a symex."
   (and (not (eolp))
-       (not (looking-at-p lispy-right))
-       (or (lispy-left-p)                           ; |(*
+       (not (looking-at-p symex--re-right))
+       (or (symex-left-p)                           ; |(*
            (symex--special-left-p)                  ; |'(*
            ;; looking at the start of any non-whitespace:
            (and (not (looking-at-p "[[:space:]]"))
@@ -112,8 +128,35 @@
                                   (line-beginning-position))
                     (save-excursion (backward-char)
                                     (symex-string-p))
-                    (looking-back lispy-left        ; (*|.
+                    (looking-back symex--re-left    ; (*|.
                                   (line-beginning-position)))))))
+
+(defun symex-lisp--point-at-end-p ()
+  "Check if point is at the end of a symex."
+  (condition-case nil
+      (symex-right-p)
+    (error nil)))
+
+(defun symex-lisp--previous-p ()
+  "Check if a preceding symex exists at this level."
+  (save-excursion (symex-lisp--backward)))
+
+(defun symex-lisp--next-p ()
+  "Check if a succeeding symex exists at this level."
+  (save-excursion (symex-lisp--forward)))
+
+(defun symex-lisp--selected-p ()
+  "Check if a symex is currently selected."
+  (and (not (looking-at-p "[[:space:]]"))
+       (not (symex-right-p))))
+
+;; From Lispy
+(defvar symex--re-left "[([{]"
+  "Opening delimiter.")
+
+;; From Lispy
+(defvar symex--re-right "[])}]"
+  "Closing delimiter.")
 
 (defvar symex--re-comment-line "^[[:space:]]*;"
   "A comment line.")
@@ -124,14 +167,68 @@
 (defvar symex--re-blank-line "^[[:space:]]*$"
   "A blank line, either empty or containing only whitespace.")
 
+(defvar symex--re-whitespace "[[:space:]|\n]+"
+  "Whitespace that may extend over many lines.")
+
+(defvar symex--re-optional-whitespace "[[:space:]|\n]*"
+  "Optional whitespace that may extend over many lines.")
+
 (defvar symex--re-symex-line "^[[:space:]]*[^;[:space:]\n]"
   "A line that isn't blank and isn't a comment line.")
+
+(defvar symex--re-racket-syntax-object
+  (concat "#['`]" symex--re-left))
+
+(defvar symex--re-splicing-unquote
+  (concat ",@" symex--re-left))
+
+(defvar symex--re-racket-unquote-syntax
+  (concat "#," symex--re-left))
+
+(defvar symex--re-racket-splicing-unsyntax
+  (concat "#,@" symex--re-left))
+
+(defvar symex--re-quoted-list
+  (concat "['`]" symex--re-left))
+
+(defvar symex--re-unquoted-list
+  (concat "," symex--re-left))
+
+(defvar symex--re-clojure-deref-reader-macro
+  (concat "@" symex--re-left))
+
+(defvar symex--re-clojure-literal-lambda
+  (concat "#" symex--re-left))
+
+;; based on lispy-left-p
+(defun symex-left-p ()
+  "Check if we're at (i.e. after) an opening delimiter."
+  (looking-at symex--re-left))
+
+;; based on lispy-right-p
+(defun symex-right-p ()
+  "Check if we're at (i.e. after) a closing delimiter."
+  (looking-at symex--re-right))
+
+;; From https://www.gnu.org/software/emacs/manual/html_node/efaq/Matching-parentheses.html
+(defun symex-other ()
+  "Move point to the other delimiter in a matching pair."
+  (cond ((looking-at "\\s(") (forward-list 1) (backward-char 1))
+        ((looking-at "\\s)") (forward-char 1) (backward-list 1))))
+
+(defun symex-whitespace-p ()
+  "Check if we're looking at whitespace."
+  (looking-at-p symex--re-whitespace))
 
 (defun symex-comment-line-p ()
   "Check if we're currently at the start of a comment line."
   (save-excursion
     (back-to-indentation)
     (looking-at-p ";")))
+
+(defun symex-inline-comment-p ()
+  "Check if there is an inline comment following point."
+  (looking-at-p "[[:space:]]*;"))
 
 (defun symex-string-p ()
   "Check if the symex is a string."
@@ -151,10 +248,10 @@
 
 (defun symex-empty-list-p ()
   "Check if we're looking at an empty list."
-  (save-excursion
-    (and (lispy-left-p)
-         (progn (forward-char 2) ;; need to go forward by 2 for some reason
-                (lispy-right-p)))))
+  (looking-at-p
+   (concat symex--re-left
+           symex--re-optional-whitespace
+           symex--re-right)))
 
 (defun symex-empty-string-p ()
   "Check if we're looking at an empty list."
@@ -163,37 +260,46 @@
          (progn (forward-char 1)
                 (symex-string-p)))))
 
+(defun symex-inside-empty-form-p ()
+  "Check if point is inside an empty form."
+  (and (looking-back (concat symex--re-left
+                             symex--re-optional-whitespace)
+                     (line-beginning-position))
+       (looking-at-p
+        (concat symex--re-optional-whitespace
+                symex--re-right))))
+
 (defun symex--racket-syntax-object-p ()
   "Check if the symex is a racket syntax object."
-  (looking-at (concat "#['`]" lispy-left)))
+  (looking-at-p symex--re-racket-syntax-object))
 
 (defun symex--splicing-unquote-p ()
   "Check if the symex is a spliced unquoted list."
-  (looking-at (concat ",@" lispy-left)))
+  (looking-at-p symex--re-splicing-unquote))
 
 (defun symex--racket-unquote-syntax-p ()
   "Check if the symex is a racket unquoted syntax list."
-  (looking-at (concat "#," lispy-left)))
+  (looking-at-p symex--re-racket-unquote-syntax))
 
 (defun symex--racket-splicing-unsyntax-p ()
   "Check if the symex is a racket spliced unsyntaxed list."
-  (looking-at (concat "#,@" lispy-left)))
+  (looking-at-p symex--re-racket-splicing-unsyntax))
 
 (defun symex--quoted-list-p ()
   "Check if the symex is a quoted list."
-  (looking-at (concat "['`]" lispy-left)))
+  (looking-at-p symex--re-quoted-list))
 
 (defun symex--unquoted-list-p ()
   "Check if the symex is an unquoted list."
-  (looking-at (concat "," lispy-left)))
+  (looking-at-p symex--re-unquoted-list))
 
 (defun symex--clojure-deref-reader-macro-p ()
   "Check if the symex is a Clojure deref reader macro."
-  (looking-at (concat "@" lispy-left)))
+  (looking-at-p symex--re-clojure-deref-reader-macro))
 
 (defun symex--clojure-literal-lambda-p ()
   "Check if the symex is a Clojure anonymous function literal."
-  (looking-at (concat "#" lispy-left)))
+  (looking-at-p symex--re-clojure-literal-lambda))
 
 (defun symex--special-left-p ()
   "Check if point is at a \"special\" opening delimiter.
@@ -212,29 +318,49 @@ as special cases here."
       (symex--clojure-deref-reader-macro-p)
       (symex--clojure-literal-lambda-p)))
 
+(defun symex--re-or (&rest args)
+  "An OR combinator for regular expression strings."
+  (concat (string-join args "\\|") ))
+
+(defun symex--form-offset ()
+  "Get the offset for entry into the form."
+  (cond ((symex--racket-splicing-unsyntax-p) 4)
+        ((or (symex--racket-syntax-object-p)
+             (symex--racket-unquote-syntax-p)
+             (symex--splicing-unquote-p))
+         3)
+        ((or (symex--quoted-list-p)
+             (symex--unquoted-list-p)
+             (symex--clojure-deref-reader-macro-p)
+             (symex--clojure-literal-lambda-p))
+         2)
+        ((or (symex-form-p)
+             (symex-string-p)) 1)
+        (t 0)))
+
 (defun symex--special-empty-list-p ()
   "Check if we're looking at a \"special\" empty list."
   (or (save-excursion
         (and (symex--racket-splicing-unsyntax-p)
-             (progn (forward-char 5)
-                    (lispy-right-p))))
+             (progn (forward-char 4)
+                    (looking-at-p (concat symex--re-whitespace symex--re-right)))))
       (save-excursion
         (and (or (symex--racket-syntax-object-p)
                  (symex--racket-unquote-syntax-p)
                  (symex--splicing-unquote-p))
-             (progn (forward-char 4)
-                    (lispy-right-p))))
+             (progn (forward-char 3)
+                    (looking-at-p (concat symex--re-whitespace symex--re-right)))))
       (save-excursion
         (and (or (symex--quoted-list-p)
                  (symex--unquoted-list-p)
                  (symex--clojure-deref-reader-macro-p)
                  (symex--clojure-literal-lambda-p))
-             (progn (forward-char 3)
-                    (lispy-right-p))))))
+             (progn (forward-char 2)
+                    (looking-at-p (concat symex--re-whitespace symex--re-right)))))))
 
 (defun symex-atom-p ()
   "Check if the symex is an atom."
-  (not (lispy-left-p)))
+  (not (symex-left-p)))
 
 (defun symex-form-p ()
   "Check if the symex is a composite expression, i.e. a nonatom."
@@ -257,21 +383,24 @@ as special cases here."
 
 ;;; Navigation
 
-(defun symex-lisp--select-nearest ()
+(defun symex-lisp-select-nearest ()
   "Select the appropriate symex nearest to point."
-  (cond ((and (not (eobp))
-              (save-excursion (forward-char) (lispy-right-p))) ; |)
-         (forward-char)
-         (lispy-different))
+  (cond ((symex-left-p) nil)
+        ((and (symex-right-p)
+              (looking-back symex--re-left
+                            (line-beginning-position))) ; (|)
+         nil) ; don't change level in selection
+        ((and (not (eobp))
+              (symex-right-p)) ; |)
+         (symex-other))
         ((condition-case nil  ; (thing-at-point string) raises error at EOB
              (thing-at-point 'string)
            (error nil))       ; "som|e string"
          (beginning-of-thing 'string))
-        ((thing-at-point 'sexp)       ; som|ething
+        ((thing-at-point 'sexp) ; som|ething or even (something)|
          (beginning-of-thing 'sexp))
         (t (symex-lisp--if-stuck (symex-lisp--backward)
                                  (symex-lisp--forward)))))
-
 
 (defun symex-lisp--get-starting-point ()
   "Get the point value at the start of the current symex."
@@ -291,18 +420,31 @@ symexes, returns the end point of the last one found.
 Note that this mutates point - it should not be called directly."
   (if (= count 0)
       (point)
-    (condition-case nil
-        (forward-sexp)
-      (error (point)))
-    (symex-lisp--get-end-point-helper (1- count))))
+    (let ((at-end (condition-case nil
+                      (progn (forward-sexp)
+                             nil)
+                    (error t))))
+      (if at-end
+          (error "Out of range!")
+        (symex-lisp--get-end-point-helper (1- count))))))
 
-(defun symex-lisp--get-end-point (count)
+(defun symex-lisp--get-end-point (count &optional include-whitespace)
   "Get the point value after COUNT symexes.
 
 If the containing expression terminates earlier than COUNT
-symexes, returns the end point of the last one found."
+symexes, returns the end point of the last one found.
+
+If include-whitespace is non-nil, this returns the end point
+including trailing whitespace at the end of the last symex."
   (save-excursion
-    (symex-lisp--get-end-point-helper count)))
+    (let ((endpoint (symex-lisp--get-end-point-helper count)))
+      (if include-whitespace
+          (progn (goto-char endpoint)
+                 (if (and (not (eobp))
+                          (symex-whitespace-p))
+                     (1+ endpoint)
+                   endpoint))
+        endpoint))))
 
 (defun symex-lisp--point-height-offset ()
   "Compute the height offset of the current symex.
@@ -343,7 +485,20 @@ symex-oriented languages like Lisp, this is always zero."
         ;; better to revise the above logic so that
         ;; point does not go backwards.
         (goto-char original-location)
-        (setq result 0)))
+        (setq result 0))
+      (when (and (< original-location current-location)
+                 (= result 0))
+        ;; happens when point is in whitespace like
+        ;; a |  b
+        ;; and the result is
+        ;; a   |b
+        ;; but the logic above concludes there has been
+        ;; no movement.
+        ;; probably better to revise the above logic to
+        ;; explicitly reason about the source text instead
+        ;; of relying on implicit assumptions about the
+        ;; behavior of forward-sexp - maybe use thing-at-point
+        (setq result 1)))
     result))
 
 (defun symex-lisp--forward (&optional count)
@@ -402,10 +557,12 @@ of symex mode (use the public `symex-go-backward` instead)."
 (defun symex-lisp--go-up-by-one ()
   "Go up one level."
   (let ((result 1))
+    ;; TODO: this should enter at the primitive / command level
+    ;; but perhaps not at the user level
     (cond ((or (symex-empty-list-p)
                (symex--special-empty-list-p))
-           (setq result 0))
-          ((lispy-left-p) (forward-char))
+           (forward-char (symex--form-offset)))
+          ((symex-left-p) (forward-char))
           ;; note that at least some symex features would benefit by
           ;; treating these special cases as "symex-left-p" but it
           ;; would likely be too much special case handling to be
@@ -422,6 +579,8 @@ of symex mode (use the public `symex-go-backward` instead)."
                (symex--clojure-literal-lambda-p))
            (forward-char 2))
           (t (setq result 0)))
+    ;; find first non-whitespace character
+    (symex--go-to-next-non-whitespace-char)
     result))
 
 (defun symex-lisp--go-up (&optional count)
@@ -497,20 +656,50 @@ line."
         (delete-region start comment-line-position)
       (delete-region start end))))
 
-(defun symex--join-to-match (pattern)
-  "Join current position to the next position matching PATTERN.
-
-This eliminates whitespace between the original position and the found
-match."
-  (condition-case nil
-      (let* ((start (point))
-             (end (save-excursion (re-search-forward pattern)
-                                  (match-beginning 0))))
-        (delete-region start end))))
+(defun symex-lisp--reset-after-delete ()
+  "Tidy after deletion and select the appropriate symex."
+  (cond ((symex--current-line-empty-p) ; ^<>$
+         ;; only join up to the next symex if the context suggests
+         ;; that a line break is not desired
+         (if (or (not (symex--next-line-empty-p))
+                 (symex--previous-line-empty-p))
+             (symex--join-to-next)
+           ;; don't leave an empty line where the symex was
+           (symex--delete-whole-line)))
+        ((or (save-excursion (evil-last-non-blank) ; (<>$
+                             (symex-left-p)))
+         (symex--join-to-next))
+        ((looking-at-p "\n")         ; (abc <>
+         (unless (symex--next-line-empty-p)
+           ;; only join up to the next symex if the context suggests
+           ;; that a line break is not desired
+           (symex--join-to-next)))
+        ((save-excursion (back-to-indentation) ; ^<>)
+                         (symex-right-p))
+         ;; Cases 2 and 3 in issue #18
+         ;; if the deleted symex is preceded by a comment line
+         ;; or if the preceding symex is followed by a comment
+         ;; on the same line, then don't attempt to join lines
+         (let ((original-position (point)))
+           (when (symex--go-backward)
+             (save-excursion
+               (let ((previous-symex-end-pos (symex--get-end-point 1)))
+                 (unless (symex--intervening-comment-line-p previous-symex-end-pos
+                                                            original-position)
+                   (goto-char previous-symex-end-pos)
+                   ;; ensure that there isn't a comment on the
+                   ;; preceding line before joining lines
+                   (unless (condition-case nil
+                               (save-excursion (evil-find-char 1 ?\;)
+                                               t)
+                             (error nil))
+                     (symex--join-to-match symex--re-right))))))))
+        ((symex-right-p) (fixup-whitespace)) ; abc <>)
+        (t nil)))
 
 ;;; Utilities
 
-(defun symex-lisp--exit ()
+(defun symex-lisp-exit ()
   "Take necessary actions upon Symex mode exit.
 
 There are no Lisp-specific actions to take, at the present time, so

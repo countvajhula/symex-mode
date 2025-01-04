@@ -1,6 +1,6 @@
 ;;; symex-utils.el --- An evil way to edit Lisp symbolic expressions as trees -*- lexical-binding: t -*-
 
-;; URL: https://github.com/countvajhula/symex.el
+;; URL: https://github.com/drym-org/symex.el
 
 ;; This program is "part of the world," in the sense described at
 ;; https://drym.org.  From your perspective, this is no different than
@@ -26,7 +26,6 @@
 ;;; Code:
 
 (require 'cl-lib)
-(require 'symex-primitives)
 
 (defun symex--current-line-empty-p ()
   "Check if the current line is empty.
@@ -36,6 +35,16 @@ From: https://emacs.stackexchange.com/a/16793"
     (beginning-of-line)
     (looking-at "[[:space:]]*$")))
 
+(defun symex--next-line-empty-p ()
+  "Check if the next line is empty."
+  (save-excursion (forward-line)
+                  (symex--current-line-empty-p)))
+
+(defun symex--previous-line-empty-p ()
+  "Check if the previous line is empty."
+  (save-excursion (forward-line -1)
+                  (symex--current-line-empty-p)))
+
 (defun symex--point-at-indentation-p ()
   "Check if point is at the point of indentation.
 
@@ -44,6 +53,63 @@ From: https://stackoverflow.com/a/13313091"
   (= (save-excursion (back-to-indentation)
                      (point))
      (point)))
+
+(defun symex--point-on-last-line-p ()
+  "Check if point is on the last line of the buffer."
+  (= (line-number-at-pos)
+     (save-excursion (goto-char (point-max))
+                     (line-number-at-pos))))
+
+(defun symex--goto-line (line-no)
+  "Go to line number LINE-NO.
+
+Emacs docs recommend against using `goto-line`, suggesting
+the following recipe instead."
+  (goto-char (point-min))
+  (forward-line (1- line-no)))
+
+(defvar symex--re-non-whitespace "[^[:space:]\n]"
+  "A non-whitespace character.")
+
+(defvar symex--re-non-whitespace-or-newline "[^[:space:]]"
+  "A non-whitespace character.")
+
+(defun symex--go-to-next-non-whitespace-char ()
+  "Move point to the next non-whitespace character.
+
+If the current character is non-whitespace, point is not moved."
+  (unless (looking-at-p symex--re-non-whitespace)
+    (condition-case nil
+        (progn (re-search-forward symex--re-non-whitespace)
+               ;; since the re search goes to the end of the match
+               (backward-char)
+               t)
+      (error nil))))
+
+(defun symex--join-to-match (pattern)
+  "Join current position to the next position matching PATTERN.
+
+This eliminates whitespace between the original position and the found
+match."
+  (condition-case nil
+      (let* ((start (point))
+             (end (save-excursion (re-search-forward pattern)
+                                  (match-beginning 0))))
+        (delete-region start end))))
+
+(defun symex--join-to-non-whitespace ()
+  "Join current position to the next non-whitespace character.
+
+This eliminates whitespace between the original position and the found
+match."
+  (symex--join-to-match symex--re-non-whitespace))
+
+(defun symex--join-to-non-whitespace-or-newline ()
+  "Join current position to the next non-whitespace character.
+
+This eliminates whitespace between the original position and the found
+match."
+  (symex--join-to-match symex--re-non-whitespace-or-newline))
 
 ;; `with-undo-collapse` macro, to treat a sequence of operations
 ;; as a single entry in the undo list.
@@ -89,6 +155,23 @@ MARKER is some kind of delimiter for the undo block, TODO."
          (with-current-buffer ,buffer-var
            (symex--undo-collapse-end ',marker))))))
 
+;; Modified from: https://stackoverflow.com/a/24283996
+;; In cases where we mutate the buffer within a save-excursion
+;; (e.g. by using symex--tidy), it seems that save-excursion
+;; does not return to the original point even if the mutation
+;; did not actually result in any changes. Instead, it seems
+;; to return to the beginning of the changed region, which
+;; for our purposes is sometimes one character before the
+;; original position. We use this simple macro to restore point
+;; to its exact original location.
+(defmacro symex--save-point-excursion (&rest forms)
+  (declare (indent 0))
+  (let ((old-point (gensym "old-point")))
+    `(let ((,old-point (point)))
+       (prog1
+           (progn ,@forms)
+         (goto-char ,old-point)))))
+
 (defun symex--combine-alists (al1 al2)
   "Combine two association lists, prioritizing one of them.
 
@@ -100,13 +183,37 @@ result."
       (cl-pushnew p result :key #'car :test #'equal))
     result))
 
-(defun symex--remaining-length ()
-  "Compute the remaining length of the current symex.
+(defun symex--delete-whole-line ()
+  "Delete entire current line.
 
-This should be done via DSL computation semantics at some point."
-  (symex-save-excursion
-    (let ((result (symex-execute-traversal symex--traversal-goto-last)))
-     (1+ (length result)))))
+Similar to `kill-whole-line` but doesn't add an entry to the kill
+ring."
+  (delete-region (line-beginning-position)
+                 (line-end-position))
+  (unless (eobp)
+    (delete-char 1)))
+
+(defun symex--current-kill ()
+  "Get current kill ring entry without rotating the kill ring."
+  (current-kill 0 t))
+
+(defun symex--kill-ring-push (entry)
+  "Push an ENTRY onto the kill ring."
+  (kill-new entry))
+
+(defun symex--kill-ring-pop ()
+  "Pop the latest entry off the kill ring."
+  (let ((result (pop kill-ring)))
+    (setq kill-ring-yank-pointer kill-ring)
+    result))
+
+(defun symex--kill-ring-compose ()
+  "Compose kill ring entries.
+
+This concatenates the latest kill with the preceding one, treating the
+preceding one as the accumulator. "
+  (let ((latest (symex--kill-ring-pop)))
+    (kill-append latest nil)))
 
 
 (provide 'symex-utils)

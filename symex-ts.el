@@ -1,7 +1,7 @@
 ;;; symex-ts.el --- Primitive navigations using Tree Sitter -*- lexical-binding: t; coding: utf-8 -*-
 
 ;; Author: Simon Pugnet <simon@polaris64.net>
-;; URL: https://github.com/countvajhula/symex.el
+;; URL: https://github.com/drym-org/symex.el
 
 ;; This program is "part of the world," in the sense described at
 ;; https://drym.org.  From your perspective, this is no different than
@@ -33,8 +33,6 @@
 
 (require 'tree-sitter)
 (require 'tsc)
-(require 'symex-transformations-ts)
-(require 'symex-utils-ts)
 
 
 (defvar-local symex-ts--current-node nil "The current Tree Sitter node.")
@@ -129,7 +127,7 @@ Return a Symex move (list with x,y node offsets tagged with
     (dotimes (_ (or count 1))
       (let ((new-node (funcall fn cursor)))
         (when (and new-node (not (tsc-node-eq new-node cursor)))
-          (setq move (symex--add-moves (list move move-delta)))
+          (setq move (symex--move-+ move move-delta))
           (setq cursor new-node
                 target-node cursor))))
     (when target-node (symex-ts--set-current-node target-node))
@@ -152,6 +150,7 @@ Automatically set it to the node at point if necessary."
 
 (defun symex-ts-set-current-node-from-point ()
   "Set the current node to the top-most node at point."
+  (symex--go-to-next-non-whitespace-char)
   (symex-ts--set-current-node (symex-ts-get-topmost-node-at-point)))
 
 (defun symex-ts-get-topmost-node-at-point ()
@@ -223,6 +222,14 @@ Note that this does not consider global root to be a tree root."
   (let ((cur (symex-ts-get-current-node)))
     (= (point) (tsc-node-start-position cur))))
 
+(defun symex-ts--previous-p ()
+  "Check if a preceding symex exists at this level."
+  (symex-ts-save-excursion (symex-ts-move-prev-sibling)))
+
+(defun symex-ts--next-p ()
+  "Check if a succeeding symex exists at this level."
+  (symex-ts-save-excursion (symex-ts-move-next-sibling)))
+
 ;;; Navigations
 
 (defun symex-ts-move-prev-sibling (&optional count)
@@ -253,7 +260,6 @@ Move COUNT times, defaulting to 1."
   (interactive "p")
   (symex-ts--move-with-count #'symex-ts--descend-to-child-with-sibling (symex-make-move 0 1) count))
 
-
 ;;; Utilities
 
 (defmacro symex-ts-save-excursion (&rest body)
@@ -265,6 +271,7 @@ languages where point position doesn't uniquely identify a tree
 location (e.g. non-symex-based languages like Python).
 
 This is tree-sitter specific and meant for internal, primitive use."
+  (declare (indent 0))
   (let ((offset (gensym))
         (result (gensym)))
     `(let ((,offset (symex-ts--point-height-offset)))
@@ -285,8 +292,8 @@ This is tree-sitter specific and meant for internal, primitive use."
 If the containing expression terminates earlier than COUNT
 symexes, returns the end point of the last one found."
   (symex-ts-save-excursion
-   (symex-ts-move-next-sibling (1- count))
-   (tsc-node-end-position symex-ts--current-node)))
+    (symex-ts-move-next-sibling (1- count))
+    (tsc-node-end-position symex-ts--current-node)))
 
 (defun symex-ts--point-height-offset-helper (orig-pos)
   "A helper to compute the height offset of the current symex.
@@ -328,7 +335,7 @@ This is measured from the lowest symex indicated by point."
              (symex-ts-move-child offset)
              offset))))
 
-(defun symex-ts--exit ()
+(defun symex-ts-exit ()
   "Take necessary tree-sitter related actions upon exiting Symex mode."
   (setq-local symex-ts--current-node nil))
 

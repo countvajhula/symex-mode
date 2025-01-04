@@ -1,6 +1,6 @@
 ;;; symex-misc.el --- An evil way to edit Lisp symbolic expressions as trees -*- lexical-binding: t -*-
 
-;; URL: https://github.com/countvajhula/symex.el
+;; URL: https://github.com/drym-org/symex.el
 
 ;; This program is "part of the world," in the sense described at
 ;; https://drym.org.  From your perspective, this is no different than
@@ -26,10 +26,10 @@
 ;;; Code:
 
 
-(require 'lispy)
 (require 'evil)
 (require 'symex-primitives)
 (require 'symex-evaluator)
+(require 'symex-computations)
 (require 'symex-traversals)
 (require 'symex-interface)
 (require 'symex-interface-builtins)
@@ -109,9 +109,6 @@ to how the Lisp interpreter does it (when it is following
   (save-excursion
     (symex-execute-traversal (symex-traversal
                               (circuit symex--traversal-preorder-in-tree)))
-    ;; do it once first since it will be executed as a side-effect
-    ;; _after_ each step in the traversal
-    (symex--evaluate)
     (symex--do-while-traversing #'symex--evaluate
                                 symex--traversal-postorder-in-tree)))
 
@@ -119,9 +116,6 @@ to how the Lisp interpreter does it (when it is following
   "Evaluate the remaining symexes at this level."
   (interactive)
   (save-excursion
-    ;; do it once first since it will be executed as a side-effect
-    ;; _after_ each step in the traversal
-    (symex--evaluate)
     (symex--do-while-traversing #'symex--evaluate
                                 (symex-make-move 1 0))))
 
@@ -205,6 +199,21 @@ Version 2017-11-01"
   (recenter)
   (evil-window-mru))
 
+(defun symex-user-select-nearest ()
+  "Select symex nearest to point.
+
+This user-level interface does the most intuitive thing from the perspective
+of the user, and isn't necessarily deterministic. It may select the next
+expression, the previous one, or the containing one, depending on context.
+For the deterministic version used at the primitive level, see
+`symex-select-nearest`."
+  (interactive)
+  (symex-select-nearest)
+  (when (and (symex-right-p)
+             (looking-back symex--re-left
+                           (line-beginning-position)))
+    (symex-go-down 1)))
+
 (defun symex-select-nearest-in-line ()
   "Select symex nearest to point that's on the current line."
   (interactive)
@@ -213,31 +222,26 @@ Version 2017-11-01"
       (symex-select-nearest)
       (unless (= (line-number-at-pos)
                  (line-number-at-pos original-pos))
-        (goto-char original-pos)
-        (beginning-of-line)
-        (symex-select-nearest)))))
+        (goto-char original-pos)))))
 
-(defun symex-index ()  ; TODO: may be better framed as a computation
+(defun symex-remaining-length ()
+  "Compute the remaining length of the current symex."
+  (1+  ; length, so not zero-based like index
+   (symex-save-excursion
+     (symex-execute-traversal symex--traversal-goto-last
+                              symex--computation-traversal-length))))
+
+(defun symex-index ()
   "Get relative (from start of containing symex) index of current symex."
-  (interactive)
   (symex-save-excursion
-    (let ((original-location (point)))
-      (let ((current-location (symex-goto-first))
-            (move-made symex--move-zero)
-            (result 0))
-        (while (and move-made
-                    (< current-location original-location))
-          (setq move-made (symex--execute-tree-move (symex-make-move 1 0)))
-          (setq current-location (point))
-          (setq result (1+ result)))
-        result))))
+    (symex-execute-traversal symex--traversal-goto-first
+                             symex--computation-traversal-length)))
 
-(defun symex-height ()  ; TODO: may be better framed as a computation
+(defun symex-height ()
   "Get height (above root) of current symex."
-  (interactive)
   (symex-save-excursion
-   (let ((moves (symex-execute-traversal symex--traversal-goto-lowest)))
-     (length moves))))
+    (symex-execute-traversal symex--traversal-goto-lowest
+                             symex--computation-traversal-length)))
 
 (defun symex-next-visual-line (&optional count)
   "Coordinate navigation to move down.
@@ -305,81 +309,6 @@ Leaps COUNT times, defaulting to once."
    (symex-goto-lowest)
    (symex-index)))
 
-(defun symex--leap-backward (&optional soar)
-  "Leap backward to a neighboring branch, preserving height and position.
-
-If SOAR is true, leap between trees too, otherwise, stay in the
-current tree.
-
-Note: This isn't the most efficient at the moment since it determines
-the height at every step of the traversal which itself is logarithmic
-in the size of the tree, making the cost O(nlog(n)).
-
-There are at least two possible ways in which we could implement this
-\"leap\" feature: first, as a \"local\" traversal from the starting
-position, keeping track of changes to the height while traversing and
-stopping when a suitable destination point is reached.  This would be
-efficient since we would only need to determine the height once, at the
-start, making it O(n).  However, this approach would require some
-notion of \"memory\" to be built into the DSL semantics, which at
-present it lacks (representing a theoretical limitation on the types
-of traversals expressible in the DSL in its present form).
-
-A second way to do it is in \"global\" terms -- rather than keeping
-track of changing height in the course of the traversal, instead,
-determine always from a common reference point (the root) the current
-height. This allows us to circumvent the need for \"memory\" since this
-information could be computed afresh at each step.  This latter
-approach is the one employed here."
-  (let ((traverse (if soar
-                      symex--traversal-postorder
-                    symex--traversal-postorder-in-tree))
-        (height (symex-height))
-        (index (symex-index))
-        (original-tree-index (symex--tree-index)))
-    (let* ((ensure-at-first-node
-            (symex-traversal
-             (decision (at first)
-                       symex--move-zero
-                       symex--traversal-goto-first)))
-           (find-neighboring-branch
-            (symex-traversal
-             (maneuver ensure-at-first-node
-                       (circuit (precaution traverse
-                                            (afterwards (lambda ()
-                                                          (or (not (= (symex-height)
-                                                                      height))
-                                                              (if soar
-                                                                  (= original-tree-index
-                                                                     (symex--tree-index))
-                                                                nil))))))
-                       traverse
-                       ensure-at-first-node)))
-           (run-along-branch
-            (symex-traversal
-             (circuit (precaution (move forward)
-                                  (beforehand (lambda ()
-                                                (< (symex-index)
-                                                   index)))))))
-           (leap-backward
-            (symex-traversal
-             (venture find-neighboring-branch
-                      run-along-branch))))
-      (symex-execute-traversal
-       (symex-traversal
-        (precaution (venture leap-backward
-                             (circuit
-                              (precaution leap-backward
-                                          (beforehand (lambda ()
-                                                        (< (symex-index)
-                                                           index))))))
-                    (beforehand (not (at root)))
-                    (afterwards (lambda ()
-                                  (and (= (symex-index)
-                                          index)
-                                       (= (symex-height)
-                                          height))))))))))
-
 (defun symex--leap-forward (&optional soar)
   "Leap forward to a neighboring branch, preserving height and position.
 
@@ -387,57 +316,49 @@ If SOAR is true, leap between trees too, otherwise, stay in the
 current tree.
 
 See the documentation on `symex-leap-backward` for details regarding
-the implementation."
+the implementation -- the only difference is that this uses a preorder
+traversal instead of a postorder traversal."
   (let ((traverse (if soar
                       symex--traversal-preorder
-                    symex--traversal-preorder-in-tree))
-        (height (symex-height))
-        (index (symex-index))
-        (original-tree-index (symex--tree-index)))
-    (let* ((find-neighboring-branch
-            (symex-traversal
-             (maneuver (decision (at last)
-                                 symex--move-zero
-                                 symex--traversal-goto-last)
-                       (circuit (precaution traverse
-                                            (afterwards (lambda ()
-                                                          (or (not (= (symex-height)
-                                                                      height))
-                                                              (if soar
-                                                                  (= original-tree-index
-                                                                     (symex--tree-index))
-                                                                nil))))))
-                       traverse)))
-           (run-along-branch
-            (symex-traversal
-             (circuit (precaution (move forward)
-                                  (beforehand (lambda ()
-                                                (< (symex-index)
-                                                   index)))))))
-           (leap-forward
-            (symex-traversal
-             (venture find-neighboring-branch
-                      run-along-branch))))
-      (symex-execute-traversal
-       (symex-traversal
-        (precaution (venture leap-forward
-                             (circuit
-                              (precaution leap-forward
-                                          (beforehand (lambda ()
-                                                        (< (symex-index)
-                                                           index))))))
-                    (beforehand (not (at root)))
-                    (afterwards (lambda ()
-                                  (and (= (symex-index)
-                                          index)
-                                       (= (symex-height)
-                                          height))))))))))
+                    symex--traversal-preorder-in-tree)))
+    (symex-execute-traversal
+     (symex-traversal
+       (maneuver (loop traverse
+                       (lambda (acc)
+                         (and (= (symex--move-x acc) 0)
+                              (= (symex--move-y acc) 0))))))
+     symex--computation-node-distance)))
+
+(defun symex--leap-backward (&optional soar)
+  "Leap backward to a neighboring branch, preserving height and position.
+
+If SOAR is true, leap between trees too, otherwise, stay in the
+current tree.
+
+This is implemented as a postorder traversal from the starting
+position, keeping track of changes to the height (nesting level from
+root) and index (position along branch) while traversing, and stopping
+when both the height and index delta returns to zero, based on a
+computation that keeps track of this delta while traversing.
+
+Since we only track height and index _deltas_ and don't actually
+measure them anywhere, we do this traversal in O(n)."
+  (let ((traverse (if soar
+                      symex--traversal-postorder
+                    symex--traversal-postorder-in-tree)))
+    (symex-execute-traversal
+     (symex-traversal
+       (maneuver (loop traverse
+                       (lambda (acc)
+                         (and (= (symex--move-x acc) 0)
+                              (= (symex--move-y acc) 0))))))
+     symex--computation-node-distance)))
 
 (defun symex-select-nearest-advice (&rest _)
   "Advice to select the nearest symex."
   (when (and (fboundp 'evil-symex-state-p)
              (evil-symex-state-p))
-    (symex-select-nearest)))
+    (symex-user-select-nearest)))
 
 (defun symex--selection-side-effects ()
   "Things to do as part of symex selection, e.g. after navigations."
@@ -490,7 +411,7 @@ is expected to handle in Emacs)."
   (advice-add #'symex-goto-last :around #'symex-selection-advice)
   (advice-add #'symex-goto-lowest :around #'symex-selection-advice)
   (advice-add #'symex-goto-highest :around #'symex-selection-advice)
-  (advice-add #'symex-select-nearest :around #'symex-selection-advice))
+  (advice-add #'symex-user-select-nearest :around #'symex-selection-advice))
 
 (defun symex--remove-selection-advice ()
   "Remove selection advice."
@@ -510,7 +431,7 @@ is expected to handle in Emacs)."
   (advice-remove #'symex-goto-last #'symex-selection-advice)
   (advice-remove #'symex-goto-lowest #'symex-selection-advice)
   (advice-remove #'symex-goto-highest #'symex-selection-advice)
-  (advice-remove #'symex-select-nearest #'symex-selection-advice))
+  (advice-remove #'symex-user-select-nearest #'symex-selection-advice))
 
 (defun symex--remember-branch-position (orig-fn &rest args)
   "Remember branch position when descending the tree.
@@ -571,6 +492,8 @@ ORIG-FN applied to ARGS is the invocation being advised."
   (unless (member evil-next-state '(emacslike normallike))
     ;; these are "internal" state transitions, used in e.g. symex-evaluate
     (deactivate-mark)
+    (when symex--original-blink-cursor-state
+      (blink-cursor-mode 1))
     (when symex-refocus-p
       (symex--restore-scroll-margin))
     (symex--primitive-exit)))

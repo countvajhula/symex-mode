@@ -6,7 +6,7 @@ Symex DSL
 Introduction
 ------------
 
-The Symex.el Emacs package consists of three things: (1) A high-level language (or DSL) for tree operations, (2) A low-level tree abstraction layer, and (3) An Evil modal UI. The modal UI is documented in the `README <https://github.com/countvajhula/symex.el/blob/master/README.rst>`_, and the low-level abstraction layer is fulfilled by third party packages like Paredit and Lispy. This is the documentation for the DSL.
+The Symex.el Emacs package consists of three things: (1) A high-level language (or DSL) for tree operations, (2) A low-level tree abstraction layer, and (3) An Evil modal UI. The modal UI is documented in the `README <https://github.com/drym-org/symex.el/blob/master/README.rst>`_, and the low-level abstraction layer is fulfilled by third party packages like Paredit and Tree-Sitter. This is the documentation for the DSL.
 
 The Symex DSL allows you to specify arbitrary tree traversals in a cursor-oriented manner. That is, instead of describing traversals from an absolute reference point such as a root node, it allows you to describe traversals from the first-person vantage point of the cursor -- what would you do if you were where this cursor is right now? It allows you to describe what you'd like to do in intuitive terms that make sense for movement in a tree. Symex is the language a squirrel might use to describe a traversal to another squirrel.
 
@@ -112,8 +112,8 @@ Examples
 
   (symex-execute-traversal
     (symex-traversal
-      (maneuver (maneuver (move up)
-                          (circuit (move forward)))
+      (maneuver (move up)
+                (circuit (move forward))
                 (move up))))
 
 venture
@@ -431,9 +431,9 @@ Here, you can substitute the contents of ``(symex-traversal ...)`` with whatever
 Using a Debugger (EDebug)
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Another way is to use the ELisp Debugger, EDebug. This can be helpful to see the exact steps the DSL evaluator goes through in executing a traversal, and can be helpful for cases where the traversal isn't doing what you think it should be and you want to understand why (or even if you just want to understand how the evaluator works).
+Another way is to use the ELisp Debugger, EDebug. This allows you to see the exact steps the DSL evaluator goes through in executing a traversal and the effects it has on the code, and can be helpful if you want to understand why a traversal isn't doing what you think it should be doing (or even if you just want to understand how the DSL works). A good debugger isn't just for debugging problems, it's also an exploratory tool for quick feedback at the creative stage when you're implementing new functionality. It can help you be more efficient at every stage of development.
 
-To use it, first evaluate the ``symex-execute-traversal`` function for debugging by placing point somewhere within it and then invoking ``M-x edebug-defun`` (I personally have this bound in an ELisp specific leader / Hydra). Now, if you execute a traversal (e.g. via the REPL as in the recipe above), it will put you in the debugger and allow you to step through the code. Handy commands for EDebug:
+To use it, first evaluate the relevant traversal evaluator (for instance, the ``symex-execute-traversal`` function) for debugging by placing point somewhere within it and then invoking ``M-x edebug-defun`` (I personally have this bound in an ELisp specific leader / Hydra). Now, if you execute a traversal (e.g. via the REPL as in the recipe above, with a test expression in the Scratch buffer -- or even just by invoking the relevant feature on source code while in Symex mode), it will put you in the debugger and allow you to step through the code. Handy commands for EDebug:
 
 * ``s`` -- step forward
 * ``i`` -- step in
@@ -443,9 +443,22 @@ To use it, first evaluate the ``symex-execute-traversal`` function for debugging
 
 There are also lots of other features like setting and unsetting breakpoints (``b`` and ``u``), seeing a backtrace (``d``), evaluating expressions in the evaluation context (``e``), and lots more, making it an indispensible tool for ELisp debugging.
 
-When you're done debugging, you can remove the debugger hooks by just evaluating the debugged functions in the usual way (e.g. via ``M-x eval-defun``).
+When you're done debugging, you can remove the debugger hooks by just evaluating the debugged functions in the usual way (e.g. via ``M-x eval-defun`` or ``M-x eval-buffer``).
 
 Also see `this series on ELisp debugging <https://endlessparentheses.com/debugging-emacs-lisp-part-1-earn-your-independence.html>`__ for more tips.
+
+Troubleshooting
+~~~~~~~~~~~~~~~
+
+Debugging Macros vs Functions
+`````````````````````````````
+
+If you are attempting to debug a feature implemented as a macro like ``symex-define-command``, you would need to evaluate the primitive functions for debugging, rather than the macro, or if necessary, copy the contents of the command to a new function and call that function from the macro, in order to be able to debug it. To be clear, you would need to evaluate the *function* for debugging rather than the macro. Naively, if you attempt to debug the macro, the debugger is triggered at compile time (i.e. as soon as you attempt to evaluate it for debugging!) and not at runtime when you're actually interested in using it. For the same reason, if you attempt to "step into" a macro invocation while the debugger is active, it won't do anything. You can only debug functions. If what you are interested in debugging is not a function, then put it in a function and debug that.
+
+"Buffer is read-only"
+`````````````````````
+
+Sometimes, the debugger appears to get overridden by Evil keybindings, complaining that the "Buffer is read-only" when you attempt to ``s`` to step forward. Saving the buffer (as opposed to debugging an unsaved buffer) seems to solve these issues, and if not, killing and reopening the buffer does.
 
 Print Statements and Asserts
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -457,7 +470,7 @@ Minimizing Complexity
 
 Symex uses `advice <https://www.gnu.org/software/emacs/manual/html_node/elisp/Advising-Functions.html>`_ to implement some features such as branch memory. To minimize complexity while debugging, it may be advisable (so to speak) to disable such advice. To do this, find the place in the code where the advice is added and execute the corresponding function to remove it, something like ``(advice-remove #'symex-go-down #'symex--remember-branch-position)``. Of course, if disabling the advice causes the error to go away, then you can focus your efforts on debugging the advice itself in isolation.
 
-It may also be advisable to comment out macros like ``symex-save-excursion`` to see if the problem persists.
+It may also be advisable to comment out macros like ``symex-save-excursion`` to see if the problem persists. Commenting out macros like ``symex--with-undo-collapse`` will also help you use the debugger in code wrapped by such macros.
 
 Gotchas
 ^^^^^^^

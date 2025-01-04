@@ -33,7 +33,7 @@ Symex (pronounced sym-ex, as in symbolic expression) is a modal (like Vim but si
 - Implementing new structure-related features in general is easy [1]_.
 - Keybindings are short and memorable
 
-At the moment, symex mode uses ``paredit``, ``lispy``, and `evil-cleverparens <https://github.com/luxbock/evil-cleverparens>`_ to provide much of its low level functionality. In the future, this layer of primitives may be replaced with a layer that explicitly uses the abstract syntax tree, for still greater precision.
+Under the hood, Symex mode uses ``paredit`` and Tree-Sitter for parsing the code syntax tree.
 
 As of Jan 2023, there is "alpha" support for non-Lisp languages via ``tree-sitter``. While motions and a couple of basic transformations should work across languages (i.e. not only Lisp), it should be considered an early preview rather than production-worthy. Full support is planned for completion as part of the `2.0 release coming in Spring '23 <https://github.com/drym-org/symex.el/pull/71>`__.
 
@@ -43,7 +43,7 @@ As of Jan 2023, there is "alpha" support for non-Lisp languages via ``tree-sitte
     <img src="https://user-images.githubusercontent.com/401668/59328521-6db96280-8ca1-11e9-8b32-24574a0af676.png" alt="Screenshot" title="Screenshot" style="cursor:default;"/>
   </p>
 
-.. [1] As long as, from a theoretical perspective, the intended traversal can be accomplished using a `finite automaton <https://en.wikipedia.org/wiki/Deterministic_finite_automaton>`_. More complex traversals can be implemented (such as "leap branch"), but not as easily. Symex may be made Turing-complete at some point in the future, if there is interest in a feature that cannot be implemented in the DSL in its current form.
+.. [1] As long as, from a theoretical perspective, the intended traversal can be accomplished using a `pushdown automaton <https://en.wikipedia.org/wiki/Pushdown_automaton>`_. That is, Symex is more expressive than regular expressions but less expressive than Lisp itself.
 
 Installation
 ============
@@ -69,33 +69,19 @@ The Animated Guide
 
 The best way to learn how to use Symex is to read the `Animated Guide <https://countvajhula.com/2021/09/25/the-animated-guide-to-symex/>`_. Besides animations, it also contains lots of helpful field notes. Go check it out!
 
-Evil or Hydra?
+Symex and Evil
 --------------
 
-Symex provides both an evil state as well as a hydra-based modal interface. Which one should you use?
+At the moment, Symex uses an Evil state to implement its modal interface. Does that mean it's only for Evil users? No! It's just an implementation detail that you needn't be aware of, as Symex does not assume that you are an actual user of Evil.
 
-**TL;DR**: Use the evil option -- this is the default, and it is available to both evil and vanilla emacs users. If you're learning and would like some hand-holding as you familiarize yourself with the keybindings, use the hydra option, but it is likely that hydra will eventually be deprecated here.
+If you do happen to be an Evil user, using Symex should feel familiar, but while there are many similarities to Evil, it's also fairly different.
 
-The evil option is less obtrusive and allows you to, for instance, execute ``M-x`` commands without leaving symex mode. It should feel very similar to using Normal state, and doesn't interfere with normal Emacs usage including any custom keybindings you may be using.
-
-The hydra operates almost identically to the evil state, but it provides a comprehensive menu that can be toggled on and off, and can therefore help you learn the keybindings as you go along. On the other hand, the drawback is that the hydra will exit if you do something not specifically connected to symex mode -- for instance, if you run an ``M-x`` command, or do a text search, or save the buffer, or run a custom command of some kind. You could customize the hydra so that it is more persistent (e.g. "pink" or "amaranth" hydra) but doing so could cause it to interfere with normal Emacs functions, as hydra keybindings take precedence over everything else.
-
-In short, evil provides a more seamless experience, but hydra may be a good option while you are learning to use symex.
-
-Depending on your choice, put one of these in the ``:custom`` `section <https://github.com/jwiegley/use-package#customizing-variables>`__ (not the ``:config`` section) of your ``use-package`` form:
-
-::
-
-  (symex-modal-backend 'evil)
-
-::
-
-  (symex-modal-backend 'hydra)
+Symex has a modal interface, but one that's simpler than Evil. In Evil, the paradigm is composing verbs with nouns (or operators with motions, in Vim parlance), whereas Symex has a "point free" design where the noun is fixed (i.e. it assumes you mean to perform operations on symexes) so you only need to worry about what you are trying to do without bothering about composition. For more on this style of UI, see `Rigpa <https://github.com/countvajhula/rigpa>`_.
 
 Key Bindings
 ------------
 
-The table below lists the key bindings in Symex mode for Evil Symex users. You don't need this with the hydra frontend since you can lookup the keybindings at any time by pulling up the hydra menu (default binding: ``H-m``). Also for the evil frontend, while you don't have the menu, you can always use Emacs's ``C-h k`` to learn what a key does, as another way of learning the bindings.
+The table below lists the key bindings in Symex mode. You can also always use Emacs's ``C-h k`` to learn what a key does, as another way of learning the bindings.
 
 Movement
 ~~~~~~~~
@@ -321,21 +307,12 @@ Control
      - exit
      -
 
-The Menu (Hydra-only)
----------------------
-
-Entering the symex modal interface (via e.g. :code:`s-;`) using the hydra option shows you a comprehensive menu of all possible actions, by default. This is helpful initially, but over time you may prefer to dismiss the menu and bring it up only on demand, in order to conserve screen real estate. To do this, either run ``symex-toggle-menu`` via the menu entry point (``H-m``) while in symex mode, or add this to your ``init.d`` (e.g. in the ``:config`` section of the ``use-package`` form):
-
-::
-
-  (symex-hide-menu)
-
 Up and Down
 -----------
 
 The default keybindings in symex mode treat increasingly nested code as being "higher" and elements closer to the root as "lower." Think going "up" to the nest and "down" to the root. But symex allows you to modify these or any other keybindings to whatever you may find most natural.
 
-If you're using evil, put something resembling this in your configuration *before* the call to ``(symex-initialize)``:
+Put something resembling this in your configuration *before* the call to ``(symex-initialize)``:
 
 ::
 
@@ -346,21 +323,6 @@ If you're using evil, put something resembling this in your configuration *befor
           ("C-k" . symex-descend-branch)
           ("M-j" . symex-goto-highest)
           ("M-k" . symex-goto-lowest)))
-
-If you're using hydra, put something resembling this in your configuration *after* the call to ``(symex-initialize)``:
-
-::
-
-  (defhydra+ hydra-symex (:columns 4
-                          :post (symex-exit-mode)
-                          :after-exit (symex--signal-exit))
-      "Symex mode"
-      ("j" symex-go-up "up")
-      ("k" symex-go-down "down")
-      ("C-j" symex-climb-branch "climb branch")
-      ("C-k" symex-descend-branch "descend branch")
-      ("M-j" symex-goto-highest "go to highest")
-      ("M-k" symex-goto-lowest "go to lowest"))
 
 Branch Memory
 -------------
